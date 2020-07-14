@@ -344,7 +344,7 @@ getDB(async (err, db, dbm)=>{
 			} else tokenData.expired=new Date()+24*60*60*1000;
 
 			cb(null, tokenData.t);
-			socket.emit('statechanged', {user:{_id:dbuser._id, balance:dbuser.balance}, ...game.snapshot(pack.phone)});
+			socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, balance:dbuser.balance}), ...game.snapshot(pack.phone)});
 		})
 		.on('betting', async (pack, cb)=>{
 			if (!socket.user) return cb('can not do that');
