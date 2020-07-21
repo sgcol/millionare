@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import { BootstrapVue, BIcon, BIconChevronRight, BIconChevronLeft } from 'bootstrap-vue'
+import { BootstrapVue, BIcon, BIconChevronRight, BIconChevronLeft ,BIconBoxArrowInLeft} from 'bootstrap-vue'
 import './custom.scss'
 
 // Install BootstrapVue
@@ -9,6 +9,8 @@ Vue.use(BootstrapVue)
 Vue.component('BIcon', BIcon)
 Vue.component('BIconChevronRight', BIconChevronRight)
 Vue.component('BIconChevronLeft', BIconChevronLeft)
+Vue.component('BIconBoxArrowInLeft', BIconBoxArrowInLeft)
+
 Vue.use(Vuex);
 import App from './App.vue'
 

@@ -46,7 +46,7 @@
 								placeholder="Enter OTP"
 							></b-form-input>
 							<b-input-group-append>
-								<b-button variant="outline-info">Send OTP</b-button>
+								<b-button variant="outline-info" :disabled="validateState('mobile')" v-on:click="sendOTP">Send OTP</b-button>
 							</b-input-group-append>
 						</b-input-group>
 					</b-form-group>
@@ -112,44 +112,44 @@ import {openLink} from "../client.js"
 import md5 from 'md5'
 
 const docCookies = {
-  getItem: function (sKey) {
+	getItem: function (sKey) {
 		// eslint-disable-next-line
-    return decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent(sKey).replace(/[-.+*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || null;
-  },
-  setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
+	return decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*" + encodeURIComponent(sKey).replace(/[-.+*]/g, "\\$&") + "\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")) || null;
+	},
+	setItem: function (sKey, sValue, vEnd, sPath, sDomain, bSecure) {
 		// eslint-disable-next-line
-    if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return false; }
-    var sExpires = "";
-    if (vEnd) {
-      switch (vEnd.constructor) {
-        case Number:
-          sExpires = vEnd === Infinity ? "; expires=Fri, 31 Dec 9999 23:59:59 GMT" : "; max-age=" + vEnd;
-          break;
-        case String:
-          sExpires = "; expires=" + vEnd;
-          break;
-        case Date:
-          sExpires = "; expires=" + vEnd.toUTCString();
-          break;
-      }
-    }
-    document.cookie = encodeURIComponent(sKey) + "=" + encodeURIComponent(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
-    return true;
-  },
-  removeItem: function (sKey, sPath, sDomain) {
-    if (!sKey || !this.hasItem(sKey)) { return false; }
-    document.cookie = encodeURIComponent(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + ( sDomain ? "; domain=" + sDomain : "") + ( sPath ? "; path=" + sPath : "");
-    return true;
-  },
-  hasItem: function (sKey) {
-    return (new RegExp("(?:^|;\\s*)" + encodeURIComponent(sKey).replace(/[-.+*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
-  },
-  keys: /* optional method: you can safely remove it! */ function () {
+	if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) { return false; }
+	var sExpires = "";
+	if (vEnd) {
+		switch (vEnd.constructor) {
+		case Number:
+			sExpires = vEnd === Infinity ? "; expires=Fri, 31 Dec 9999 23:59:59 GMT" : "; max-age=" + vEnd;
+			break;
+		case String:
+			sExpires = "; expires=" + vEnd;
+			break;
+		case Date:
+			sExpires = "; expires=" + vEnd.toUTCString();
+			break;
+		}
+	}
+	document.cookie = encodeURIComponent(sKey) + "=" + encodeURIComponent(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
+	return true;
+	},
+	removeItem: function (sKey, sPath, sDomain) {
+	if (!sKey || !this.hasItem(sKey)) { return false; }
+	document.cookie = encodeURIComponent(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + ( sDomain ? "; domain=" + sDomain : "") + ( sPath ? "; path=" + sPath : "");
+	return true;
+	},
+	hasItem: function (sKey) {
+	return (new RegExp("(?:^|;\\s*)" + encodeURIComponent(sKey).replace(/[-.+*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
+	},
+	keys: /* optional method: you can safely remove it! */ function () {
 		// eslint-disable-next-line
-    var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
-    for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = decodeURIComponent(aKeys[nIdx]); }
-    return aKeys;
-  }
+	var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
+	for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = decodeURIComponent(aKeys[nIdx]); }
+	return aKeys;
+	}
 };
 
 export default {
@@ -168,26 +168,32 @@ export default {
 		show(showLoginPage) {
 			this.page=showLoginPage?1:0;
 			this.$children[0].show();
+			openLink((socket)=>{
+				socket.disable_relogin=true;
+			})
 		},
 		hide() {
 			this.$children[0].hide();
+			openLink((socket)=>{
+				socket.disable_relogin=false;
+			})
 		},
 		showRDA() {
 			this.$refs.rda.show()
 		},
 		flip: function(which, e) {
-      e.preventDefault();
+			e.preventDefault();
 			this.$refs.signin.activate();
-    },
+		},
 		forgotPassword(e) {
 			e.preventDefault();
 			this.$refs.forgot.show()
 		},
 		validateState(name) {
-      const { $dirty, $error } = this.$v[name];
-      return $dirty ? !$error : null;
+			const { $dirty, $error } = this.$v[name];
+			return $dirty ? !$error : null;
 			// return name;
-    },
+		},
 		handlelogin(err, token) {
 			this.longop=false;
 			if (err) return alert(err);
@@ -225,7 +231,7 @@ export default {
 			this.$v.$touch();
 			if (this.$v.$error) return false;
 			this.longop=true;
-			var phone=this.mobile, pwd=this.password, self=this;
+			var phone=this.mobile, pwd=this.password, otp=this.otp, self=this;
 			openLink((socket)=>{
 				function errHandler() {
 					self.longop=false;
@@ -233,10 +239,16 @@ export default {
 					alert('Can not reach the server');
 				}
 				socket.on('reconnect_failed', errHandler);
-				socket.emit('reg', {phone, pwd}, (err, t)=>{
+				socket.emit('reg', {phone, pwd, otp}, (err, t)=>{
 					self.handlelogin(err ,t);
 					socket.off('reconnect_failed', errHandler);
 				})
+			})
+		},
+		sendOTP() {
+			var phone=this.mobile
+			openLink((socket)=>{
+				socket.emit('beforereg', phone);
 			})
 		}
 	},

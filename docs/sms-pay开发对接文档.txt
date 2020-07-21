@@ -1,0 +1,72 @@
+【短信】
+1 接口地址：https://pay.luckyshopee.com/sms/send
+2 请求参数 json格式
+appId    // string  开发者appId
+phone    // string  用户的电话号码
+deviceId // string  必填，用户的设备id，用于限制接口滥用
+userIp   // string  必填，用户的IP，用于限制接口滥用
+captcha  // string  必填，验证码，一般为4 -6位数字
+content  // string  可选，完整的消息内容（通道不限制发送模板情况下直接使用此内容）；
+sign     // string  用appId对应appKey签名
+
+3 响应消息 json格式
+示例： {"Msg": "Ok", "Code": "200", "Data": {"status":"success"}}
+其中 status  // string 发送状态: success成功 failure失败 
+Code为200 且 Data.status为success的情况下，表示短信发送成功
+
+
+4 注意事项
+- 部分通道限制短信发送模板，建议captcha/content同时提供。
+- 同一个手机号/同一个设备标识的发送最小间隔：60秒
+- 同一个手机号/同一个设备标识的每天最大发送条数：5条
+
+【支付及代付】 测试环境已经开通
+
+1 接口参数及返回值请参考DokyPay文档 https://www.dokypay.com/api.html#api
+
+2 接口差异点：
+* 支付订单支持可选参数：appChannel string类型 0-16位，用于表示App的发布渠道。
+* 支付接口地址：https://pay.luckyshopee.com/pay/createPaymentOrder
+* 代付接口地址：https://pay.luckyshopee.com/pay/createPayoutOrder
+
+3 配置信息[支持测试沙盒及正式环境，开发接口请使用测试环境，发布时候改为正式环境]：
+用于测试环境pay-test.luckyshopee.com
+appId:devTestAppId
+appKey:fe68e63bea35f8edeae04daec0ecb722
+appChannel:default
+
+用于正式环境pay.luckyshopee.com
+appId:20203002
+appKey:0ce76d0c41edd1e2dfbf9175fdfd20cc
+appChannel:vdm
+
+
+4 注意事项：
+* 开发阶段请使用测试环境，使用测试账号可以实现全流程沙盒测试验证。 
+* 代付接口无需确认即可付款出去，所以需要在运营后台做好审核功能
+* 示例规则一：金额小于1000卢比的可以直接代付，大于1000卢比的需要在运营后台人工审核后，通过接口自动代付。
+* 示例规则二：用户连续提现超过10000卢比的，需要人工审核后才能代付。
+
+
+5 支付测试账号
+Credit
+Number	Expiry	CVV	Name
+4444 3333 2222 1111	07/2023	123	Test
+4111 1111 1111 1111	07/2023	123	Test
+
+Paytm Wallet
+Mobile	Password	OTP
+77777 77777	Paytm12345	489871
+
+Paytm ( Credit & Debit )
+Number	Expiry	CVV
+4200 0000 0000 0000	07/2029 (未来日期即可)	123
+
+Netbanking
+Bank Name
+TEST Bank
+
+6 代付测试账号
+paytm.wallet.payout ( 印度paytm 钱包代付 )
+Mobile
+7777777777

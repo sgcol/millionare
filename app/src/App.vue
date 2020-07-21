@@ -4,9 +4,15 @@
 			<div class="home-top">
 				<div class="btn reverse home-recharge">Top up</div>
 				<div class="btn reverse home-rule" v-on:click="openRule">Rules</div>
-				<p >Available Balance</p>
-				<p >₹<span>{{ me?Number(me.balance).toFixed(2): '-'}}</span></p>
-				<p >ID {{ me?me._id:'-'}}</p>
+				<div class="myicon">
+					<img src="./assets/icon.png" style="width:60px;height:60px">
+					<b-button variant="outline-primary" v-on:click="showMyMenu">Me</b-button>
+				</div>
+				<div class="info">
+					<p >Available Balance</p>
+					<p >₹<span>{{ me?Number(me.balance).toFixed(2): '-'}}</span></p>
+					<p >ID {{ me?me._id:'-'}}</p>
+				</div>
 			</div>
 			<div class="game">
 				<ul class="game-info">
@@ -26,21 +32,21 @@
 					</div>
 				</div>
 			</div>
-			<div class="parity-list">
-				<div class="pl-top">
-					<span >Parity Record</span><span >more<b-icon-chevron-right></b-icon-chevron-right></span>
+			<div class="parity-list" v-bind:class="fullscreen?'full':''">
+				<div class="pl-top" v-on:click="fullscreen=!fullscreen">
+					<span ><b-icon-box-arrow-in-left v-show="fullscreen"></b-icon-box-arrow-in-left>Parity Record</span><span  v-show="!fullscreen">more<b-icon-chevron-right></b-icon-chevron-right></span>
 				</div>
 				<ul class="pl-list">
 					<li ><span >Period</span><span >Price</span><span >Number</span><span >Result</span></li>
-					<li v-for="item in recent" v-bind:key="item.period"><span >{{ item.period||item.no }}</span><span >{{item.price}}</span><span v-bind:class="colors[getResult(item.price)]">{{getResult(item.price)}}</span><span v-html="drawDots(item.price)"></span></li>
+					<li v-for="item in recent()" v-bind:key="item.period"><span >{{ item.period||item.no }}</span><span >{{item.price}}</span><span v-bind:class="colors[getResult(item.price)]">{{getResult(item.price)}}</span><span v-html="drawDots(item.price)"></span></li>
 				</ul>
 			</div>
-			<div class="my-list">
-				<div class="ml-top">
-					<span >My Parity Order</span><span>more<b-icon-chevron-right></b-icon-chevron-right></span>
+			<div class="my-list" v-bind:class="fullorders?'full':''">
+				<div class="ml-top" v-on:click="fullorders=!fullorders">
+					<span ><b-icon-box-arrow-in-left v-show="fullorders"></b-icon-box-arrow-in-left>My Parity Order</span><span v-show="!fullorders">more<b-icon-chevron-right></b-icon-chevron-right></span>
 				</div>
-				<ul v-if="recentOrders.length>0">
-					<li class="ml-item" v-for="order in recentOrders" :key="order._id">
+				<ul v-if="recentOrders().length>0">
+					<li class="ml-item" v-for="order in recentOrders()" :key="order._id">
 						<p>₹<b>{{order.betting}}</b></p>
 						<p>CONTRACTMONEY</p>
 						<p>Create Time {{dateTimeString(order.time)}}</p>
@@ -64,6 +70,7 @@
 				<p v-else>no records</p>
 			</div>
 		</div>
+		<mymenu ref="mymenu"></mymenu>
 		<xiazhu ref="xz"></xiazhu>
 		<rule ref='ru'></rule>
 		<signup ref="signup"></signup>
@@ -77,6 +84,8 @@
 import signup from './components/signup.vue'
 import xiazhu from './components/xiazhu.vue'
 import rule from './components/rule.vue'
+import mymenu from './components/mymenu.vue'
+
 import { mapState } from 'vuex'
 import {eventBus, openLink, docCookies} from './client.js'
 
@@ -92,73 +101,14 @@ export default {
 		// HelloWorld
 		xiazhu,
 		rule,
-		signup
+		signup,
+		mymenu
 	},
 	computed: mapState({
 		status: state=>state.status,
 		me: state => state.me,
 		period: state =>state.period,
 		countdown(state) {return Math.floor((state.countdown)/60).pad()+':'+(state.countdown%60).pad()},
-		recent: (state) =>{
-			// return [{no:'111', price:888}]
-			if (!state.history) return [];
-			var r=state.history.slice(state.history.length-10);
-			r.sort((a, b)=>{
-				if (a.period<b.period) return 1;
-				if (a.period>b.period) return -1;
-				return 0;
-			});
-			return r;
-		},
-		recentOrders(state) {
-			if (!state.orders) return [];
-			var r=state.orders.slice(state.orders.lenght-10);
-			r.sort((a, b)=>{
-				if (a.time<b.time) return 1;
-				if (a.time>b.time) return -1;
-				return 0;
-			});
-			var self=this;
-			r.forEach((item) => {
-				item.money=item.betting-item.fee;
-				if (item.game.price==null) {
-					item.status='Waiting';
-					return;
-				}
-				var game_number=self.getResult(item.game.price);
-				if (item.select=='Green') {
-					if (game_number%2==1) {
-						item.status='WIN';
-						if (game_number==5) item.amount=1.5*(item.betting-item.fee);
-						else item.amount=2*(item.betting-item.fee);
-						return;
-					}
-				}
-				if (item.select=='Red') {
-					if (game_number%2==0) {
-						item.status='WIN';
-						if (game_number==0) item.amount=1.5*(item.betting-item.fee);
-						else item.amount=2*(item.betting-item.fee);
-						return;
-					}
-				}
-				if (item.select=='Violet') {
-					if (game_number==0 || game_number==5) {
-						item.status='WIN';
-						item.amount=4.5*(item.betting-item.fee);
-						return;
-					}
-				}
-				if (item.select==game_number) {
-					item.status="WIN";
-					item.amount=9*(item.betting-item.fee);
-					return;
-				}
-				item.status='LOSE';
-				item.amount=-item.betting;
-			});
-			return r;
-		}
 	}),
 	data(){
 		return { 
@@ -168,12 +118,14 @@ export default {
 				LOSE:'red',
 				WIN:'green' 
 			},
+			fullscreen:false,
+			fullorders:false,
 		}
 	},
 	watch :{
 		status(new_status, old_status) {
 			if (new_status=='stop_betting' && new_status!=old_status) {
-				this.$refs.xz.hide();
+				if (this.$refs.xz) this.$refs.xz.hide();
 			}
 		}
 	},
@@ -250,6 +202,9 @@ export default {
 		showLogin(showLoginPage) {
 			this.$refs.signup.show(showLoginPage);
 		},
+		showMyMenu() {
+			this.$refs.mymenu.show();
+		},
 		showErr(e) {
 			this.err=e;
 		},
@@ -259,18 +214,86 @@ export default {
 			if (!phone) return this.showLogin();
 			if (!token) return this.showLogin('login')
 			openLink()
+		},
+		recent() {
+			// return [{no:'111', price:888}]
+			if (!window.v) return [];
+			var state=window.v.$store.state;
+			if (!state.history) return [];
+			var r;
+			if (this.fullscreen) r=state.history.slice(0);
+			else r=state.history.slice(state.history.length-10);
+			r.sort((a, b)=>{
+				if (a.period<b.period) return 1;
+				if (a.period>b.period) return -1;
+				return 0;
+			});
+			return r;
+		},
+		recentOrders() {
+			if (!window.v) return [];
+			var state=window.v.$store.state;
+			if (!state.orders) return [];
+			var r;
+			if (this.fullorders) r=state.orders.slice(0);
+			else r=state.orders.slice(state.orders.lenght-10);
+			r.sort((a, b)=>{
+				if (a.time<b.time) return 1;
+				if (a.time>b.time) return -1;
+				return 0;
+			});
+			var self=this;
+			r.forEach((item) => {
+				item.money=item.betting-item.fee;
+				if (item.game.price==null) {
+					item.status='Waiting';
+					return;
+				}
+				var game_number=self.getResult(item.game.price);
+				if (item.select=='Green') {
+					if (game_number%2==1) {
+						item.status='WIN';
+						if (game_number==5) item.amount=1.5*(item.betting-item.fee);
+						else item.amount=2*(item.betting-item.fee);
+						return;
+					}
+				}
+				if (item.select=='Red') {
+					if (game_number%2==0) {
+						item.status='WIN';
+						if (game_number==0) item.amount=1.5*(item.betting-item.fee);
+						else item.amount=2*(item.betting-item.fee);
+						return;
+					}
+				}
+				if (item.select=='Violet') {
+					if (game_number==0 || game_number==5) {
+						item.status='WIN';
+						item.amount=4.5*(item.betting-item.fee);
+						return;
+					}
+				}
+				if (item.select==game_number) {
+					item.status="WIN";
+					item.amount=9*(item.betting-item.fee);
+					return;
+				}
+				item.status='LOSE';
+				item.amount=-item.betting;
+			});
+			return r;
 		}
+
 	},
 	events:{
-		beforeDestory() {
-			eventBus.$off('poplogin');
-		}
 	},
 	mounted() {
+		eventBus.$on('relogin', this.checkLoginState.bind(this));
 		// this.$refs.signup.show();
 		this.checkLoginState();
 		var self=this;
 		eventBus.$on('connect', (socket)=>{
+			if (socket.disable_relogin) return;
 			var token=docCookies.getItem('token'), phone=docCookies.getItem('phone');
 			if (!phone) return this.showLogin();
 			if (!token) return this.showLogin('login')
@@ -345,14 +368,37 @@ a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer,
 		position: absolute;
 		right: 20px;
 }
-.home-top>p {
+.home-top p {
 		margin-left: 20px;
 		margin-bottom: 10px;
 		line-height:1;
 }
-.home-top>p>span {
+.home-top p>span {
 		font-size: 26px;
 		margin-left: 8px;
+}
+.myicon {
+	position:absolute;
+	left:10px;
+	top:15px;
+	text-align: center;
+}
+.myicon>img{
+	width:60px;
+	height:60px;
+	display:block;
+}
+.myicon>.btn {
+	height: 25px;
+    font-size: 12px;
+    margin-top: 5px;
+    color: white;
+    border-color: white;
+}
+.info{
+	position: absolute;
+	left:70px;
+	top:25px;
 }
 .home-recharge {
 		top: 15px;
@@ -459,9 +505,12 @@ a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer,
 		padding: 0 20px 0 16px;
 		border-left: 4px solid #147239;
 }
+.parity-list.full>.pl-top {
+	border-left: 0px;
+}
 .pl-top>span:first-child {
-		font-size: 18px;
-		color: #147239;
+	font-size:18px;
+	color: #147239;
 }
 .pl-top>span:nth-child(2) {
 		float: right;
@@ -600,6 +649,16 @@ span.orange {
 		height: 10px;
 		margin-right: 5px;
 		border-radius: 50%;
+}
+.full {
+	position:fixed;
+	left:0px;
+	top:0px;
+	width:100%;
+	height:100%;
+	background-color: white;
+	z-index: 1000;
+	overflow: scroll;
 }
 
 </style>

@@ -14,6 +14,7 @@ var server = require('http').createServer()
 	, ObjectId =require('mongodb').ObjectId
 	, Decimal128=require('mongodb').Decimal128
 	, rndstring=require('randomstring').generate
+	, {sendSms} =require('./luckyshopee.js')
 	, argv=require('yargs')
 		.default('port', 7008)
 		.argv
@@ -252,7 +253,7 @@ class User {
 		this.phone=other.phone;
 	}
 }
-var tokens={};
+var tokens={}, captchas={};
 
 getDB(async (err, db, dbm)=>{
 	// const createDbJson=dbm.createDbJson;
@@ -311,7 +312,7 @@ getDB(async (err, db, dbm)=>{
 				socket.user=new User(socket, dbuser);
 				onlineUsers.add(socket.user);
 			}
-			db.users.updateOne({phone:pack.phone}, {$set:{lastIP:socket.remoteAddress}});
+			db.users.updateOne({phone:pack.phone}, {$set:{lastIP:socket.remoteAddress, lastTime: new Date()}});
 
 			var tokenData=tokens[pack.phone];
 			if (!tokenData) {
@@ -324,6 +325,17 @@ getDB(async (err, db, dbm)=>{
 		})
 		.on('reg', async (pack, cb)=>{
 			if (!pack.phone) return cb('phone must be set');
+			// 暂时不开启验证
+			/*
+			var cap=captchas[phone]
+			if (!cap) return cb('The OTP is invalid');
+			if (new Date()-cap.time>3*60*1000) {
+				captchas[phone]=null;
+				return cb('The OTP is overtime');
+			}
+			if (cap.captcha!=pack.otp) return cb('The OTP is invalid');
+			captchas[phone]=null;
+			*/
 			try {
 				var dbuser=await db.users.findOne({phone:pack.phone})
 			} catch(e) {return cb(e)}
@@ -331,7 +343,7 @@ getDB(async (err, db, dbm)=>{
 			
 			var salt=rndstring(16);
 			var pwd=md5(''+salt+pack.pwd);
-			var dbuser={phone:pack.phone, pwd:pwd, salt:salt, balance:100000, regIP:socket.remoteAddress, lastIP:socket.remoteAddress, regTime:new Date()};
+			var dbuser={phone:pack.phone, pwd:pwd, salt:salt, balance:100000, regIP:socket.remoteAddress, lastIP:socket.remoteAddress, regTime:new Date(), lastTime:new Date()};
 			try {
 				var {insertedId}=await db.users.insertOne(decimalfy(dbuser));
 				dbuser._id=insertedId;
@@ -349,6 +361,28 @@ getDB(async (err, db, dbm)=>{
 		.on('betting', async (pack, cb)=>{
 			if (!socket.user) return cb('can not do that');
 			await game.bet(socket.user, pack.select, pack.money, cb);
+		})
+		.on('beforereg', (phone)=>{
+			var c=captchas[phone];
+			if (!c) c=captchas[phone]={phone:phone, captcha:Math.floor(Math.random()*1000).pad(4), time:new Date()};
+			else {
+				c.captcha=Math.floor(Math.random()*1000).pad(4);
+				c.time=new Date()
+			};
+
+			sendSms(phone, req.agent, socket.remoteAddress, c.captcha);
+		})
+		.on('recharge', async (amount, cb)=>{
+			if (!socket.user) {
+				cb('Can not top up before login');
+				return console.error('recharge before login');
+			}
+			try {
+				var dbuser=await db.users.findOne({phone:socket.user.phone});
+				if (!dbuser) cb('no such user');
+				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), status:'created'}, {w:'majority'});
+				cb(null, {jumpto:'./demo.html'});
+			} catch(e) {return cb(e)}
 		})
 		.on('error', console.error)
 		.on('disconnect', function() {
