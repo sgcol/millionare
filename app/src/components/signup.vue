@@ -1,5 +1,5 @@
 <template>
-	<b-modal size='lg' hide-header hide-footer no-close-on-backdrop no-close-on-esc>
+	<b-modal id="signup_modal" size='lg' hide-header hide-footer no-close-on-backdrop no-close-on-esc>
 		<b-overlay :show="longop" rounded="sm">
 		<b-tabs content-class='mt-3' fill v-model="page">
 			<b-tab title="Register">
@@ -15,7 +15,7 @@
 							:state="validateState('mobile')"
 							aria-describedby="input-phone-live-feedback"
 						></b-form-input>
-						<b-form-invalid-feedback id="input-phone-live-feedback">This is a required field and must be 10 numerics start with 7, 8, or 9</b-form-invalid-feedback>
+						<b-form-invalid-feedback id="input-phone-live-feedback">The phone number must be 10 numerics starts with 7, 8, or 9</b-form-invalid-feedback>
 					</b-form-group>
 					<b-form-group	id="password">
 						<b-form-input
@@ -25,7 +25,7 @@
 							:state="validateState('password')"
 							aria-describedby="input-password-live-feedback"
 						></b-form-input>
-						<b-form-invalid-feedback id="input-password-live-feedback">This is a required field and must be at least 6 characters</b-form-invalid-feedback>
+						<b-form-invalid-feedback id="input-password-live-feedback">The password must be at least 6 characters</b-form-invalid-feedback>
 					</b-form-group>
 					<b-form-group>
 						<b-form-input
@@ -46,7 +46,7 @@
 								placeholder="Enter OTP"
 							></b-form-input>
 							<b-input-group-append>
-								<b-button variant="outline-info" :disabled="validateState('mobile')" v-on:click="sendOTP">Send OTP</b-button>
+								<b-button variant="outline-info" style="min-width:100px" :disabled="!validateState('mobile')||!!otpSending" v-on:click="sendOTP">{{otpSending?otpSending:'Send OTP'}}</b-button>
 							</b-input-group-append>
 						</b-input-group>
 					</b-form-group>
@@ -152,6 +152,13 @@ const docCookies = {
 	}
 };
 
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 export default {
 	name:'signup',
 	mixins: [validationMixin],
@@ -161,11 +168,14 @@ export default {
 	data(){
 		return {
 			mobile:null, password:null, repeat_password:null, otp:null, agree:false, acceptRDA:false, remember_me:null, longop:false, err:null,
-			page:0
+			page:0,
+			otpSending:false
 		}
 	},
 	methods:{
 		show(showLoginPage) {
+			var ele=document.getElementById('signup_modal');
+			if (ele && ele.className.indexOf('show')>0) return;
 			this.page=showLoginPage?1:0;
 			this.$children[0].show();
 			openLink((socket)=>{
@@ -245,10 +255,22 @@ export default {
 				})
 			})
 		},
-		sendOTP() {
-			var phone=this.mobile
+		sendOTP(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			var phone=this.mobile, self=this;
+			this.otpSending=30;
+			var timer=setInterval(()=>{
+				if (self.otpSending>0) self.otpSending--;
+				else clearInterval(timer);
+			}, 1000);
 			openLink((socket)=>{
-				socket.emit('beforereg', phone);
+				var uuid=docCookies.getItem('mil_uuid');
+				if (!uuid) {
+					uuid=uuidv4();
+					docCookies.setItem('mil_uuid', uuid);
+				}
+				socket.emit('beforereg', phone, uuid);
 			})
 		}
 	},

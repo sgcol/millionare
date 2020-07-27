@@ -84,7 +84,12 @@ export function openLink(next) {
 		socket =window.socket= io(serverpath, {reconnectionAttempts: 3,transports:['websocket']});
 		socket.on('statechanged', (msg)=>{
 			var state=window.v.$store.state;
-			if (msg.user) state.me=msg.user;
+			if (msg.user) {
+				var  u=msg.user;
+				if (u._id) state.me._id=u._id;
+				if (u.balance) state.me.balance=u.balance;
+				if (u.paytm_id) state.me.paytm_id=u.paytm_id;
+			}
 			if (msg.history) state.history=msg.history;
 			if (msg.orders) state.orders=msg.orders;
 			if (msg.countdown) state.countdown=msg.countdown;
@@ -117,7 +122,16 @@ export function openLink(next) {
 			// relogin	
 			eventBus.$emit('connect', socket);
 		})
-		.on('error', console.error.bind(console));
+		.on('error', console.error.bind(console, 'err'))
+		.on('connect_error', ()=>{
+			eventBus.$emit('relogin');
+		})
+		.on('connect_timeout', ()=>{
+			eventBus.$emit('relogin');
+		})
+		.on('disconnect', ()=>{
+			eventBus.$emit('relogin');
+		})
 	}else {
 		if (socket.disconnected) socket.connect();
 	}

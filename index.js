@@ -12,9 +12,9 @@ var server = require('http').createServer()
 	, md5=require('md5')
 	, getDB=require('./db.js')
 	, ObjectId =require('mongodb').ObjectId
-	, Decimal128=require('mongodb').Decimal128
+	, {dedecimal, ID} =require('./etc.js')
 	, rndstring=require('randomstring').generate
-	, {sendSms} =require('./luckyshopee.js')
+	, {sendSms, createOrder, createWithdraw} =require('./luckyshopee.js')
 	, argv=require('yargs')
 		.default('port', 7008)
 		.argv
@@ -22,46 +22,15 @@ var server = require('http').createServer()
 
 require('colors');
 
-app.use(express.static(path.join(__dirname, 'app/dist'), {maxAge:7*24*3600*1000, index: 'index.html' }));
+var {router}=require('./luckyshopee');
 
+app.use(express.static(path.join(__dirname, 'app/dist'), {maxAge:7*24*3600*1000, index: 'index.html' }));
+app.use('/pf/luckyshopee', router);
 
 server.on('request', app);
 server.listen(argv.port, function () { console.log(`Listening on ${server.address().port}`.green) });
 
 const default_user={balance:0};
-
-dec2num=function(dec) {
-	if (dec==null) return null;
-	if (dec._bsontype && dec._bsontype=='Decimal128') return Number(dec.toString());
-	return dec;
-}
-
-function dedecimal(obj) {
-	for (var k in obj) {
-		if (!obj[k] || typeof obj[k]!='object') continue;
-		if (obj[k]._bsontype && obj[k]._bsontype=='Decimal128') obj[k]=Number(obj[k].toString());
-		else dedecimal(obj[k]);
-	}
-	return obj;
-}
-
-function decimalfy(o) {
-	for (var k in o) {
-		if (typeof o[k]=='number') o[k]=Decimal128.fromString(''+o[k]);
-		if (typeof o[k]=='object') {
-			if (o[k]._bsontype) continue;
-			decimalfy(o[k]);
-		}
-	}
-	return o;
-}
-
-var ID = function () {
-  // Math.random should be unique because of its seeding algorithm.
-  // Convert it to base 36 (numbers + letters), and grab the first 9 characters
-  // after the decimal.
-  return '_' + Math.random().toString(36).substr(2, 9);
-};
 
 Number.prototype.pad = function(size) {
 	var s = String(this);
@@ -117,7 +86,8 @@ const onlineUsers=(function() {
 	return o;
 })();
 
-function Game(feeRate, db) {
+function Game(settings, db) {
+	var feeRate=settings.feeRate, withdrawFee=settings.withdrawFee;
 	var status='not_running', countdown, starttime, endtime, period;
 	var today, setno=0;
 	var contracts=[];
@@ -156,6 +126,47 @@ function Game(feeRate, db) {
 			}, 1000);
 		},
 		findResult() {
+			switch (settings.strategy) {
+				case 0:
+					// random strategy
+					break;
+				case 1:
+					// system always win
+					var pay=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], recieve=0;
+					for (var i=contracts.length-1; i>=0; i--) {
+						var c=contracts[i];
+						if (c.game.period!=period) break;
+						var coins=c.betting-c.fee;
+						recieve+=coins;
+						switch (c.select) {
+						case 'Green':
+							[1, 3, 7, 9].forEach((n)=>{pay[n]+=2*coins});
+							pay[5]+=1.5*coins;
+							break;
+						case 'Red':
+							[2, 4, 6, 8].forEach((n)=>{pay[n]+=2*coins});
+							pay[0]+=1.5*coins;
+							break;
+						case 'Violet':
+							pay[0]+=4.5*coins;
+							pay[5]+=4.5*coins;
+							break;
+						default:
+							var n=Number(c.select);
+							if (Number.isNaN(n)) break;
+							pay[n]+=9*coins;
+						}
+					}
+					if (recieve==0) break;
+					// 只有赔付小于收入的数字才会被计入anticipates
+					var anticipates=[];
+					pay.forEach((v, idx)=>{
+						if (v<recieve) anticipates.push(idx);
+					})
+					return 19000+Math.floor(Math.random()*100)*10+anticipates[Math.floor(Math.random()*anticipates.length)];
+				default:
+					break;;
+			}
 			return 19000+Math.floor(Math.random()*1000);
 		},
 		getResult(p) {
@@ -202,7 +213,7 @@ function Game(feeRate, db) {
 				if (c) {
 					if (c.game.period!=period) break;
 					c.game.price=r;
-					var win=this.dealResult(c, r);
+					var win=Number(this.dealResult(c, r).toFixed(2));
 					if (win) {
 						if (userwins[c.user]==null) userwins[c.user] ={ balance:win, socket:c.socket};
 						else userwins[c.user].balance+=win;
@@ -247,10 +258,16 @@ class User {
 		this.socket=socket;
 		this.dbuser=dbuser;
 		this.phone=dbuser.phone;
+		this.block=dbuser.block;
+		this.isAdmin=dbuser.isAdmin;
+		this.paytm_id=dbuser.paytm_id;
 	}
 	copyfrom(other) {
 		this.dbuser=other.dbuser;
 		this.phone=other.phone;
+		this.block=other.block;
+		this.isAdmin=other.isAdmin;
+		this.paytm_id=other.paytm_id;
 	}
 }
 var tokens={}, captchas={};
@@ -264,8 +281,14 @@ getDB(async (err, db, dbm)=>{
 			return callback();
 		})
 	}
+	// clear all locks
+	db.users.updateMany({}, {$set:{locked:false}});
+
 	var settings= await db.settings.findOne();
-	const game=Game(settings?(settings.feeRate||0.02):0.02, db);
+	if (!settings) settings={};
+	settings.feeRate=settings.feeRate||0.02
+	var withdrawFee=settings.withdrawFee=settings.withdrawFee||0.05;
+	const game=Game(settings, db);
 	game.start();
 
 	io.on('connection', function connection(socket) {
@@ -295,7 +318,11 @@ getDB(async (err, db, dbm)=>{
 			} catch(e) {return cb(e.message)}
 			// check password if token was not set
 			if (!pack.t && pack.pwd!=dbuser.pwd) return cb('Incorrect password');
-			if (dbuser.block>new Date()) return cb('Account has been banned');
+			if (new Date(dbuser.block)>new Date()) {
+				cb('Account has been banned');
+				socket.disconnect(true);
+				return;
+			}
 			
 			var oldUser=onlineUsers.get(pack.phone)
 			if (oldUser) {
@@ -320,8 +347,24 @@ getDB(async (err, db, dbm)=>{
 			} else tokenData.expired=new Date()+24*60*60*1000;
 
 			cb(null, tokenData.t);
-			var content={user:dedecimal({_id:dbuser._id, balance:dbuser.balance}), ...game.snapshot(pack.phone)};
+			var content={user:dedecimal({_id:dbuser._id, balance:dbuser.balance, paytm_id:dbuser.paytm_id}), ...game.snapshot(pack.phone)};
 			socket.emit('statechanged', content);
+		})
+		.on('adminexists', async (cb)=>{
+			var admin=await db.users.findOne({isAdmin:true});
+			cb(null, admin?true:false);
+		})
+		.on('regadmin', async(pack, cb)=>{
+			if (!pack.phone) return cb('phone must be set');
+			var admin=await db.users.findOne({isAdmin:true});
+			if (!!admin) return cb('only one admin account can be registered');
+			var salt=rndstring(16);
+			var pwd=md5(''+salt+pack.pwd);
+			var dbuser={phone:pack.phone, pwd:pwd, salt:salt, regIP:socket.remoteAddress, isAdmin:true, lastIP:socket.remoteAddress, regTime:new Date(), lastTime:new Date()};
+			try {
+				db.users.updateOne({phone:pack.phone}, {$set:dbuser}, {upsert:true});
+			}catch(e) {return cb(e)}
+			cb();
 		})
 		.on('reg', async (pack, cb)=>{
 			if (!pack.phone) return cb('phone must be set');
@@ -343,7 +386,7 @@ getDB(async (err, db, dbm)=>{
 			
 			var salt=rndstring(16);
 			var pwd=md5(''+salt+pack.pwd);
-			var dbuser={phone:pack.phone, pwd:pwd, salt:salt, balance:100000, regIP:socket.remoteAddress, lastIP:socket.remoteAddress, regTime:new Date(), lastTime:new Date()};
+			var dbuser={phone:pack.phone, pwd:pwd, salt:salt, balance:0, regIP:socket.remoteAddress, lastIP:socket.remoteAddress, regTime:new Date(), lastTime:new Date()};
 			try {
 				var {insertedId}=await db.users.insertOne(decimalfy(dbuser));
 				dbuser._id=insertedId;
@@ -362,7 +405,7 @@ getDB(async (err, db, dbm)=>{
 			if (!socket.user) return cb('can not do that');
 			await game.bet(socket.user, pack.select, pack.money, cb);
 		})
-		.on('beforereg', (phone)=>{
+		.on('beforereg', (phone, deviceid)=>{
 			var c=captchas[phone];
 			if (!c) c=captchas[phone]={phone:phone, captcha:Math.floor(Math.random()*1000).pad(4), time:new Date()};
 			else {
@@ -370,7 +413,7 @@ getDB(async (err, db, dbm)=>{
 				c.time=new Date()
 			};
 
-			sendSms(phone, req.agent, socket.remoteAddress, c.captcha);
+			sendSms(phone, deviceid, socket.remoteAddress, c.captcha);
 		})
 		.on('recharge', async (amount, cb)=>{
 			if (!socket.user) {
@@ -381,11 +424,133 @@ getDB(async (err, db, dbm)=>{
 				var dbuser=await db.users.findOne({phone:socket.user.phone});
 				if (!dbuser) cb('no such user');
 				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), status:'created'}, {w:'majority'});
-				cb(null, {jumpto:'./demo.html'});
+				var url=await createOrder(insertedId.toHexString(), amount, req);
+				cb(null, {jumpto:url});
 			} catch(e) {return cb(e)}
+		})
+		.on('setpaytmid', async (id, cb)=>{
+			if (!socket.user) {
+				cb('Can not set paytm id before login');
+				return console.error('setpaytmid before login');	
+			}
+			try {
+				await db.users.updateOne({phone:socket.user.phone}, {$set:{paytm_id:id}});				
+				socket.emit('statechanged', {user:{paytm_id:id}});
+				cb();
+			} catch(e) {
+				return cb(e);
+			}
+		})
+		.on('withdraw', async(money, cb)=>{
+			if (socket.user==null) {
+				cb('Can not withdraw before login');
+				return console.error('withdraw before login');	
+			}
+			try {
+				var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, locked:{$ne:true}, balance:{$gte:money}}, {$set:{locked:true}}, {w:'majority'});
+				var dbuser=dedecimal(value);
+				if (!dbuser) return cb('can not manipulate user data right now');
+				var fee=Math.floor(money*withdrawFee*100)/100;
+				var id=new ObjectId();
+				var tradeno=await createWithdraw(id.toHexString(), money-fee, dbuser.paytm_id, req);
+				await db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}, $inc:{balance:-money}});
+				var withdraw={_id:id, time:new Date(), phone:socket.user.phone, money:money, fee:fee, snapshot:{balance:dbuser.balance}, luckyshopee_tradeno:tradeno};
+				db.withdraw.insertOne(withdraw);
+				socket.emit('statechanged', {user:{balance:dbuser.balance-money}});
+				cb();
+			} catch(e) {return cb(e)}
+		})
+		// admin tools
+		.on('getsettings', (cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			cb(null, {...settings, online:onlineUsers.length>0?(onlineUsers.length-1):0})
+		})
+		.on('setsettings', async (values, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			Object.assign(settings, values);
+			try {
+			await db.settings.updateOne({_id:'server'}, {$set:settings}, {upsert:true});
+			db.adminlog.insertOne({op:'setsettings', admin:socket.user.phone, value:settings, time:new Date()});
+			} catch(e) {return cb(e)}
+			cb();
+		})
+		.on('queryuser', async (phone, cb)=>{
+			try {
+				if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+				var ud=await db.users.findOne({phone});
+				ud=dedecimal(ud);
+				db.adminlog.insert({op:'queryuser', admin:socket.user.phone, target:{phone, ...ud}, time:new Date()});
+				if (!ud) return cb('找不到用户');
+				cb(null, {phone:ud.phone, balance:ud.balance, paytm_id:ud.paytm_id, block:ud.block});
+			}catch(e) {return cb(e)}
+		})
+		.on('modifybalance', async(phone, delta, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			delta=Number(delta);
+			var {value}=await db.users.findOneAndUpdate({phone:phone}, {$inc:{balance:delta}});
+			if (!value) return cb('没有这个用户');
+			db.adminlog.insertOne({op:'modifybalance', admin:socket.user.phone, target:value, change:delta, time:new Date()});
+			value=dedecimal(value);
+			var ud=onlineUsers.get(phone);
+			if (ud) {
+				var newbalance=value.balance+delta;
+				ud.socket.emit('statechanged', {user:{balance:newbalance}});
+			}
+			cb(null, {balance:value.balance+delta});
+		})
+		.on('changepaytm', async(phone, idx, new_id, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			var upd={};
+			upd[`paytm_id`]=new_id;
+			var {value}=await db.users.findOneAndUpdate({phone:phone}, {$set:upd});
+			if (!value) return cb('没有这个用户');
+			db.adminlog.insertOne({op:'changepaytm', admin:socket.user.phone, target:value, change:new_id, time:new Date()});
+			value=dedecimal(value);
+			var ud=onlineUsers.get(phone);
+			if (ud) {
+				if (idx!=null) ud.paytm_id[idx]=new_id;
+				else ud.paytm_id=[new_id];
+				ud.socket.emit('statechanged', {user:{paytm_id:ud.paytm_id}});
+			}
+			cb(null, {paytm_id:value.paytm_id});
+		})
+		.on('delpaytm', async(phone, id, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			var upd={};
+			upd['$unset']={paytm_id:''};
+			var {value}=await db.users.findOneAndUpdate({phone:phone}, upd);
+			if (!value) return cb('没有这个用户');
+			db.adminlog.insertOne({op:'delpaytm', admin:socket.user.phone, target:value, time:new Date()});
+			value=dedecimal(value);
+			var ud=onlineUsers.get(phone);
+			if (ud) {
+				// var idx=ud.paytm_id.find(ele=>ele==id);
+				// if (idx) {
+				// 	ud.paytm_id.splice(idx, 1);
+				// 	ud.socket.emit('statechanged', {user:{paytm_id:ud.paytm_id}});
+				// }
+				ud.paytm_id=null;
+				ud.socket.emit('statechanged', {user:{paytm_id:ud.paytm_id}});
+			}
+			cb(null, {paytm_id:value.paytm_id});
+		})
+		.on('disableuser', async(phone, block, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			var {value}=await db.users.findOneAndUpdate({phone:phone}, {$set:{block:new Date(block)}}, {returnOriginal:false});
+			if (!value) return cb('没有这个用户');
+			db.adminlog.insertOne({op:'disableuser', admin:socket.user.phone, target:value, time:new Date()});
+			value=dedecimal(value);
+			var ud=onlineUsers.get(phone);
+			if (ud) {
+				onlineUsers.remove(phone);
+				ud.block=block;
+				ud.socket && ud.socket.disconnect(true);
+			}
+			cb(null);
 		})
 		.on('error', console.error)
 		.on('disconnect', function() {
+			socket.disconnect();
 			if (socket.user) {
 				debugout('userout'.red, socket.user.phone);
 				onlineUsers.remove(socket.user);

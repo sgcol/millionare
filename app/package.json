@@ -5,6 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve --port=7008",
     "build": "vue-cli-service build",
+    "build:admin": "vue-cli-service build --dest dist src/admin/main.js",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
@@ -26,6 +27,7 @@
     "parse-domain": "^3.0.2",
     "sass": "^1.26.9",
     "sass-loader": "^9.0.1",
+    "vue-router": "^3.3.4",
     "vue-template-compiler": "^2.6.11",
     "vuelidate": "^0.7.5",
     "vuex": "^3.5.1"

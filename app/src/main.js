@@ -20,7 +20,8 @@ const store =new Vuex.Store({
   state:{
     me:{
       balance:null,
-      id:null
+      id:null,
+      paytm_id:null
     },
     countdown:null,
     period:null,

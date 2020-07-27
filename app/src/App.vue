@@ -2,10 +2,10 @@
 	<div id="app">
 		<div class="home">
 			<div class="home-top">
-				<div class="btn reverse home-recharge">Top up</div>
+				<div class="btn reverse home-recharge" v-on:click="showTopUp">Top up</div>
 				<div class="btn reverse home-rule" v-on:click="openRule">Rules</div>
 				<div class="myicon">
-					<img src="./assets/icon.png" style="width:60px;height:60px">
+					<img src="./assets/icon.png">
 					<b-button variant="outline-primary" v-on:click="showMyMenu">Me</b-button>
 				</div>
 				<div class="info">
@@ -63,7 +63,7 @@
 									<span v-html="drawDots(getResult(order.game.price))"></span>
 								</template>
 							</p>
-							<p><span>Amount</span><span>{{order.amount}}</span></p>
+							<p><span>Amount</span><span>{{order.amount.toFixed(2)}}</span></p>
 						</div>
 					</li>
 				</ul>
@@ -199,6 +199,9 @@ export default {
 		openRule() {
 			this.$refs.ru.show();
 		},
+		showTopUp() {
+			this.$refs.mymenu.showtopup();
+		},
 		showLogin(showLoginPage) {
 			this.$refs.signup.show(showLoginPage);
 		},
@@ -222,7 +225,8 @@ export default {
 			if (!state.history) return [];
 			var r;
 			if (this.fullscreen) r=state.history.slice(0);
-			else r=state.history.slice(state.history.length-10);
+			else if (state.history.length>10) r=state.history.slice(state.history.length-10);
+			else r=state.history.slice(0);
 			r.sort((a, b)=>{
 				if (a.period<b.period) return 1;
 				if (a.period>b.period) return -1;
@@ -236,7 +240,8 @@ export default {
 			if (!state.orders) return [];
 			var r;
 			if (this.fullorders) r=state.orders.slice(0);
-			else r=state.orders.slice(state.orders.lenght-10);
+			else if (state.orders.length>10) r=state.orders.slice(state.orders.length-10);
+			else r=state.orders.slice(0);
 			r.sort((a, b)=>{
 				if (a.time<b.time) return 1;
 				if (a.time>b.time) return -1;
@@ -332,7 +337,6 @@ a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer,
 		font-family: Georgia,Microsoft Yahei;
 		font-size: 14px;
 		text-decoration: none;
-		list-style: none;
 		-webkit-tap-highlight-color: transparent;
 		-webkit-font-smoothing: antialiased;
 }
@@ -374,18 +378,18 @@ a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer,
 		line-height:1;
 }
 .home-top p>span {
-		font-size: 26px;
-		margin-left: 8px;
+	font-size: 18px;
+    margin-left: 8px;
 }
 .myicon {
-	position:absolute;
-	left:10px;
-	top:15px;
-	text-align: center;
+	position: absolute;
+    left: 5px;
+    top: 22px;
+    text-align: center;
 }
 .myicon>img{
-	width:60px;
-	height:60px;
+	width:40px;
+	height:40px;
 	display:block;
 }
 .myicon>.btn {
@@ -396,22 +400,22 @@ a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer,
     border-color: white;
 }
 .info{
-	position: absolute;
-	left:70px;
-	top:25px;
+    position: absolute;
+    left: 35px;
+    top: 25px;
 }
 .home-recharge {
-		top: 15px;
-		width: 100px;
-		border-color: transparent;
+	top: 15px;
+	width: 100px;
+	border-color: transparent;
 }
 .home-rule {
-		bottom: 15px;
-		width: 60px;
-		border: 1px solid #fff;
-		border-radius: 6px;
-		background-color: transparent;
-		color: #fff;
+	bottom: 15px;
+	width: 60px;
+	border: 1px solid #fff;
+	border-radius: 6px;
+	background-color: transparent;
+	color: #fff;
 }
 .game-info {
 		position: relative;
@@ -443,6 +447,7 @@ a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer,
 		justify-content: space-between;
 		margin: 20px;
 		margin-top: 30px;
+		list-style: none;
 }
 .game-color:first-child {
 		background: #1eb93d;
