@@ -10,7 +10,7 @@ const crypto=require('crypto')
 	, args=require('yargs').argv
 	, debugout=require('debugout')(args.debugout)
 
-const sms_url='https://pay.luckyshopee.com/sms/send',
+var sms_url='https://pay.luckyshopee.com/sms/send',
 	pay_url='https://pay-test.luckyshopee.com/pay/createPaymentOrder',
 	withdraw_url='https://pay-test.luckyshopee.com/pay/createPayoutOrder'
 	appId='devTestAppId', 
@@ -58,6 +58,14 @@ function verifySign(req, res, next) {
 }
 
 getDB((err, db)=>{
+	db.settings.findOne({}, (err, s)=>{
+		if (err) return;
+		sms_url=s.sms_url||sms_url;
+		pay_url=s.pay_url||pay_url;
+		withdraw_url=s.withdraw_url||withdraw_url;
+		appId=s.appId||appId
+		appKey=s.appKey||appKey;
+	})
 	router.all('/done', bodyParser.urlencoded({ extended: true, limit: '5mb' }), verifySign, httpf({transNo:'string', merTransNo:'string', amount:'number', processAmount:'number', transStatus:'string', callback:true}, async function(transNo, merTransNo, amount, processAmount, transStatus, cb) {
 		if (transStatus!='success') return cb(null, httpf.text('success'));
 		try {
