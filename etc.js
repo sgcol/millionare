@@ -6,7 +6,7 @@ exports.dec2num=function(dec) {
 	return dec;
 }
 
-exports.dedecimal=(obj) =>{
+const dedecimal=exports.dedecimal=(obj) =>{
 	if (obj==null) return obj;
 	if (typeof obj!='object') return obj;
 	if (obj._bsontype && obj._bsontype=='Decimal128') return Number(obj.toString());
@@ -18,7 +18,7 @@ exports.dedecimal=(obj) =>{
 	return obj;
 }
 
-exports.decimalfy=(o) => {
+const decimalfy=exports.decimalfy=(o) => {
 	for (var k in o) {
 		if (typeof o[k]=='number') o[k]=Decimal128.fromString(''+o[k]);
 		if (typeof o[k]=='object') {
