@@ -60,6 +60,7 @@ function verifySign(req, res, next) {
 getDB((err, db)=>{
 	db.settings.findOne({}, (err, s)=>{
 		if (err) return;
+		if (!s) return;
 		sms_url=s.sms_url||sms_url;
 		pay_url=s.pay_url||pay_url;
 		withdraw_url=s.withdraw_url||withdraw_url;
