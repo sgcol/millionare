@@ -2,25 +2,28 @@
 	<div id="app">
 		<div class="home">
 			<div class="home-top">
-				<div class="btn reverse home-recharge" v-on:click="showTopUp">Top up</div>
-				<div class="btn reverse home-rule" v-on:click="openRule">Rules</div>
+				<div class="btn reverse home-recharge" v-on:click="showTopUp">{{ $t("Top Up") }}</div>
+				<div class="btn reverse home-rule" v-on:click="openRule">{{ $t('Rules') }}</div>
 				<div class="myicon">
 					<img src="./assets/icon.png">
-					<b-button variant="outline-primary" v-on:click="showMyMenu">Me</b-button>
+					<b-button variant="outline-primary" v-on:click="showMyMenu">{{$t('Me')}}</b-button>
 				</div>
 				<div class="info">
-					<p >Available Balance</p>
-					<p >₹<span>{{ me?Number(me.balance).toFixed(2): '-'}}</span></p>
-					<p >ID {{ me?me._id:'-'}}</p>
+					<p >{{$t('Available Balance')}}</p>
+					<p>{{$t('₹')}}
+						<span>{{ me?Number(me.balance).toFixed(2):'-' }}</span>
+					</p>
+					<!-- <p >{{$n(me?Number(me.balance).toFixed(2): '100', 'currency')}}</p> -->
+					<p >{{$t('ID')}} {{ me?me._id:'-'}}</p>
 				</div>
 			</div>
 			<div class="game">
 				<ul class="game-info">
-					<li ><p >Period<i class="el-icon-s-flag"></i></p><p >{{ period}}</p></li>
-					<li ><p >Count Down</p><p >{{ countdown }}</p></li>
+					<li ><p >{{ $t('Period') }}<i class="el-icon-s-flag"></i></p><p >{{ period}}</p></li>
+					<li ><p >{{ $t('Count Down') }}</p><p >{{ countdown }}</p></li>
 				</ul>
 				<ul class="game-block" v-bind:class="status=='running'?'':'ban'">
-					<li v-for="clr in ['Green', 'Violet', 'Red']" :key="clr" class="game-color" v-on:click="bet" v-bind:data-bet="clr">Join {{clr}}</li>
+					<li v-for="clr in ['Green', 'Violet', 'Red']" :key="clr" class="game-color" v-on:click="bet" v-bind:data-bet="clr">{{$t('Join') }} {{$t(clr)}}</li>
 					<li v-for="item in [0, 1, 2, 3, 4, 5, 6, 7,8, 9]" :key="item" class="game-number" v-on:click="bet" v-bind:data-bet="item">
 						{{item}}
 					</li>
@@ -34,40 +37,40 @@
 			</div>
 			<div class="parity-list" v-bind:class="fullscreen?'full':''">
 				<div class="pl-top" v-on:click="fullscreen=!fullscreen">
-					<span ><b-icon-box-arrow-in-left v-show="fullscreen"></b-icon-box-arrow-in-left>Parity Record</span><span  v-show="!fullscreen">more<b-icon-chevron-right></b-icon-chevron-right></span>
+					<span ><b-icon-box-arrow-in-left v-show="fullscreen"></b-icon-box-arrow-in-left>{{$t('Parity Record')}}</span><span  v-show="!fullscreen">{{$t('more')}}<b-icon-chevron-right></b-icon-chevron-right></span>
 				</div>
 				<ul class="pl-list">
-					<li ><span >Period</span><span >Price</span><span >Number</span><span >Result</span></li>
+					<li ><span >{{$t('Period')}}</span><span >{{$t('Price')}}</span><span >{{$t('Number')}}</span><span >{{$t('Result')}}</span></li>
 					<li v-for="item in recent()" v-bind:key="item.period"><span >{{ item.period||item.no }}</span><span >{{item.price}}</span><span v-bind:class="colors[getResult(item.price)]">{{getResult(item.price)}}</span><span v-html="drawDots(item.price)"></span></li>
 				</ul>
 			</div>
 			<div class="my-list" v-bind:class="fullorders?'full':''">
 				<div class="ml-top" v-on:click="fullorders=!fullorders">
-					<span ><b-icon-box-arrow-in-left v-show="fullorders"></b-icon-box-arrow-in-left>My Parity Order</span><span v-show="!fullorders">more<b-icon-chevron-right></b-icon-chevron-right></span>
+					<span ><b-icon-box-arrow-in-left v-show="fullorders"></b-icon-box-arrow-in-left>{{$t('My Parity Order')}}</span><span v-show="!fullorders">{{$t('more')}}<b-icon-chevron-right></b-icon-chevron-right></span>
 				</div>
 				<ul v-if="recentOrders().length>0">
 					<li class="ml-item" v-for="order in recentOrders()" :key="order._id">
-						<p>₹<b>{{order.betting}}</b></p>
-						<p>CONTRACTMONEY</p>
-						<p>Create Time {{dateTimeString(order.time)}}</p>
+						<p>{{$t('₹')}}<b>{{order.betting}}</b></p>
+						<p>{{$t('CONTRACTMONEY')}}</p>
+						<p>{{$t('Create Time')}} {{dateTimeString(order.time)}}</p>
 						<div class="ml-content">
-							<p><span>Period</span><span>{{order.game.period}}</span></p>
-							<p><span>Select</span><span><span v-bind:class="String(order.select).toLowerCase()">{{order.select}}</span></span></p>
-							<p><span>Status</span><span><span v-bind:class="statusColors[order.status]">{{order.status}}</span></span></p>
-							<p><span>Pre Pay</span><span>{{order.money}}</span></p>
-							<p><span>Open Time</span><span>{{timeString(order.game.endtime)}}</span></p>
-							<p><span>Fee</span><span>{{order.fee}}</span></p>
-							<p><span>Result</span>
+							<p><span>{{$t('Period')}}</span><span>{{order.game.period}}</span></p>
+							<p><span>{{$t('Select')}}</span><span><span v-bind:class="String(order.select).toLowerCase()">{{order.select}}</span></span></p>
+							<p><span>{{$t('Status')}}</span><span><span v-bind:class="statusColors[order.status]">{{order.status}}</span></span></p>
+							<p><span>{{$t('Pre Pay')}}</span><span>{{order.money}}</span></p>
+							<p><span>{{$t('Open Time')}}</span><span>{{timeString(order.game.endtime)}}</span></p>
+							<p><span>{{$t('Fee')}}</span><span>{{order.fee}}</span></p>
+							<p><span>{{$t('Result')}}</span>
 								<template v-if="order.game.price!=null">
 									<span style="color: rgb(0, 122, 204);">{{getResult(order.game.price)}}</span>
 									<span v-html="drawDots(getResult(order.game.price))"></span>
 								</template>
 							</p>
-							<p><span>Amount</span><span>{{order.amount.toFixed(2)}}</span></p>
+							<p><span>{{$t('Amount')}}</span><span>{{order.amount.toFixed(2)}}</span></p>
 						</div>
 					</li>
 				</ul>
-				<p v-else>no records</p>
+				<p v-else>{{$t('no records')}}</p>
 			</div>
 		</div>
 		<mymenu ref="mymenu"></mymenu>

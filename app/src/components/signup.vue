@@ -2,40 +2,40 @@
 	<b-modal id="signup_modal" size='lg' hide-header hide-footer no-close-on-backdrop no-close-on-esc>
 		<b-overlay :show="longop" rounded="sm">
 		<b-tabs content-class='mt-3' fill v-model="page">
-			<b-tab title="Register">
+			<b-tab :title="$t('Register')">
 				<b-form>
 					<b-form-group
 						id="phone"
-						description="We'll never share your phone with anyone else."
+						:description="$t(`We'll never share your phone with anyone else.`)"
 					>
 						<b-form-input
 							v-model="$v.mobile.$model"
 							type="tel"
-							placeholder="Phone number"
+							:placeholder="$t('Phone number')"
 							:state="validateState('mobile')"
 							aria-describedby="input-phone-live-feedback"
 						></b-form-input>
-						<b-form-invalid-feedback id="input-phone-live-feedback">The phone number must be 10 numerics starts with 7, 8, or 9</b-form-invalid-feedback>
+						<b-form-invalid-feedback id="input-phone-live-feedback">{{$t('The phone number must be 10 numerics starts with 7, 8, or 9')}}</b-form-invalid-feedback>
 					</b-form-group>
 					<b-form-group	id="password">
 						<b-form-input
 							v-model="$v.password.$model"
 							type="password"
-							placeholder="Password"
+							:placeholder="$t('Password')"
 							:state="validateState('password')"
 							aria-describedby="input-password-live-feedback"
 						></b-form-input>
-						<b-form-invalid-feedback id="input-password-live-feedback">The password must be at least 6 characters</b-form-invalid-feedback>
+						<b-form-invalid-feedback id="input-password-live-feedback">{{$t('The password must be at least 6 characters')}}</b-form-invalid-feedback>
 					</b-form-group>
 					<b-form-group>
 						<b-form-input
 							v-model="$v.repeat_password.$model"
 							type="password"
-							placeholder="Repeat password"
+							:placeholder="$t('Repeat password')"
 							:state="validateState('repeat_password')"
 							aria-describedby="input-repeat-password-live-feedback"
 						></b-form-input>
-						<b-form-invalid-feedback id="input-repeat-password-live-feedback">Must be same as password</b-form-invalid-feedback>
+						<b-form-invalid-feedback id="input-repeat-password-live-feedback">{{$t('Must be same as password')}}</b-form-invalid-feedback>
 					</b-form-group>
 					<b-form-group	id="otp">
 						<b-input-group>
@@ -43,10 +43,10 @@
 								v-model="otp"
 								type="text"
 								required
-								placeholder="Enter OTP"
+								:placeholder="$t('Enter OTP')"
 							></b-form-input>
 							<b-input-group-append>
-								<b-button variant="outline-info" style="min-width:100px" :disabled="!validateState('mobile')||!!otpSending" v-on:click="sendOTP">{{otpSending?otpSending:'Send OTP'}}</b-button>
+								<b-button variant="outline-info" style="min-width:100px" :disabled="!validateState('mobile')||!!otpSending" v-on:click="sendOTP">{{$t(otpSending?otpSending:'Send OTP')}}</b-button>
 							</b-input-group-append>
 						</b-input-group>
 					</b-form-group>
@@ -56,22 +56,25 @@
 						value="acceptedRDA"
 						required
 					>
-						Agree <a href='#' v-on:click="showRDA">Privacy Policy</a>
+						<i18n path="term" tag="label" for="Privacy Policy">
+							<!-- Agree <a href='#' v-on:click="showRDA">Privacy Policy</a> -->
+							<a href="#" v-on:click="showRDA">{{ $t('Privacy Policy')}} </a>
+						</i18n>
 					</b-form-checkbox>
 					<b-form-group class="text-center">
-						<a href="" @click="flip('login', $event)">Already have an account?</a>
+						<a href="" @click="flip('login', $event)">{{$t('Already have an account?')}}</a>
 					</b-form-group>
-					<b-button type="submit" variant="primary" block v-on:click="signup">Sign up</b-button>
+					<b-button type="submit" variant="primary" block v-on:click="signup">{{$t('Sign up')}}</b-button>
 				</b-form>
 			</b-tab>
-			<b-tab title="Login" ref="signin">
+			<b-tab :title="$t('Login')" ref="signin">
 				<b-form>
 					<b-form-group	id="login-phone">
 						<b-form-input
 							v-model="mobile"
 							type="tel"
 							required
-							placeholder="Phone number"
+							:placeholder="$t('Phone number')"
 						></b-form-input>
 					</b-form-group>
 					<b-form-group>
@@ -79,7 +82,7 @@
 							v-model="password"
 							type="password"
 							required
-							placeholder="Password"
+							:placeholder="$t('Password')"
 						></b-form-input>
 					</b-form-group>
 					<b-form-group class="text-center">
@@ -91,9 +94,9 @@
 						>
 							Remember me
 						</b-form-checkbox> -->
-						<a href="#" v-on:click="forgotPassword">Forgot your password?</a>
+						<a href="#" v-on:click="forgotPassword">{{$t('Forgot your password?')}}</a>
 					</b-form-group>
-					<b-button type="submit" variant="primary" block v-on:click="signin">Sign in</b-button>
+					<b-button type="submit" variant="primary" block v-on:click="signin">{{$t('Sign in')}}</b-button>
 				</b-form>
 			</b-tab>
 		</b-tabs>
@@ -154,8 +157,8 @@ const docCookies = {
 
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
+	var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+	return v.toString(16);
   });
 }
 
@@ -220,7 +223,7 @@ export default {
 				function errHandler() {
 					self.longop=false;
 					socket.off('reconnect_failed', errHandler);
-					alert('Can not reach the server');
+					alert(this.$i18n.t('Can not reach the server'));
 				}
 				socket.on('reconnect_failed', errHandler);
 				socket.emit('salt', phone, (err, salt)=>{
@@ -246,7 +249,7 @@ export default {
 				function errHandler() {
 					self.longop=false;
 					socket.off('reconnect_failed', errHandler);
-					alert('Can not reach the server');
+					alert(this.$i18n.t('Can not reach the server'));
 				}
 				socket.on('reconnect_failed', errHandler);
 				socket.emit('reg', {phone, pwd, otp}, (err, t)=>{

@@ -14,7 +14,8 @@ var sms_url='https://pay.luckyshopee.com/sms/send',
 	pay_url='https://pay-test.luckyshopee.com/pay/createPaymentOrder',
 	withdraw_url='https://pay-test.luckyshopee.com/pay/createPayoutOrder'
 	appId='devTestAppId', 
-	appKey='fe68e63bea35f8edeae04daec0ecb722';
+	appKey='fe68e63bea35f8edeae04daec0ecb722',
+	appChannel='default'
 
 function makeSign(data) {
 	var hash = crypto.createHash('sha256');
@@ -45,7 +46,7 @@ function orderForm(req, o) {
 		country:'IN', 
 		currency:'INR', 
 		prodName:'southeast.asia',
-		appChannel:'default',
+		appChannel:appChannel,
 		notifyUrl:url.format({host:req.headers.host, pathname:'pf/luckyshopee/done', protocol}), 
 		returnUrl:url.format({host:req.headers.host, pathname:'/', protocol})
 	});
@@ -60,12 +61,14 @@ function verifySign(req, res, next) {
 getDB((err, db)=>{
 	db.settings.findOne({}, (err, s)=>{
 		if (err) return;
-		if (!s) return;
+		if (!s || !s.luckyshopee) return;
+		s=s.luckyshopee;
 		sms_url=s.sms_url||sms_url;
 		pay_url=s.pay_url||pay_url;
 		withdraw_url=s.withdraw_url||withdraw_url;
 		appId=s.appId||appId
 		appKey=s.appKey||appKey;
+		appChannel=s.appChannel||appChannel;
 	})
 	router.all('/done', bodyParser.urlencoded({ extended: true, limit: '5mb' }), verifySign, httpf({transNo:'string', merTransNo:'string', amount:'number', processAmount:'number', transStatus:'string', callback:true}, async function(transNo, merTransNo, amount, processAmount, transStatus, cb) {
 		if (transStatus!='success') return cb(null, httpf.text('success'));

@@ -49,7 +49,7 @@ const onlineUsers=(function() {
 			var u=_online[user.phone];
 			if (u) {
 				user.copyfrom(u);
-				u.socket.emit('kicked', 'Account has logined from other place');
+				u.socket.emit('kicked', 'Account has logined from another place');
 				u.socket.disconnect(true);
 			}
 			_online[user.phone]=user;
@@ -328,7 +328,7 @@ getDB(async (err, db, dbm)=>{
 			if (oldUser) {
 				debugout('already online, kick old');
 				socket.user=oldUser;
-				oldUser.socket.emit('kicked', 'Account has logined at other place');
+				oldUser.socket.emit('kicked', 'Account has logined at another place');
 				oldUser.socket.user=null;
 				oldUser.socket.disconnect(true);
 				oldUser.socket=socket;

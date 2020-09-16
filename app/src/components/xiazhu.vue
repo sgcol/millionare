@@ -2,10 +2,10 @@
 <b-modal ref="modal1" id='modal-betting' size="xl" :hide-header="true" :hide-footer="true">
 	<section class="el-drawer__body">
 		<div class="drawer-top">
-			<div class="drawer-bg" v-bind:class="color">{{title}}</div>
+			<div class="drawer-bg" v-bind:class="color">{{$t(title)}}</div>
 		</div>
 		<div class="drawer-main">
-			<p>Contract Money</p>
+			<p>{{$t('Contract Money')}}</p>
 			<b-form-radio-group
 				id="btn-bet"
 				v-model.number="betting"
@@ -31,7 +31,7 @@
 					<input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="10000">
 					<span class="el-radio-button__inner">10000</span>
 				</label> -->
-			<p >Multiples</p>
+			<p >{{$t('Multiples')}}</p>
 			<b-form-radio-group
 				id="btn-multiple"
 				v-model.number="multiple"
@@ -52,10 +52,10 @@
 				</b-input-group-append>
 			</b-input-group>		
 		</div>
-		<p  class="drawer-tip">Maximum lower singular 999 hands</p>
+		<p  class="drawer-tip">{{$t('Maximum lower singular 999 hands')}}</p>
 		<div  class="drawer-btm">
-			<div v-on:click="hide">Cancel</div>
-			<div class="drawer-bg" v-bind:class="color" v-on:click="makeBet">Confirm</div>
+			<div v-on:click="hide">{{$t('Cancel')}}</div>
+			<div class="drawer-bg" v-bind:class="color" v-on:click="makeBet">{{$t('Confirm')}}</div>
 		</div>
 	</section>
 </b-modal>
@@ -74,8 +74,8 @@ export default {
 	},
 	computed:{
 		title() {
-			if (isNaN(Number(this.bet))) return 'Join '+this.bet;
-			else return 'Select '+this.bet; 
+			if (isNaN(Number(this.bet))) return this.$i18n.t('Join')+' '+this.$i18n.t(this.bet);
+			else return this.$i18n.t('Select')+' '+this.$i18n.t(this.bet); 
 		},
 		color() {
 			if (isNaN(Number(this.bet))) return this.bet;
@@ -93,7 +93,7 @@ export default {
 			var self=this;
 			window.socket.emit('betting', {select:this.bet, money:this.betting*(this.multiple||1)}, function(err, contract) {
 				if (err) {
-					alert(err);
+					alert(this.$i18n.t(err));
 					self.hide();
 					return;
 				}

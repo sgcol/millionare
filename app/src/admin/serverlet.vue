@@ -11,6 +11,8 @@
 		<b-form-input v-model="luckyshopee.appId"></b-form-input>
 		<label>appKey</label>
 		<b-form-input v-model="luckyshopee.appKey"></b-form-input>
+		<label>appChannel</label>
+		<b-form-input v-model="luckyshopee.appChannel"></b-form-input>
 	</b-form-group>
 	<p>在线人数<span>{{online}}</span></p>
 	<b-form-group label="获胜策略">
@@ -47,13 +49,14 @@ export default {
 				pay_url:null,
 				withdraw_url:null,
 				appId:null,
-				appKey:null
+				appKey:null,
+				appChannel:null
 			}
 		}
 	},
 	methods:{
 		submit() {
-			var strategy=this.strategy, feeRate=Number(this.feeRate), withdrawFee=Number(this.withdrawFee);
+			var strategy=this.strategy, feeRate=Number(this.feeRate), withdrawFee=Number(this.withdrawFee), luckyshopee=this.luckyshopee;
 			openLink((socket)=>{
 				socket.emit('setsettings', {strategy, feeRate, withdrawFee, luckyshopee}, (err)=>{
 					if (err) return alert(err);
