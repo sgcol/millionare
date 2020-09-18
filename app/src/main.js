@@ -10,7 +10,7 @@ Vue.use(VueI18n)
 
 const i18n=new VueI18n(
 	{
-		locale:'idn',
+		locale:'en',
 		fallbackLocale:'en',
 		messages:{
 			en: new Proxy ({
