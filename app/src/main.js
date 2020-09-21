@@ -1,45 +1,12 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import VueI18n from 'vue-i18n'
 import { BootstrapVue, BIcon, BIconChevronRight, BIconChevronLeft ,BIconBoxArrowInLeft} from 'bootstrap-vue'
 import './custom.scss'
+import i18n from './lang'
 
 // Install BootstrapVue
 Vue.use(BootstrapVue)
-Vue.use(VueI18n)
 
-const i18n=new VueI18n(
-	{
-		locale:'en',
-		fallbackLocale:'en',
-		messages:{
-			en: new Proxy ({
-				term:'Agree {0}'
-			}, {
-				get(target, prop) {
-					if (typeof prop!=='string') return undefined;
-					if (target[prop]) return target[prop];
-					return prop
-				}
-			}),
-			revert: new Proxy({
-				term:'eergA {0}',
-				currency:{
-					style:'currency', currency:'IDR'
-				}
-			}, {
-				get(target, prop) {
-					if (typeof prop!=='string') return undefined;
-					if (target[prop]) return target[prop];
-					var reversed=prop.split('').reduce((reversed, character) => character + reversed, '');
-					target[prop]=reversed;
-					return reversed;
-				}
-			}),
-			idn:require('./lang/idn.js')
-		}
-	}
-)
 // Optionally install the BootstrapVue icon components plugin
 Vue.component('BIcon', BIcon)
 Vue.component('BIconChevronRight', BIconChevronRight)

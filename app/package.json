@@ -13,7 +13,9 @@
     "core-js": "^3.6.5",
     "gy-easy-mongo": "^0.5.1",
     "md5": "^2.2.1",
-    "vue": "^2.6.11"
+    "vue": "^2.6.11",
+    "vue-facebook-login-component": "^2.4.0",
+    "vue-google-login": "^2.0.5"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.4.0",
