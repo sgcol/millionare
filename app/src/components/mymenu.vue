@@ -4,7 +4,7 @@
 			<form>
 				<b-button variant="outline-primary" block v-b-modal.topup>{{$t('Top up')}}</b-button>
 				<b-button variant="outline-primary" block v-b-modal.withdraw>{{$t('Withdraw')}}</b-button>
-				<b-button variant="outline-primary" block v-on:click="signout">{{St('Sign out')}}</b-button>
+				<b-button variant="outline-primary" block v-on:click="signout">{{$t('Sign out')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="hide" style="margin-top:40px">{{$t('Close')}}</b-button>
 			</form>
 		</b-modal>
