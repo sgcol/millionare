@@ -6,7 +6,7 @@
 				<b-icon-circle stacked variant="secondary"></b-icon-circle>
 			</b-iconstack>
 			<!-- <b-icon icon="person-circle" font-scale="7.5" variant="secondary" class="mt-4 mb-5"></b-icon> -->
-			<v-facebook-login app-id="658156324804891" style="margin:auto"></v-facebook-login>
+			<v-facebook-login app-id="658156324804891" style="margin:auto" @login="fb_login"></v-facebook-login>
 			<GoogleLogin :params="{client_id:'xxxx'}" :renderParams="{width:250, height:50, longtitle:true}" ></GoogleLogin>
 		</div>
 		<b-overlay :show="longop" rounded="sm" v-else>
@@ -190,6 +190,9 @@ export default {
 		}
 	},
 	methods:{
+		fb_login(obj) {
+			console.log(obj);
+		},
 		show(showLoginPage) {
 			var ele=document.getElementById('signup_modal');
 			if (ele && ele.className.indexOf('show')>0) return;
