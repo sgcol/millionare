@@ -43,6 +43,10 @@ const store =new Vuex.Store({
 		}
 	},
 	mutations:{
+		fb(state, value) {
+			state.fb.connected=value.connected;
+			state.fb.logout=value.logout;
+		},
 		countdown(state) {
 			if (state.countdown>0) state.countdown--;
 			if (state.countdown<=30) state.status='stop_betting';
