@@ -433,7 +433,7 @@ getDB(async (err, db, dbm)=>{
 					oldUser.offline=false;
 				} 
 				else {
-					debugout('new one');
+					debugout('new one', dbuser);
 					socket.user=new User(socket, dbuser);
 					onlineUsers.add(socket.user);
 				}
