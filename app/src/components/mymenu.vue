@@ -99,10 +99,10 @@ var vueSettings= {
 	},
 	methods:{
 		FBLogined() {
-			return shareobj.FB_model.connected && shareobj.scope.logout;
+			return shareobj.FB_model && shareobj.FB_model.connected && shareobj.scope && shareobj.scope.logout;
 		},
 		FBLogout() {
-			if (shareobj.FB_model.connected) return shareobj.scope.logout();
+			if (shareobj.FB_model && shareobj.FB_model.connected && shareobj.scope && shareobj.scope.logout) return shareobj.scope.logout();
 			return null;
 		},
 		formatedMoney(money) {
