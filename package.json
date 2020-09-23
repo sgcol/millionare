@@ -20,6 +20,7 @@
     "compression": "^1.7.4",
     "debugout": "^1.0.0",
     "express": "^4.17.1",
+    "fb": "^2.0.0",
     "gy-easy-mongo": "^0.5.1",
     "httpf": "0.0.9",
     "md5": "^2.2.1",

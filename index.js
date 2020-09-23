@@ -19,6 +19,7 @@ var server = require('http').createServer()
 		.default('port', 7008)
 		.argv
 	, debugout =require('debugout')(argv.debugout)
+	, {FB, FacebookApiException} = require('fb')
 
 require('colors');
 
@@ -26,6 +27,13 @@ var {router}=require('./luckyshopee');
 
 app.use(express.static(path.join(__dirname, 'app/dist'), {maxAge:7*24*3600*1000, index: 'index.html' }));
 app.use('/pf/luckyshopee', router);
+
+if (argv.fbaccess) {
+	FB.api('me', { fields: ['id', 'name', 'icon'], access_token: argv.fbaccess}, res=>{
+		console.log(res);
+	});
+	return console.log('debug facebook'.green);
+}
 
 server.on('request', app);
 server.listen(argv.port, function () { console.log(`Listening on ${server.address().port}`.green) });
@@ -400,6 +408,12 @@ getDB(async (err, db, dbm)=>{
 
 			cb(null, tokenData.t);
 			socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, balance:dbuser.balance}), ...game.snapshot(pack.phone)});
+		})
+		.on('fb_login', (accessToken, cb) =>{
+			FB.api('me', { fields: ['id', 'name', 'icon'], access_token: accessToken }, res=>{
+				console.log(res);
+				cb(null);
+			});
 		})
 		.on('betting', async (pack, cb)=>{
 			if (!socket.user) return cb('can not do that');

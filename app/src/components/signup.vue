@@ -1,16 +1,16 @@
 <template>
 	<b-modal id="signup_modal" size='lg' hide-header hide-footer no-close-on-backdrop no-close-on-esc>
-		<div style="width: 100%; text-align: center; vertical-align: middle; min-height:280px" v-if="socialLogin">
-			<b-iconstack font-scale="7.5" class="mt-4 mb-5">
-				<b-icon-person-fill stacked variant="secondary" scale="0.85"></b-icon-person-fill>
-				<b-icon-circle stacked variant="secondary"></b-icon-circle>
-			</b-iconstack>
-			<!-- <b-icon icon="person-circle" font-scale="7.5" variant="secondary" class="mt-4 mb-5"></b-icon> -->
-			<v-facebook-login app-id="658156324804891" style="margin:auto" @login="fb_login"></v-facebook-login>
-			<GoogleLogin :params="{client_id:'xxxx'}" :renderParams="{width:250, height:50, longtitle:true}" ></GoogleLogin>
-		</div>
-		<b-overlay :show="longop" rounded="sm" v-else>
-			<b-tabs content-class='mt-3' fill v-model="page">
+		<b-overlay :show="longop" rounded="sm">
+			<div style="width: 100%; text-align: center; vertical-align: middle; min-height:280px" v-if="socialLogin">
+				<b-iconstack font-scale="7.5" class="mt-4 mb-5">
+					<b-icon-person-fill stacked variant="secondary" scale="0.85"></b-icon-person-fill>
+					<b-icon-circle stacked variant="secondary"></b-icon-circle>
+				</b-iconstack>
+				<!-- <b-icon icon="person-circle" font-scale="7.5" variant="secondary" class="mt-4 mb-5"></b-icon> -->
+				<v-facebook-login app-id="658156324804891" style="margin:auto" @login="fb_login" @sdk-init="handleSdkInit"></v-facebook-login>
+				<GoogleLogin :params="{client_id:'xxxx'}" :renderParams="{width:250, height:50, longtitle:true}" ></GoogleLogin>
+			</div>
+			<b-tabs content-class='mt-3' fill v-model="page" v-else>
 				<b-tab :title="$t('Register')">
 					<b-form>
 						<b-form-group
@@ -187,11 +187,35 @@ export default {
 			page:0,
 			otpSending:false,
 			socialLogin:conf.login=='social',
+			FB:{},
+			scope:{}
 		}
 	},
 	methods:{
+		handleSdkInit({FB, scope}) {
+			this.FB=FB;
+			this.scope=scope;
+		},
 		fb_login(obj) {
 			console.log(obj);
+			var self=this;
+			this.FB.getLoginStatus(response=>{
+				if (response.status!='connected') return console.error(response);
+				console.log(response);
+				self.longop=true;
+				openLink((socket)=>{
+					function errHandler() {
+						self.longop=false;
+						socket.off('reconnect_failed', errHandler);
+						alert(self.$i18n.t('Can not reach the server'));
+					}
+					socket.on('reconnect_failed', errHandler);
+					socket.emit('fb_login', response.authResponse.accessToken, (err)=>{
+						self.handlelogin(err);
+						socket.off('reconnect_failed', errHandler);
+					})
+				})
+			})
 		},
 		show(showLoginPage) {
 			var ele=document.getElementById('signup_modal');
