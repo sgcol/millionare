@@ -126,7 +126,6 @@ import VFacebookLogin from 'vue-facebook-login-component'
 import GoogleLogin from 'vue-google-login';
 import {BIconstack, BIconPersonFill, BIconCircle} from 'bootstrap-vue'
 import conf from '../conf'
-import shareobj from '../shared-obj'
 
 const docCookies = {
 	getItem: function (sKey) {
@@ -195,16 +194,13 @@ export default {
 	},
 	watch:{
 		FB_model(value) {
-			shareobj.FB_model=value;
+			this.$store.commit('fb', {connected:value.connected, logout:this.scope.logout});
 		}
 	},
 	methods:{
 		handleSdkInit({FB, scope}) {
 			this.FB=FB;
 			this.scope=scope;
-
-			shareobj.FB=FB;
-			shareobj.scope=scope;
 		},
 		fb_login(obj) {
 			console.log(obj);

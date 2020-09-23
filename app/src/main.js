@@ -37,6 +37,10 @@ const store =new Vuex.Store({
 		//   {_id:'5e367cd899', betting:10, select:'Green', fee:1, time:new Date(), game:{period:'202007081002', price:1, endtime:new Date()}}
 		// ]
 		status:null,
+		fb:{
+			connected:null,
+			logout:null
+		}
 	},
 	mutations:{
 		countdown(state) {
