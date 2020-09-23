@@ -4,6 +4,7 @@
 			<form>
 				<b-button variant="outline-primary" block v-b-modal.topup>{{$t('Top up')}}</b-button>
 				<b-button variant="outline-primary" block v-b-modal.withdraw>{{$t('Withdraw')}}</b-button>
+				<b-button variant="outline-primary" block v-b-modal.lang>{{$t('Language')}}</b-button>
 				<b-button variant="outline-primary" block v-if="fb.connected" @click="signoutfromfb">{{$t('Logout from Facebook')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="signout" v-else>{{$t('Sign out')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="hide" style="margin-top:40px">{{$t('Close')}}</b-button>
@@ -43,7 +44,10 @@
 					<p style="font-size:24px; margin-top:5px">₹ {{me?Number(me.balance).toFixed(2): '-'}}</p>
 				</b-form-group>
 				<b-form-group>
-					<p style="font-size:20px; color:#147239;">{{$t('Withdraw via ')}}<img style="height:20px" :src="$t('../assets/paytm.png')"></p>
+					<p style="font-size:20px; color:#147239;">{{$t('Withdraw via ')}}
+						<img style="height:20px" src="../assets/ovo.png" v-if="locale=='idn'">
+						<img style="height:20px" src="../assets/paytm.png" v-else>
+					</p>
 					<p class="pl-3" style="font-size:20px; color:#147239;" v-if="me.paytm_id">{{me.paytm_id}}</p>
 					<b-button v-else size="lg" variant="outline-primary" v-b-modal.paytmid>{{$t('+ Add Paytm ID')}}</b-button>
 				</b-form-group>
@@ -59,6 +63,18 @@
 				</ol>
 				<b-form-group>
 					<b-button block variant="primary" v-on:click="withdraw">Withdraw</b-button>
+				</b-form-group>
+			</b-form>
+		</b-modal>
+		<b-modal id="lang" :title="$t('Language')" ok-only>
+			<b-form>
+				<b-form-group :label="$t('Set language')">
+					<b-form-radio-group
+						v-model="selected_lang"
+						:options="[{text:'English UK', value:'en'}, {text:'Indonesian', value:'idn'}]"
+						stacked
+					>
+					</b-form-radio-group>
 				</b-form-group>
 			</b-form>
 		</b-modal>
@@ -82,7 +98,7 @@ import {docCookies, eventBus, openLink} from '../client.js'
 import { mapState } from 'vuex'
 import { validationMixin } from "vuelidate";
 import { required, numeric } from "vuelidate/lib/validators";
-import i18n from '../lang'
+import conf from '../conf'
 
 var vueSettings= {
 	name:'mymenu',
@@ -95,11 +111,16 @@ var vueSettings= {
 		fb: state=>state.fb,
 	}),
 	data(){
-		return {amount:100,withdraw_amount:500, mobile:null}
+		return {amount:conf.locale=='idn'?50000:100,withdraw_amount:conf.locale=='idn'?500000:500, mobile:null, locale:conf.locale, selected_lang:this.$i18n.locale}
+	},
+	watch: {
+		selected_lang(v) {
+			this.$i18n.locale=v;
+		}
 	},
 	methods:{
 		formatedMoney(money) {
-			if (this.$i18n.locale==='idn') {
+			if (conf.locale==='idn') {
 				if (money>1000) return Math.floor(money/1000)+'k';
 			}
 			return money;
@@ -121,6 +142,13 @@ var vueSettings= {
 		signoutfromfb() {
 			this.fb.logout();
 			this.hide();
+			this.$store.commit('setMe', {
+				balance:null,
+				_id:null,
+				paytm_id:null,
+				name:null,
+				icon:null
+			})
 			openLink((socket)=>{
 				socket.close();
 				eventBus.$emit('relogin');
@@ -128,6 +156,13 @@ var vueSettings= {
 		},
 		signout() {
 			this.hide();
+			this.$store.commit('setMe', {
+				balance:null,
+				_id:null,
+				paytm_id:null,
+				name:null,
+				icon:null
+			})
 			openLink((socket)=>{
 				socket.close();
 				docCookies.removeItem('token');
@@ -194,7 +229,7 @@ var vueSettings= {
 	}
 }
 
-if (i18n.locale=='idn') {
+if (conf.locale=='idn') {
 	vueSettings.validations={
 		mobile:{
 			required,

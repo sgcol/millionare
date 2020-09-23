@@ -14,6 +14,7 @@ const en=new Proxy ({
     'The service charge shall be deducetd by payment channel :5%.':'The service charge shall be deducetd by payment channel :5%+Rp7k.',
     '../assets/paytm.png':'../assets/ovo.png',
     '+ Add Paytm ID':'+ Add OVO',
+    'Add Paytm ID':'Add OVO ID',
 }, {
     get(target, prop) {
         if (typeof prop!=='string') return undefined;
