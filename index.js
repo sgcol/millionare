@@ -487,6 +487,7 @@ getDB(async (err, db, dbm)=>{
 				return console.error('withdraw before login');	
 			}
 			try {
+				debugout('user', socket.user);
 				var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, locked:{$ne:true}, balance:{$gte:money}}, {$set:{locked:true}}, {w:'majority'});
 				var dbuser=dedecimal(value);
 				if (!dbuser) return cb('can not manipulate user data right now');
