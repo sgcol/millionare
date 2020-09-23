@@ -4,7 +4,7 @@
 			<form>
 				<b-button variant="outline-primary" block v-b-modal.topup>{{$t('Top up')}}</b-button>
 				<b-button variant="outline-primary" block v-b-modal.withdraw>{{$t('Withdraw')}}</b-button>
-				<b-button variant="outline-primary" block v-if="fb.connected" @click="fb.logout">{{$t('Logout from Facebook')}}</b-button>
+				<b-button variant="outline-primary" block v-if="fb.connected" @click="signoutfromfb">{{$t('Logout from Facebook')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="signout" v-else>{{$t('Sign out')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="hide" style="margin-top:40px">{{$t('Close')}}</b-button>
 			</form>
@@ -117,6 +117,14 @@ var vueSettings= {
 		},
 		showtopup() {
 			this.$refs.topup.show();
+		},
+		signoutfromfb() {
+			this.fb.logout();
+			this.hide();
+			openLink((socket)=>{
+				socket.close();
+				eventBus.$emit('relogin');
+			})
 		},
 		signout() {
 			this.hide();
