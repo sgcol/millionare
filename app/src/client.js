@@ -85,9 +85,12 @@ export function openLink(next) {
 			var state=window.v.$store.state;
 			if (msg.user) {
 				var  u=msg.user;
-				if (u._id) state.me._id=u._id;
-				if (u.balance) state.me.balance=u.balance;
-				if (u.paytm_id) state.me.paytm_id=u.paytm_id;
+				for (var key in u) {
+					state.me[key]=u[key];
+				}
+				// if (u._id) state.me._id=u._id;
+				// if (u.balance) state.me.balance=u.balance;
+				// if (u.paytm_id) state.me.paytm_id=u.paytm_id;
 			}
 			if (msg.history) state.history=msg.history;
 			if (msg.orders) state.orders=msg.orders;

@@ -142,7 +142,7 @@ export default {
 		username() {
 			if (!this.me) return null;
 			if (this.me.name) return this.me.name;
-			return this.$i18n.t('ID')+' '+(this.me.id||'-');
+			return this.$i18n.t('ID')+' '+(this.me._id||'-');
 		},
 		colorsOfNumber(n) {
 			if (n==0) return ['red', 'violet'];
