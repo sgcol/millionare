@@ -7,8 +7,8 @@
 					<b-icon-circle stacked variant="secondary"></b-icon-circle>
 				</b-iconstack>
 				<!-- <b-icon icon="person-circle" font-scale="7.5" variant="secondary" class="mt-4 mb-5"></b-icon> -->
-				<v-facebook-login app-id="658156324804891" style="margin:auto" @login="fb_login" @sdk-init="handleSdkInit"></v-facebook-login>
-				<GoogleLogin :params="{client_id:'xxxx'}" :renderParams="{width:250, height:50, longtitle:true}" ></GoogleLogin>
+				<v-facebook-login app-id="658156324804891" style="margin:auto" @login="fb_login" @sdk-init="handleSdkInit" v-model="FB_model"></v-facebook-login>
+				<GoogleLogin :params="{client_id:'647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com'}" :renderParams="{width:250, height:50, longtitle:true}" ></GoogleLogin>
 			</div>
 			<b-tabs content-class='mt-3' fill v-model="page" v-else>
 				<b-tab :title="$t('Register')">
@@ -126,6 +126,7 @@ import VFacebookLogin from 'vue-facebook-login-component'
 import GoogleLogin from 'vue-google-login';
 import {BIconstack, BIconPersonFill, BIconCircle} from 'bootstrap-vue'
 import conf from '../conf'
+import shareobj from '../shared-obj'
 
 const docCookies = {
 	getItem: function (sKey) {
@@ -188,13 +189,22 @@ export default {
 			otpSending:false,
 			socialLogin:conf.login=='social',
 			FB:{},
-			scope:{}
+			scope:{},
+			FB_model:{}
+		}
+	},
+	watch:{
+		FB_model(value) {
+			shareobj.FB_model=value;
 		}
 	},
 	methods:{
 		handleSdkInit({FB, scope}) {
 			this.FB=FB;
 			this.scope=scope;
+
+			shareobj.FB=FB;
+			shareobj.scope=scope;
 		},
 		fb_login(obj) {
 			console.log(obj);

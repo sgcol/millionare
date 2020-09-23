@@ -4,7 +4,8 @@
 			<form>
 				<b-button variant="outline-primary" block v-b-modal.topup>{{$t('Top up')}}</b-button>
 				<b-button variant="outline-primary" block v-b-modal.withdraw>{{$t('Withdraw')}}</b-button>
-				<b-button variant="outline-primary" block v-on:click="signout">{{$t('Sign out')}}</b-button>
+				<b-button variant="outline-primary" block v-if="FBLogined()" @click="FBLogout">{{$t('Logout from Facebook')}}</b-button>
+				<b-button variant="outline-primary" block v-on:click="signout" v-else>{{$t('Sign out')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="hide" style="margin-top:40px">{{$t('Close')}}</b-button>
 			</form>
 		</b-modal>
@@ -82,6 +83,7 @@ import { mapState } from 'vuex'
 import { validationMixin } from "vuelidate";
 import { required, numeric } from "vuelidate/lib/validators";
 import i18n from '../lang'
+import shareobj from '../shared-obj'
 
 var vueSettings= {
 	name:'mymenu',
@@ -96,6 +98,13 @@ var vueSettings= {
 		return {amount:100,withdraw_amount:500, mobile:null}
 	},
 	methods:{
+		FBLogined() {
+			return shareobj.FB_model.connected && shareobj.scope.logout;
+		},
+		FBLogout() {
+			if (shareobj.FB_model.connected) return shareobj.scope.logout();
+			return null;
+		},
 		formatedMoney(money) {
 			if (this.$i18n.locale==='idn') {
 				if (money>1000) return Math.floor(money/1000)+'k';
