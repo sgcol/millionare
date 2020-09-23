@@ -5,7 +5,8 @@
 				<div class="btn reverse home-recharge" v-on:click="showTopUp">{{ $t("Top Up") }}</div>
 				<div class="btn reverse home-rule" v-on:click="openRule">{{ $t('Rules') }}</div>
 				<div class="myicon">
-					<img src="./assets/icon.png">
+					<!-- <img src="./assets/icon.png"> -->
+					<b-avatar size="40px" :src="headicon()"></b-avatar>
 					<b-button variant="outline-primary" v-on:click="showMyMenu">{{$t('Me')}}</b-button>
 				</div>
 				<div class="info">
@@ -14,7 +15,8 @@
 						<span>{{ me?Number(me.balance).toFixed(2):'-' }}</span>
 					</p>
 					<!-- <p >{{$n(me?Number(me.balance).toFixed(2): '100', 'currency')}}</p> -->
-					<p >{{$t('ID')}} {{ me?me._id:'-'}}</p>
+					<!-- <p >{{$t('ID')}} {{ me?me._id:'-'}}</p> -->
+					<p >{{username()}}</p>
 				</div>
 			</div>
 			<div class="game">
@@ -133,6 +135,15 @@ export default {
 		}
 	},
 	methods:{
+		headicon() {
+			if (this.me.icon) return this.me.icon;
+			return null;
+		},
+		username() {
+			if (!this.me) return null;
+			if (this.me.name) return this.me.name;
+			return this.$i18n.t('ID')+' '+(this.me.id||'-');
+		},
 		colorsOfNumber(n) {
 			if (n==0) return ['red', 'violet'];
 			if (n==5) return ['green', 'violet'];
@@ -401,6 +412,9 @@ a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer,
     margin-top: 5px;
     color: white;
     border-color: white;
+	position:absolute;
+	left:0px;
+	top:40px;
 }
 .info{
     position: absolute;

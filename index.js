@@ -308,6 +308,7 @@ getDB(async (err, db, dbm)=>{
 			try {
 				var dbuser=await db.users.findOne({phone:phone});
 				if (!dbuser) return cb('no such user '+phone);
+				if (dbuser.salt==null) return cb("can not login with password")
 				cb(null, dbuser.salt);
 			} catch(e) {
 				return cb(e);
@@ -325,6 +326,7 @@ getDB(async (err, db, dbm)=>{
 				var dbuser=await db.users.findOne({phone:pack.phone});
 			} catch(e) {return cb(e.message)}
 			// check password if token was not set
+			if (dbuser.pwd==null) return cb("can not login with password")
 			if (!pack.t && pack.pwd!=dbuser.pwd) return cb('Incorrect password');
 			if (new Date(dbuser.block)>new Date()) {
 				cb('Account has been banned');
@@ -410,9 +412,33 @@ getDB(async (err, db, dbm)=>{
 			socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, balance:dbuser.balance}), ...game.snapshot(pack.phone)});
 		})
 		.on('fb_login', (accessToken, cb) =>{
-			FB.api('me', { fields: ['id', 'name', 'icon'], access_token: accessToken }, res=>{
-				console.log(res);
+			FB.api('me', { fields: ['id', 'name'], access_token: accessToken }, async (res)=>{
+				const now=new Date();
+				var {value:dbuser}=await db.users.findOneAndUpdate({phone:res.id}, {$set:{name:res.name, fb_id:res.id, lastTime:now, lastIP:socket.remoteAddress}, $setOnInsert:{regIP:socket.remoteAddress, regTime:now}} ,{upsert:true, returnOriginal:false, w:1});
+
+				if (new Date(dbuser.block)>now) {
+					cb('Account has been banned');
+					socket.disconnect(true);
+					return;
+				}
+				
+				var oldUser=onlineUsers.get(res.id)
+				if (oldUser) {
+					debugout('already online, kick old');
+					socket.user=oldUser;
+					oldUser.socket.emit('kicked', 'Account has logined at another place');
+					oldUser.socket.user=null;
+					oldUser.socket.disconnect(true);
+					oldUser.socket=socket;
+					oldUser.offline=false;
+				} 
+				else {
+					debugout('new one');
+					socket.user=new User(socket, dbuser);
+					onlineUsers.add(socket.user);
+				}
 				cb(null);
+				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`http://graph.facebook.com/${res.id}/picture?type=album`}), ...game.snapshot(res.id)});
 			});
 		})
 		.on('betting', async (pack, cb)=>{

@@ -23,7 +23,9 @@ const store =new Vuex.Store({
 		me:{
 			balance:null,
 			id:null,
-			paytm_id:null
+			paytm_id:null,
+			name:null,
+			icon:null
 		},
 		countdown:null,
 		period:null,
