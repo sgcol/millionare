@@ -14,7 +14,7 @@ var server = require('http').createServer()
 	, ObjectId =require('mongodb').ObjectId
 	, {dedecimal, decimalfy, ID} =require('./etc.js')
 	, rndstring=require('randomstring').generate
-	, {sendSms, createOrder, createWithdraw} =require('./luckyshopee.js')
+	, {sendSms, createOrder, createWithdraw, chgSettings} =require('./luckyshopee.js')
 	, argv=require('yargs')
 		.default('port', 7008)
 		.argv
@@ -25,7 +25,7 @@ var server = require('http').createServer()
 
 require('colors');
 
-var {router}=require('./luckyshopee');
+var {router, chgSettings}=require('./luckyshopee');
 
 app.use(express.static(path.join(__dirname, 'app/dist'), {maxAge:7*24*3600*1000, index: 'index.html' }));
 if (argv.debugout) {
@@ -556,8 +556,9 @@ getDB(async (err, db, dbm)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			Object.assign(settings, values);
 			try {
-			await db.settings.updateOne({_id:'server'}, {$set:settings}, {upsert:true});
-			db.adminlog.insertOne({op:'setsettings', admin:socket.user.phone, value:settings, time:new Date()});
+				await db.settings.updateOne({_id:'server'}, {$set:settings}, {upsert:true});
+				db.adminlog.insertOne({op:'setsettings', admin:socket.user.phone, value:settings, time:new Date()});
+				chgSettings(settings);
 			} catch(e) {return cb(e)}
 			cb();
 		})

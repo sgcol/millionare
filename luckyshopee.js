@@ -21,7 +21,7 @@ function makeSign(data) {
 	var hash = crypto.createHash('sha256');
 
 	delete data.sign;
-	var message ='', o=Object.assign({appId}, data);
+	var message ='', o=Object.assign({}, data);
 	function assembleObj(o) {
 		var message='';
 		Object.keys(o).sort().map((key)=>{
@@ -130,7 +130,14 @@ const createWithdraw=exports.createWithdraw=function(orderid, money, phone, req,
 }
 
 exports.router=router;
-
+exports.chgSettings=(s)=>{
+	sms_url=s.sms_url||sms_url;
+	pay_url=s.pay_url||pay_url;
+	withdraw_url=s.withdraw_url||withdraw_url;
+	appId=s.appId||appId
+	appKey=s.appKey||appKey;
+	appChannel=s.appChannel||appChannel;
+}
 if (module==require.main) {
 	const {ID}=require('./etc');
 
