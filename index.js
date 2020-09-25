@@ -20,6 +20,8 @@ var server = require('http').createServer()
 		.argv
 	, debugout =require('debugout')(argv.debugout)
 	, {FB, FacebookApiException} = require('fb')
+	, {OAuth2Client} = require('google-auth-library')
+	, gooclient = new OAuth2Client('647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com')
 
 require('colors');
 
@@ -446,6 +448,43 @@ getDB(async (err, db, dbm)=>{
 				cb(null);
 				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`http://graph.facebook.com/${res.id}/picture?type=album`}), ...game.snapshot(res.id)});
 			});
+		})
+		.on('google_login', async (id_token, cb)=>{
+			try {
+				const ticket = await gooclient.verifyIdToken({
+					idToken: id_token,
+					audience: '647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com',
+				});
+				const payload = ticket.getPayload();
+				const userid = payload['sub'], name=payload.name, icon=payload.picture;
+				const now=new Date();
+				var {value:dbuser}=await db.users.findOneAndUpdate({phone:userid}, {$set:{name:name, goo_id:userid, lastTime:now, lastIP:socket.remoteAddress}, $setOnInsert:{regIP:socket.remoteAddress, regTime:now}} ,{upsert:true, returnOriginal:false, w:1});
+				if (new Date(dbuser.block)>now) {
+					cb('Account has been banned');
+					socket.disconnect(true);
+					return;
+				}
+				
+				var oldUser=onlineUsers.get(res.id)
+				if (oldUser) {
+					debugout('already online, kick old');
+					socket.user=oldUser;
+					oldUser.socket.emit('kicked', 'Account has logined at another place');
+					oldUser.socket.user=null;
+					oldUser.socket.disconnect(true);
+					oldUser.socket=socket;
+					oldUser.offline=false;
+				} 
+				else {
+					debugout('new one', dbuser);
+					socket.user=new User(socket, dbuser);
+					onlineUsers.add(socket.user);
+				}
+				cb(null);
+				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:icon}), ...game.snapshot(userid)});
+			} catch(e) {
+				cb(e);
+			}
 		})
 		.on('betting', async (pack, cb)=>{
 			if (!socket.user) return cb('can not do that');
