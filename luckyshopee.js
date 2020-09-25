@@ -94,8 +94,9 @@ const createOrder=exports.createOrder=function(orderid, money, req, cb) {
 			if (err) reject(err);
 			return resolve(r);
 		}
-		debugout({uri:pay_url, json:orderForm(req, {merTransNo:orderid, amount:money.toFixed(2)})});
-		request.post({uri:pay_url, json:orderForm(req, {merTransNo:orderid, amount:money.toFixed(2)})}, (err, header, body)=>{
+		const reqobj={uri:pay_url, json:orderForm(req, {userId:'123456', merTransNo:orderid, amount:money.toFixed(2)})};
+		debugout(reqobj);
+		request.post(reqobj, (err, header, body)=>{
 			if (err) return cb(err);
 			ret=body;
 			debugout(body);
