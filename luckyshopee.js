@@ -15,7 +15,7 @@ var sms_url='https://pay.luckyshopee.com/sms/send',
 	withdraw_url='https://pay-test.luckyshopee.com/pay/createPayoutOrder'
 	appId='devTestAppId', 
 	appKey='fe68e63bea35f8edeae04daec0ecb722',
-	appChannel='default'
+	appChannel='wypay'
 
 function makeSign(data) {
 	var hash = crypto.createHash('sha256');
