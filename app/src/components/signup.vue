@@ -200,7 +200,21 @@ export default {
 	},
 	methods:{
 		onSuccess(googleUser) {
-			console.log(googleUser, googleUser.getBasicProfile());
+			console.log(googleUser, googleUser.getAuthResponse().id_token);
+			var self=this;
+			self.longop=true;
+			openLink(socket=>{
+				function errHandler() {
+					self.longop=false;
+					socket.off('reconnect_failed', errHandler);
+					alert(self.$i18n.t('Can not reach the server'));
+				}
+				socket.on('reconnect_failed', errHandler);
+				socket.emit('google_login', googleUser.getAuthResponse().id_token, (err)=>{
+					self.handlelogin(err);
+					socket.off('reconnect_failed', errHandler);
+				})
+			})
 		},
 		onFailure() {},
 		handleSdkInit({FB, scope}) {
@@ -262,8 +276,8 @@ export default {
 		handlelogin(err, token) {
 			this.longop=false;
 			if (err) return alert(err);
-			docCookies.setItem('token', token);
-			docCookies.setItem('phone', this.mobile);
+			if (token) docCookies.setItem('token', token);
+			if (this.mobile) docCookies.setItem('phone', this.mobile);
 			this.hide();
 		},
 		signin(e) {
