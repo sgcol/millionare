@@ -26,6 +26,12 @@ require('colors');
 var {router}=require('./luckyshopee');
 
 app.use(express.static(path.join(__dirname, 'app/dist'), {maxAge:7*24*3600*1000, index: 'index.html' }));
+if (argv.debugout) {
+    app.use(function(req, res, next) {
+        debugout('access', req.url, req.headers);
+        next();
+    });
+}
 app.use('/pf/luckyshopee', router);
 
 if (argv.fbaccess) {
