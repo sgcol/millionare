@@ -509,7 +509,7 @@ getDB(async (err, db, dbm)=>{
 			try {
 				var dbuser=await db.users.findOne({phone:socket.user.phone});
 				if (!dbuser) cb('no such user');
-				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), lastTime:new Date(), status:'created'}, {w:'majority'});
+				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), lastTime:new Date(), used:false}, {w:'majority'});
 				var url=await createOrder(insertedId.toHexString(), amount, req);
 				cb(null, {jumpto:url});
 			} catch(e) {return cb(e)}
