@@ -57,7 +57,7 @@
 						<p>{{$t('Create Time')}} {{dateTimeString(order.time)}}</p>
 						<div class="ml-content">
 							<p><span>{{$t('Period')}}</span><span>{{order.game.period}}</span></p>
-							<p><span>{{$t('Select')}}</span><span><span v-bind:class="String(order.select).toLowerCase()">{{order.select}}</span></span></p>
+							<p><span>{{$t('Select')}}</span><span><span v-bind:class="String(order.select).toLowerCase()">{{$t(order.select)}}</span></span></p>
 							<p><span>{{$t('Status')}}</span><span><span v-bind:class="statusColors[order.status]">{{order.status}}</span></span></p>
 							<p><span>{{$t('Pre Pay')}}</span><span>{{order.money}}</span></p>
 							<p><span>{{$t('Open Time')}}</span><span>{{timeString(order.game.endtime)}}</span></p>
