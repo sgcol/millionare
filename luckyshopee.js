@@ -75,7 +75,7 @@ getDB((err, db)=>{
 		debugout(this.req.body);
 		if (transStatus!='success') return cb(null, httpf.text('success'));
 		try {
-			var {value}=await debugout.bills.findOneAndUpdate({_id:ObjectId(merTransNo), status:{$ne:'completed'}}, {$set:{status:'completed', lastTime:new Date()}}, {w:'majority'});
+			var {value}=await db.bills.findOneAndUpdate({_id:ObjectId(merTransNo), status:{$ne:'completed'}}, {$set:{status:'completed', lastTime:new Date()}}, {w:'majority'});
 			if (!value) throw 'no such orderid or order is processing';
 			value=dedecimal(value);
 			await db.users.updateOne({phone:value.phone}, {$inc:{balance:value.money}}, {w:'majority'});
