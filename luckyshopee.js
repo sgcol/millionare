@@ -76,11 +76,14 @@ getDB((err, db)=>{
 		if (transStatus!='success') return cb(null, httpf.text('success'));
 		try {
 			var {value}=await debugout.bills.findOneAndUpdate({_id:ObjectId(merTransNo), status:{$ne:'completed'}}, {$set:{status:'completed', lastTime:new Date()}}, {w:'majority'});
-		} catch(e) {return cb(e);}
-		if (!value) return cb('no such orderid or order is processing');
-		value=dedecimal(value);
-		await db.users.updateOne({phone:value.phone}, {$inc:{balance:value.money}}, {w:'majority'});
-		return cb(null, httpf.text('success'));
+			if (!value) throw 'no such orderid or order is processing';
+			value=dedecimal(value);
+			await db.users.updateOne({phone:value.phone}, {$inc:{balance:value.money}}, {w:'majority'});
+			return cb(null, httpf.text('success'));
+		} catch(e) {
+			debugout(e);
+			return cb(e);
+		}
 	}));    
 })
 
