@@ -8,8 +8,8 @@
 				</b-iconstack>
 				<!-- <b-icon icon="person-circle" font-scale="7.5" variant="secondary" class="mt-4 mb-5"></b-icon> -->
 				<v-facebook-login app-id="658156324804891" style="margin:auto" @login="fb_login" @sdk-init="handleSdkInit" v-model="FB_model"></v-facebook-login>
-				<p>----------------or---------------</p>
-				<GoogleLogin :params="{client_id:'647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com'}" :renderParams="{width:215, height:39, margin:auto, longtitle:true}"></GoogleLogin>
+				<p>or</p>
+				<GoogleLogin :params="{client_id:'647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com'}" :onSuccess="onSuccess" :onFailure="onFailure"></GoogleLogin>
 			</div>
 			<b-tabs content-class='mt-3' fill v-model="page" v-else>
 				<b-tab :title="$t('Register')">
@@ -199,6 +199,10 @@ export default {
 		}
 	},
 	methods:{
+		onSuccess(googleUser) {
+			console.log(googleUser.getBasicProfile());
+		},
+		onFailure() {},
 		handleSdkInit({FB, scope}) {
 			this.FB=FB;
 			this.scope=scope;

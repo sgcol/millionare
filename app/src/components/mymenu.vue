@@ -5,6 +5,7 @@
 				<b-button variant="outline-primary" block v-b-modal.topup>{{$t('Top up')}}</b-button>
 				<b-button variant="outline-primary" block v-b-modal.withdraw>{{$t('Withdraw')}}</b-button>
 				<b-button variant="outline-primary" block v-b-modal.lang>{{$t('Language')}}</b-button>
+				<b-button variant="outline-primary" block @click="showRule">{{$t('Rules')}}</b-button>
 				<b-button variant="outline-primary" block v-if="fb.connected" @click="signoutfromfb">{{$t('Logout from Facebook')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="signout" v-else>{{$t('Sign out')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="hide" style="margin-top:40px">{{$t('Close')}}</b-button>
@@ -45,7 +46,7 @@
 				</b-form-group>
 				<b-form-group>
 					<p style="font-size:20px; color:#147239;">{{$t('Withdraw via ')}}
-						<img style="height:20px" src="../assets/ovo.png" v-if="locale=='idn'">
+						<img style="height:20px" src="../assets/ovo.png" v-if="locale=='in_ID'">
 						<img style="height:20px" src="../assets/paytm.png" v-else>
 					</p>
 					<p class="pl-3" style="font-size:20px; color:#147239;" v-if="me.paytm_id">{{me.paytm_id}}</p>
@@ -68,7 +69,7 @@
 		</b-modal>
 		<b-modal id="lang" :title="$t('Language')" ok-only>
 			<b-form>
-				<b-form-group :label="$t('Set language')">
+				<b-form-group :label="$t('Choose your language')">
 					<b-form-radio-group
 						v-model="selected_lang"
 						:options="[{text:'English UK', value:'en'}, {text:'Indonesian', value:'idn'}]"
@@ -78,7 +79,7 @@
 				</b-form-group>
 			</b-form>
 		</b-modal>
-		<b-modal ref="paytmid" id="paytmid" :title="$t('Add Paytm ID')" hide-footer>
+		<b-modal ref="paytmid" id="paytmid" :title="withdrawOrgName()" hide-footer>
 			<b-form>
 				<b-form-group>
 					<label>{{$t('Enter Mobile Number')}}</label>
@@ -90,6 +91,7 @@
 			</b-form-group>
 			</b-form>
 		</b-modal>
+		<Rule ref="ru"></Rule>
 	</div>
 </template>
 
@@ -99,11 +101,13 @@ import { mapState } from 'vuex'
 import { validationMixin } from "vuelidate";
 import { required, numeric } from "vuelidate/lib/validators";
 import conf from '../conf'
+// import Rule from './rule.vue'
 
 var vueSettings= {
 	name:'mymenu',
 	mixins: [validationMixin],
 	components:{
+		Rule:()=>import('./rule.vue'),
 	},
 	computed:mapState({
 		status: state=>state.status,
@@ -111,7 +115,7 @@ var vueSettings= {
 		fb: state=>state.fb,
 	}),
 	data(){
-		return {amount:conf.locale=='idn'?50000:100,withdraw_amount:conf.locale=='idn'?500000:500, mobile:null, locale:conf.locale, selected_lang:this.$i18n.locale}
+		return {amount:conf.locale=='in_ID'?50000:100,withdraw_amount:conf.locale=='in_ID'?500000:500, mobile:null, locale:conf.locale, selected_lang:this.$i18n.locale}
 	},
 	watch: {
 		selected_lang(v) {
@@ -119,8 +123,21 @@ var vueSettings= {
 		}
 	},
 	methods:{
+		withdrawOrgName() {
+			switch (conf.locale) {
+				case 'in_ID':
+					return this.$i18n.t('Add OVO');
+				case 'hi_IN':
+					return this.$i18n.t('Add Paytm ID');
+				default:
+					return this.$i18n.t('Unspecified officer');
+			}
+		},
+		showRule() {
+			this.$refs.ru.show();
+		},
 		formatedMoney(money) {
-			if (conf.locale==='idn') {
+			if (conf.locale==='in_ID') {
 				if (money>1000) return Math.floor(money/1000)+'k';
 			}
 			return money;
@@ -229,7 +246,7 @@ var vueSettings= {
 	}
 }
 
-if (conf.locale=='idn') {
+if (conf.locale=='in_ID') {
 	vueSettings.validations={
 		mobile:{
 			required,
