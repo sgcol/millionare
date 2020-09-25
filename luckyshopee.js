@@ -72,7 +72,7 @@ getDB((err, db)=>{
 		appChannel=s.appChannel||appChannel;
 	})
 	router.all('/done', bodyParser.urlencoded({ extended: true, limit: '5mb' }), verifySign, httpf({transNo:'string', merTransNo:'string', amount:'number', processAmount:'number', transStatus:'string', callback:true}, async function(transNo, merTransNo, amount, processAmount, transStatus, cb) {
-		debugout(req.body);
+		debugout(this.req.body);
 		if (transStatus!='success') return cb(null, httpf.text('success'));
 		try {
 			var {value}=await debugout.bills.findOneAndUpdate({_id:ObjectId(merTransNo), status:{$ne:'completed'}}, {$set:{status:'completed', lastTime:new Date()}}, {w:'majority'});
