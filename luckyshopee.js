@@ -11,7 +11,7 @@ const crypto=require('crypto')
 	, debugout=require('debugout')(args.debugout)
 
 var sms_url='https://pay.luckyshopee.com/sms/send',
-	pay_url='http://apidoc.upayout.com/api/',
+	pay_url='http://pay-test.upayout.com/pay/createPaymentOrder',
 	withdraw_url='https://pay-test.luckyshopee.com/pay/createPayoutOrder'
 	appId='devTestAppId', 
 	appKey='fe68e63bea35f8edeae04daec0ecb722',
