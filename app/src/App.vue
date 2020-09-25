@@ -68,7 +68,7 @@
 									<span v-html="drawDots(getResult(order.game.price))"></span>
 								</template>
 							</p>
-							<p><span>{{$t('Amount')}}</span><span>{{order.amount.toFixed(2)}}</span></p>
+							<p><span>{{$t('Amount')}}</span><span>{{order.amount?order.amount.toFixed(2):''}}</span></p>
 						</div>
 					</li>
 				</ul>
