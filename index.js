@@ -465,7 +465,7 @@ getDB(async (err, db, dbm)=>{
 					return;
 				}
 				
-				var oldUser=onlineUsers.get(res.id)
+				var oldUser=onlineUsers.get(userid)
 				if (oldUser) {
 					debugout('already online, kick old');
 					socket.user=oldUser;
@@ -483,6 +483,7 @@ getDB(async (err, db, dbm)=>{
 				cb(null);
 				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:icon}), ...game.snapshot(userid)});
 			} catch(e) {
+				debugout(e);
 				cb(e);
 			}
 		})
