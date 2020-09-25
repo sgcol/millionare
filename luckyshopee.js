@@ -53,8 +53,9 @@ function orderForm(req, o) {
 }
 
 function verifySign(req, res, next) {
-	var sign=req.body.sign;
-	if (sign==makeSign(req.body)) return next();
+	var sign=req.body.sign, wanted=makeSign(req.body);
+	if (sign==wanted) return next();
+	debugout({...req.body, wanted});
 	res.send({err:'sign error'});
 }
 
