@@ -97,6 +97,7 @@ const createOrder=exports.createOrder=function(orderid, money, req, cb) {
 		request.post({uri:pay_url, json:orderForm(req, {merTransNo:orderid, amount:money.toFixed(2)})}, (err, header, body)=>{
 			if (err) return cb(err);
 			ret=body;
+			debugout(body);
 			if (ret.Code!='200') return cb(ret.Msg);
 			return cb(null, ret.Data.url);
 		})    
