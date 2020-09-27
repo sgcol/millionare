@@ -12,7 +12,7 @@ const crypto=require('crypto')
 
 var sms_url='https://pay.luckyshopee.com/sms/send',
 	pay_url='https://pay-test.upayout.com/pay/createPaymentOrder',
-	withdraw_url='https://pay-test.luckyshopee.com/pay/createPayoutOrder'
+	withdraw_url='https://pay-test.upayout.com/pay/createPayoutOrder'
 	appId='devTestAppId', 
 	appKey='fe68e63bea35f8edeae04daec0ecb722',
 	appChannel='wypay'
@@ -119,6 +119,7 @@ const createWithdraw=exports.createWithdraw=function(orderid, money, phone, req,
 		}
 		request.post({uri:withdraw_url, json:orderForm(req, {
 			merTransNo:orderid
+			, appChannel
 			, amount:money.toFixed(2)
 			, pmId:'paytm.wallet.payout'
 			, extInfo: {

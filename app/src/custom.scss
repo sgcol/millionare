@@ -1,4 +1,11 @@
 $primary : #147239;
 
 @import '~bootstrap';
+
+.btn-radio {
+	@include button-variant($white, $border-color, darken($primary, 10%), lighten($primary,5%), $primary, lighten($primary,30%));
+	color:#666666;
+	min-width:80px;
+}
+
 @import '~bootstrap-vue';

@@ -2,11 +2,11 @@
 	<div id="app">
 		<div class="home">
 			<div class="home-top">
-				<div class="btn reverse home-recharge" v-on:click="showTopUp">{{ $t("Top Up") }}</div>
-				<div class="btn reverse home-rule" v-on:click="openRule">{{ $t('Rules') }}</div>
+				<div class="btn btn-primary reverse home-recharge" v-on:click="showTopUp">{{ $t("Top Up") }}</div>
+				<div class="btn btn-outline-secondary reverse home-rule" v-on:click="openRule">{{ $t('Rules') }}</div>
 				<div class="myicon">
 					<!-- <img src="./assets/icon.png"> -->
-					<b-avatar size="40px" :src="headicon()"></b-avatar>
+					<b-avatar size="40px" :src="headicon()" class="mb-2"></b-avatar>
 					<b-button variant="outline-primary" v-on:click="showMyMenu">{{$t('Me')}}</b-button>
 				</div>
 				<div class="info">
@@ -409,12 +409,13 @@ a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer,
 .myicon>.btn {
 	height: 25px;
     font-size: 12px;
-    margin-top: 5px;
-    color: white;
-    border-color: white;
+	color: black;
+	background-color:#EAC71C;
+    border-color: #EAC71C;
 	position:absolute;
+	padding:2px 10px;
 	left:0px;
-	top:40px;
+	top:45px;
 }
 .info{
     position: absolute;
@@ -424,56 +425,59 @@ a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer,
 .home-recharge {
 	top: 15px;
 	width: 100px;
-	border-color: transparent;
+	color: white;
+	border-radius: 6px;
+	background-color:#007E00;
+	border-color:#007E00;
 }
 .home-rule {
 	bottom: 15px;
-	width: 60px;
+	padding: 2px 6px;
 	border: 1px solid #fff;
 	border-radius: 6px;
 	background-color: transparent;
 	color: #fff;
 }
 .game-info {
-		position: relative;
-		margin: 20px;
+	position: relative;
+	margin: 20px;
 }
 .game-info>li {
-		display: inline-block;
-		width: 50%;
+	display: inline-block;
+	width: 50%;
 }
 .game-info>li:nth-child(2) {
-		text-align: right;
+	text-align: right;
 }
 .game-info p {
-		color: grey;
+	color: grey;
 }
 .game-info p:last-child {
-		margin-top: 5px;
-		color: #000;
-		font-size: 24px;
+	margin-top: 5px;
+	color: #000;
+	font-size: 24px;
 }
 .game-block {
-		display: -webkit-box;
-		display: -ms-flexbox;
-		display: flex;
-		-ms-flex-wrap: wrap;
-		flex-wrap: wrap;
-		-webkit-box-pack: justify;
-		-ms-flex-pack: justify;
-		justify-content: space-between;
-		margin: 20px;
-		margin-top: 30px;
-		list-style: none;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-wrap: wrap;
+	flex-wrap: wrap;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	margin: 20px;
+	margin-top: 30px;
+	list-style: none;
 }
 .game-color:first-child {
-		background: #1eb93d;
+	background: #1eb93d;
 }
 .game-color:nth-child(2) {
-		background: #ea3af0;
+	background: #ea3af0;
 }
 .game-color:nth-child(3) {
-		background: #f52828;
+	background: #f52828;
 }
 .game-color {
 		width: calc((100% - 20px)/3);
