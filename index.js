@@ -446,7 +446,7 @@ getDB(async (err, db, dbm)=>{
 					onlineUsers.add(socket.user);
 				}
 				cb(null);
-				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`http://graph.facebook.com/${res.id}/picture?type=album`}), ...game.snapshot(res.id)});
+				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`https://graph.facebook.com/${res.id}/picture?type=album`}), ...game.snapshot(res.id)});
 			});
 		})
 		.on('google_login', async (id_token, cb)=>{
