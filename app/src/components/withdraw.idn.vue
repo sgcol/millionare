@@ -28,6 +28,7 @@
 
 <script>
 import Vue from 'vue'
+import { mapState } from 'vuex'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import {openLink} from '../client'
 
@@ -51,6 +52,11 @@ export default {
 		ownerState() {
 			return this.accountName.length>0;
 		},
+		...mapState({
+			status: state=>state.status,
+			me: state => state.me,
+			fb: state=>state.fb,
+		}),
 	},
 	methods:{
 		idr_withdraw(e) {
