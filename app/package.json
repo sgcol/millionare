@@ -13,7 +13,9 @@
     "core-js": "^3.6.5",
     "gy-easy-mongo": "^0.5.1",
     "md5": "^2.2.1",
+    "object-path": "^0.11.4",
     "vue": "^2.6.11",
+    "vue-bootstrap-typeahead": "^0.2.6",
     "vue-facebook-login-component": "^2.4.0",
     "vue-google-login": "^2.0.5"
   },

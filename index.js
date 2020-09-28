@@ -14,7 +14,7 @@ var server = require('http').createServer()
 	, ObjectId =require('mongodb').ObjectId
 	, {dedecimal, decimalfy, ID} =require('./etc.js')
 	, rndstring=require('randomstring').generate
-	, {sendSms, createOrder, createWithdraw, chgSettings} =require('./luckyshopee.js')
+	, {sendSms, createOrder, createWithdraw, createIdrWithdraw, chgSettings} =require('./luckyshopee.js')
 	, argv=require('yargs')
 		.default('port', 7008)
 		.argv
@@ -540,6 +540,37 @@ getDB(async (err, db, dbm)=>{
 				var fee=Math.floor(money*withdrawFee*100)/100;
 				var id=new ObjectId();
 				var tradeno=await createWithdraw(id.toHexString(), money-fee, dbuser.paytm_id, req);
+				await db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}, $inc:{balance:-money}});
+				var withdraw={_id:id, time:new Date(), phone:socket.user.phone, money:money, fee:fee, snapshot:{balance:dbuser.balance}, luckyshopee_tradeno:tradeno};
+				db.withdraw.insertOne(withdraw);
+				socket.emit('statechanged', {user:{balance:dbuser.balance-money}});
+				cb();
+			} catch(e) {return cb(e)}
+		})
+		.on('idr_bankinfo', async (cb)=>{
+			if (!socket.user) return cb('Can not get bankinfo before login');
+			try {
+				var {bankinfo}=await db.users.findOne({phone:socket.user.phone}, {projection:{bankinfo:1}});
+				cb(null, bankinfo);
+			} catch(e) {
+				cb(e);
+			}
+		})
+		/***
+		 * property withdrawOrder {amount,accountNo, accountName, bankCode, phone} 
+		*/
+		.on('idr_wihdraw', async (withdrawOrder, cb)=>{
+			if (socket.user==null) {
+				cb('Can not withdraw before login');
+				return console.error('withdraw before login');	
+			}
+			try {
+				debugout('user', socket.user);
+				var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, locked:{$ne:true}, balance:{$gte:money}}, {$set:{locked:true}}, {w:'majority'});
+				var dbuser=dedecimal(value);
+				if (!dbuser) return cb('can not manipulate user data right now');
+				var id=new ObjectId();
+				var tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
 				await db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}, $inc:{balance:-money}});
 				var withdraw={_id:id, time:new Date(), phone:socket.user.phone, money:money, fee:fee, snapshot:{balance:dbuser.balance}, luckyshopee_tradeno:tradeno};
 				db.withdraw.insertOne(withdraw);

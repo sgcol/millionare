@@ -22,7 +22,7 @@
 			</b-row>
 			<b-row class="my-1">
 				<b-col sm="6">
-					<label for="balance">balance <code>{{ userdata.balance }}</code>:</label>
+					<label for="balance">balance <code>{{ userdata.balance||0 }}</code>:</label>
 				</b-col>
 				<b-col sm="6">
 					<b-input-group>
@@ -47,6 +47,25 @@
 					</b-input-group>
 				</b-col>
 			</b-row>
+			<b-row class="my-1">
+				<b-col sm="6">
+					<label :for="`bi`">Bank Info <code></code>:</label>
+				</b-col>
+				<b-col sm="6">
+					<b-card>
+						<b-card-text>{{bankCode}}</b-card-text>
+						<b-card-text>{{accountName}}</b-card-text>
+						<b-card-text>{{accountNo}}</b-card-text>
+						<b-card-text>{{bankphone}}</b-card-text>
+						<b-button class="float-right" variant="danger">删</b-button>
+					</b-card>
+				</b-col>
+			</b-row>
+			<b-row>
+				<!-- <b-form label="提款记录">
+					<b-table striped hover :items="withdrawRecords"></b-table>
+				</b-form> -->
+			</b-row>
 		</b-container>
 	</b-form-group>
 </div>
@@ -55,6 +74,7 @@
 <script>
 import {openLink} from '../client.js'
 import auth from "./auth"
+import {get} from 'object-path'
 const stdret=auth.stdret;
 
 export default {
@@ -78,12 +98,24 @@ export default {
 		paytm_ids() {
 			if (Array.isArray(this.userdata.paytm_id)) return this.userdata.paytm_id;
 			return [this.userdata.paytm_id];
+		},
+		bankCode() {
+			return get(this.userdata, 'bankInfo.bankCode');
+		},
+		accountName() {
+			return get(this.userdata, 'bankInfo.accountName');
+		},
+		accountNo() {
+			return get(this.userdata, 'bankInfo.accountNo');
+		},
+		bankphone() {
+			return get(this.userdata, 'bankInfo.phone');
 		}
 	},
 	data() {
 		return {
 			phone:null,
-			userdata:{}
+			userdata:{bankInfo:{}}
 		}
 	},
 	methods:{

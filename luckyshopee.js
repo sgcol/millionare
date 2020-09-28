@@ -40,7 +40,6 @@ function makeSign(data) {
 function orderForm(req, o) {
 	var {protocol}=url.parse(req.headers.origin);
 	return makeSign({
-		...o, 
 		version:'1.1', 
 		appId:appId, 
 		country:'ID', 
@@ -48,7 +47,8 @@ function orderForm(req, o) {
 		prodName:'southeast.asia',
 		appChannel:appChannel,
 		notifyUrl:url.format({host:req.headers.host, pathname:'pf/luckyshopee/done', protocol}), 
-		returnUrl:url.format({host:req.headers.host, pathname:'/', protocol})
+		returnUrl:url.format({host:req.headers.host, pathname:'/', protocol}),
+		...o
 	});
 }
 
@@ -71,7 +71,7 @@ getDB((err, db)=>{
 		appKey=s.appKey||appKey;
 		appChannel=s.appChannel||appChannel;
 	})
-	router.all('/done', bodyParser.urlencoded({ extended: true, limit: '5mb' }), verifySign, httpf({transNo:'string', merTransNo:'string', amount:'number', processAmount:'number', transStatus:'string', callback:true}, async function(transNo, merTransNo, amount, processAmount, transStatus, cb) {
+	router.all('/done', bodyParser.urlencoded({ extended: true, limit: '1mb' }), verifySign, httpf({transNo:'string', merTransNo:'string', amount:'number', processAmount:'number', transStatus:'string', callback:true}, async function(transNo, merTransNo, amount, processAmount, transStatus, cb) {
 		debugout(this.req.body);
 		if (transStatus!='success') return cb(null, httpf.text('success'));
 		try {
@@ -84,7 +84,11 @@ getDB((err, db)=>{
 			debugout(e);
 			return cb(e);
 		}
-	}));    
+	}));  
+	router.all('/withdraw_result', bodyParser.urlencoded({extended:true, limit:'1mb'}), verifySign, httpf({resultCode:'string', merTransNo:'string', callback:true}, async function(resultCode, merTransNo, callback) {
+		db.withdraw.updateOne({_id:ObjectId(merTransNo)}, {$set:{result:this.req.body, lastTime:new Date()}});
+		return httpf.text('success');
+	}));
 })
 
 exports.sendSms=function(phone, deviceId, ip, captcha, content) {
@@ -124,6 +128,32 @@ const createWithdraw=exports.createWithdraw=function(orderid, money, phone, req,
 			, pmId:'paytm.wallet.payout'
 			, extInfo: {
 				payeeMobile:phone
+			}
+		})}, (err, header, body)=>{
+			if (err) return cb(err);
+			var ret=body;
+			if (ret.Code!='200') return cb(ret.Msg);
+			return cb(null, ret.Data.tradeNo);
+		})	
+	})
+}
+
+const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, req, cb) {
+	return new Promise((resolve, reject)=>{
+		cb=cb||function (err, r){
+			if (err) reject(err);
+			return resolve(r);
+		}
+		var {protocol}=url.parse(req.headers.origin);
+		request.post({uri:withdraw_url, json:orderForm(req, {
+			merTransNo:orderid
+			, amount:orderInfo.amount.toFixed(2)
+			, pmId:'payout.bank.id'
+			, notifyUrl:url.format({host:req.headers.host, pathname:'pf/luckyshopee/withdraw_result', protocol})
+			, prodName: 'southeast.asia.payout'
+			, userId: orderInfo.phone
+			, extInfo: {
+				bankCode:orderInfo.bankCode,accountHolderName:orderIndo.accountName,accountNumber:orderInfo.accountNo,payeeMobile:orderInfo.phone
 			}
 		})}, (err, header, body)=>{
 			if (err) return cb(err);

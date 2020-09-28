@@ -22,12 +22,12 @@ export const router=new VueRouter({
         {path:'/serverlet',component:serverlet, beforeEnter:requireAuth},
         {path:'/userMoney',component:userMoney, beforeEnter:requireAuth},
         {path:'/login', component:login},
-    { path: '/logout',
-    beforeEnter (to, from, next) {
-        auth.logout()
-        next('/')
-    }
-    }
+        { path: '/logout',
+          beforeEnter (to, from, next) {
+              auth.logout()
+              next('/')
+          }
+        }
         // {path:'*', component:"<template><p>error</p></template>"}
     ] 
 });

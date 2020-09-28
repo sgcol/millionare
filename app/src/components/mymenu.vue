@@ -39,7 +39,8 @@
 			</form>
 		</b-modal>
 		<b-modal ref="withdraw" id="withdraw" :title="$t('Withdraw')" hide-footer>
-			<b-form>
+			<withdraw-idr v-if="locale=='in_ID'"></withdraw-idr>
+			<b-form v-else>
 				<b-form-group>
 					<label for="balance" style="color:grey; font-size:24px">{{$t('Withdrawable')}}</label>
 					<p style="font-size:24px; margin-top:5px">₹ {{me?Number(me.balance).toFixed(2): '-'}}</p>
@@ -63,7 +64,7 @@
 					<li>{{$t('The service charge shall be deducetd by payment channel :5%.')}}</li>
 				</ol>
 				<b-form-group>
-					<b-button block variant="primary" v-on:click="withdraw">Withdraw</b-button>
+					<b-button block variant="primary" v-on:click="withdraw">{{$t('Withdraw')}}</b-button>
 				</b-form-group>
 			</b-form>
 		</b-modal>
@@ -91,7 +92,7 @@
 			</b-form-group>
 			</b-form>
 		</b-modal>
-		<Rule ref="ru"></Rule>
+		<Rule ref="ru" id="ru"></Rule>
 	</div>
 </template>
 
@@ -108,6 +109,7 @@ var vueSettings= {
 	mixins: [validationMixin],
 	components:{
 		Rule:()=>import('./rule.vue'),
+		WithdrawIdr:()=>import('./withdraw.idn.vue'),
 	},
 	computed:mapState({
 		status: state=>state.status,
