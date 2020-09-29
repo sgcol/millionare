@@ -247,6 +247,7 @@ function Game(settings, db) {
 		},
 		async bet(user, select, money, cb) {
 			if (status!='running') return cb('Betting is not allowed at this time');
+			if (money<=0) return cb('Illegal operation');
 			try {
 				var {value}=await db.users.findOneAndUpdate({phone:user.phone, locked:{$ne:true}}, {$set:{locked:true}}, {w:'majority'});
 			} catch(e) {
@@ -502,6 +503,7 @@ getDB(async (err, db, dbm)=>{
 			sendSms(phone, deviceid, socket.remoteAddress, c.captcha);
 		})
 		.on('recharge', async (amount, cb)=>{
+			if (amount<=0) return cb('Illegal operation');
 			if (!socket.user) {
 				cb('Can not top up before login');
 				return console.error('recharge before login');
@@ -528,6 +530,7 @@ getDB(async (err, db, dbm)=>{
 			}
 		})
 		.on('withdraw', async(money, cb)=>{
+			if (money<=0) return cb('Illegal operation');
 			if (socket.user==null) {
 				cb('Can not withdraw before login');
 				return console.error('withdraw before login');	
@@ -559,24 +562,33 @@ getDB(async (err, db, dbm)=>{
 		/***
 		 * property withdrawOrder {amount,accountNo, accountName, bankCode, phone} 
 		*/
-		.on('idr_wihdraw', async (withdrawOrder, cb)=>{
+		.on('idr_withdraw', async (withdrawOrder, cb)=>{
+			if (withdrawOrder.amount<=0) return cb('Illegal operation');
 			if (socket.user==null) {
 				cb('Can not withdraw before login');
 				return console.error('withdraw before login');	
 			}
 			try {
-				debugout('user', socket.user);
-				var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, locked:{$ne:true}, balance:{$gte:money}}, {$set:{locked:true}}, {w:'majority'});
-				var dbuser=dedecimal(value);
-				if (!dbuser) return cb('can not manipulate user data right now');
+				var dbuser=await db.users.findOne({phone:socket.user.phone});
+				if (!dbuser) throw('no such user');
+				var bankinfo={...withdrawOrder};
+				delete bankinfo.amount;
+				var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, balance:{$gte:withdrawOrder.amount}}, {$inc:{balance:-withdrawOrder.amount}, $set:{bankinfo}}, {w:'majority'});
+				dbuser=dedecimal(value);
+				if (!dbuser) throw 'not enough balance';
 				var id=new ObjectId();
-				var tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
-				await db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}, $inc:{balance:-money}});
-				var withdraw={_id:id, time:new Date(), phone:socket.user.phone, money:money, fee:fee, snapshot:{balance:dbuser.balance}, luckyshopee_tradeno:tradeno};
+				var withdraw={_id:id, time:new Date(), phone:socket.user.phone, snapshot:{balance:dbuser.balance, ...withdrawOrder}};
 				db.withdraw.insertOne(withdraw);
-				socket.emit('statechanged', {user:{balance:dbuser.balance-money}});
+				var tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
+				db.withdraw.updateOne({_id:id}, {$set:{luckyshopee_tradeno:tradeno}});
+				socket.emit('statechanged', {user:{balance:dbuser.balance-withdrawOrder.amount}});
 				cb();
-			} catch(e) {return cb(e)}
+			} 
+			catch(e) {
+				db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}});
+				debugout(e);
+				return cb(e)
+			}
 		})
 		// admin tools
 		.on('getsettings', (cb)=>{
@@ -598,7 +610,7 @@ getDB(async (err, db, dbm)=>{
 				if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 				var ud=await db.users.findOne({phone});
 				ud=dedecimal(ud);
-				db.adminlog.insert({op:'queryuser', admin:socket.user.phone, target:{phone, ...ud}, time:new Date()});
+				db.adminlog.insertOne({op:'queryuser', admin:socket.user.phone, target:{phone, ...ud}, time:new Date()});
 				if (!ud) return cb('找不到用户');
 				cb(null, {phone:ud.phone, balance:ud.balance, paytm_id:ud.paytm_id, block:ud.block});
 			}catch(e) {return cb(e)}
@@ -612,10 +624,10 @@ getDB(async (err, db, dbm)=>{
 			value=dedecimal(value);
 			var ud=onlineUsers.get(phone);
 			if (ud) {
-				var newbalance=value.balance+delta;
+				var newbalance=(value.balance||0)+delta;
 				ud.socket.emit('statechanged', {user:{balance:newbalance}});
 			}
-			cb(null, {balance:value.balance+delta});
+			cb(null, {balance:(value.balance||0)+delta});
 		})
 		.on('changepaytm', async(phone, idx, new_id, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');

@@ -10,14 +10,14 @@
 		<b-form-group :label="$t('Account Name')" :invalid-feedback="$t('Please enter account name.')" :state="ownerState">
 			<b-form-input v-model="accountName" :state="ownerState"></b-form-input>
 		</b-form-group>
-		<b-form-group :label="$t('Phone')" :invalid-feedback="phoneInvalid" :state="phoneState">
-			<b-form-input v-model="phone" :state="phonestate"></b-form-input>
+		<b-form-group :label="$t('Phone')" :invalid-feedback="$t('Please enter your phone number')" :state="phoneState">
+			<b-form-input v-model="phone" :state="phoneState"></b-form-input>
 		</b-form-group>
 		<b-form-group :label="$t('Bank Name')">
 			<vue-bootstrap-typeahead v-model="bank" :data="banklist"></vue-bootstrap-typeahead>
 		</b-form-group>
-		<b-form-group :label="$t('Account No.')">
-			<b-form-input v-model="accountNo" :data="banklist"></b-form-input>
+		<b-form-group :label="$t('Account No.')" :state="accountNoState" :invalid-feedback="$t('Please enter your account number')">
+			<b-form-input v-model="accountNo" :data="banklist" :state="accountNoState"></b-form-input>
 		</b-form-group>
 		<p>Nominal harus lebih dari Rp 500.000，</p>
 		<p>Pengambilan cash max Rp 6.000.000 perhari</p>
@@ -53,6 +53,12 @@ export default {
 		ownerState() {
 			return this.accountName.length>0;
 		},
+		phoneState() {
+			return typeof this.phone=='string' && this.phone.length>0;
+		},
+		accountNoState() {
+			return typeof this.accountNo=='string' && this.accountNo.length>0;
+		},
 		...mapState({
 			status: state=>state.status,
 			me: state => state.me,
@@ -63,9 +69,11 @@ export default {
 		idr_withdraw(e) {
 			e.preventDefault();
 			var self=this;
-			console.log(this.amount, this.accountName, this.accountNo, this.bank, this.phone);
+			if (!this.amountState || !this.ownerState || !this.accountNoState ||!this.phoneState || !this.bank) return;
+			var order={amount:this.amount, accountName:this.accountName, accountNo:this.accountNo, phone:this.phone, bankCode:toBankCode[this.bank]};
+			console.log(order);
 			openLink(sock=>{
-				sock.emit('idr_withdraw', {amount:this.amount, accountName:this.accountName, accountNo:this.accountNo, phone:this.phone, bankCode:bankCode[this.bankName]}, (err)=>{
+				sock.emit('idr_withdraw', order, (err)=>{
 					if (err) return alert(err);
 					alert(self.$i18n.t('Success'));
 				})
@@ -78,7 +86,9 @@ export default {
 			sock.emit('idr_bankinfo', (err, bi)=>{
 				if (err) return alert(self.$i18n.t(err));
 				for (var key in bi) {
-					self[key]=bi[key];
+					if (key=='amount') continue;
+					if (key=='bankCode') self.bank=toBankName[bi.bankCode];
+					else self[key]=bi[key];
 				}
 			})
 		});
@@ -303,10 +313,17 @@ const banklist=[
 			{code:'WOVOIDD1', text:'OVO'},
 			{code:'YUDBIDJ1', text:'BANK Y'},
 		]
-var bankCode=(()=>{
+var toBankCode=(()=>{
 	var map={};
 	banklist.forEach((value)=>{
 		map[value.text]=value.code
+	})
+	return map;
+})(),
+toBankName=(()=>{
+	var map={};
+	banklist.forEach(v=>{
+		map[v.code]=v.text;
 	})
 	return map;
 })()

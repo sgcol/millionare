@@ -1,5 +1,5 @@
 export default {
     lang:'idn',
-    login: 'social',
+    // login: 'social',
     locale:'in_ID'
 }

@@ -153,7 +153,7 @@ const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, 
 			, prodName: 'southeast.asia.payout'
 			, userId: orderInfo.phone
 			, extInfo: {
-				bankCode:orderInfo.bankCode,accountHolderName:orderIndo.accountName,accountNumber:orderInfo.accountNo,payeeMobile:orderInfo.phone
+				bankCode:orderInfo.bankCode,accountHolderName:orderInfo.accountName,accountNumber:orderInfo.accountNo,payeeMobile:orderInfo.phone
 			}
 		})}, (err, header, body)=>{
 			if (err) return cb(err);

@@ -88,7 +88,6 @@
 // import Vue from 'vue'
 import signup from './components/signup.vue'
 import xiazhu from './components/xiazhu.vue'
-import rule from './components/rule.vue'
 import mymenu from './components/mymenu.vue'
 
 import { mapState } from 'vuex'
@@ -105,7 +104,7 @@ export default {
 	components: {
 		// HelloWorld
 		xiazhu,
-		rule,
+		rule:()=>import('./components/rule.vue'),
 		signup,
 		mymenu
 	},

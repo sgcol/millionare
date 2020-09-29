@@ -9,12 +9,13 @@
 			<b-form-radio-group
 				id="btn-bet"
 				v-model.number="betting"
-				:options="[10, 100, 1000, 10000]"
 				buttons
 				button-variant="outline-secondary"
 				size="lg"
 				name="radio-btn-betting"
-			></b-form-radio-group>
+			>
+                <b-form-radio v-for="money in xiazhulist" :key="money" :value="money" style="min-width:80px">{{formatedMoney(money)}}</b-form-radio>
+            </b-form-radio-group>
 				<!-- <label role="radio" aria-checked="true" tabindex="0" class="el-radio-button is-active">
 					<input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="10">
 					<span class="el-radio-button__inner">10</span>
@@ -43,12 +44,12 @@
 			></b-form-radio-group>
 			<br >
 			<b-input-group style="margin-top:20px" size="lg">
-				<b-input-group-prepend v-on:click="multiple>1?multiple--:1">
+				<b-input-group-prepend @click="incMultiple($event, -1)">
 					<b-button variant="outline-info">-</b-button>
 				</b-input-group-prepend>
-				<b-form-input v-model.number="multiple"></b-form-input>
+				<b-form-input v-model.number="multiple" number min=1 max=999></b-form-input>
 				<b-input-group-append>
-					<b-button variant="outline-info" v-on:click="multiple<999?multiple++:999">+</b-button>
+					<b-button variant="outline-info" @click="incMultiple($event, 1)">+</b-button>
 				</b-input-group-append>
 			</b-input-group>		
 		</div>
@@ -62,6 +63,7 @@
 </template>
 
 <script>
+import conf from '../conf';
 
 export default {
 	name:'xiazhu',
@@ -80,20 +82,43 @@ export default {
 		color() {
 			if (isNaN(Number(this.bet))) return this.bet;
 			else return 'Blue';
-		}
+        },
+        xiazhulist() {
+            return conf.locale=='in_ID'?[2000, 20000, 200000, 2000000]:[10, 100, 1000, 10000]
+        },
 	},
 	methods:{
+        formatedMoney(money) {
+			if (conf.locale==='in_ID') {
+				if (money>1000) return Math.floor(money/1000)+'k';
+			}
+			return money;
+		},
 		show() {
 			this.$children[0].show();
 		},
 		hide() {
 			this.$children[0].hide();
-		},
+        },
+        incMultiple(e, delta) {
+            var n=Number(this.multiple);
+            if (isNaN(n)) {
+                if (delta<0) n=1;
+                else n=999;
+            } else {
+                n+=delta;
+                if (n<1) n=1;
+                if (n>999) n=999;
+            }
+            this.multiple=n;
+        },
 		makeBet() {
-			var self=this;
+            var self=this;
+            if (this.multiple<1) return alert(this.$i18n.t('At least 1 hand'));
+            if (this.multiple>999) return alert(this.$i18n.t('Maximum is 999 hands'));
 			window.socket.emit('betting', {select:this.bet, money:this.betting*(this.multiple||1)}, function(err, contract) {
 				if (err) {
-					alert(this.$i18n.t(err));
+					alert(self.$i18n.t(err));
 					self.hide();
 					return;
 				}

@@ -117,7 +117,6 @@
 </template>
 
 <script>
-import RDA from './RDA.vue'
 import forgot from './forgot.vue'
 import { validationMixin } from "vuelidate";
 import { required, numeric, minLength, sameAs } from "vuelidate/lib/validators";
@@ -180,7 +179,7 @@ export default {
 	name:'signup',
 	mixins: [validationMixin],
 	components:{
-		RDA, forgot,VFacebookLogin, GoogleLogin,BIconstack, BIconPersonFill, BIconCircle
+		RDA:()=>import('./RDA.vue'), forgot,VFacebookLogin, GoogleLogin,BIconstack, BIconPersonFill, BIconCircle
 	},
 	data(){
 		return {
