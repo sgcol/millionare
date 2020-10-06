@@ -127,7 +127,7 @@ export default {
             var self=this;
             if (this.multiple<1) return alert(this.$i18n.t('At least 1 hand'));
             if (this.multiple>999) return alert(this.$i18n.t('Maximum is 999 hands'));
-            if (!this.betting || this.xiazhulist.indexOf(this.bettig)<0) this.betting=this.xiazhulist[0];
+            if (!this.betting || this.xiazhulist.indexOf(this.betting)<0) this.betting=this.xiazhulist[0];
             var money=this.betting*(this.multiple||1);
             if (money>this.me.balance) {
                 alert(this.$i18n.t('Insuffient balance, please recharge first'));
