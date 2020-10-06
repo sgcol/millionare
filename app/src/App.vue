@@ -182,7 +182,7 @@ export default {
 					ret+='<b class="Red"></b>';
 					break;
 				case 0:
-					ret+='<b class="Violet"></b><b class="Red"></b>';
+					ret+='</b><b class="Red"></b><b class="Violet">';
 					break;
 				case 5:
 					ret+='<b class="Green"></b><b class="Violet"></b>';

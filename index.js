@@ -568,26 +568,36 @@ getDB(async (err, db, dbm)=>{
 				cb('Can not withdraw before login');
 				return console.error('withdraw before login');	
 			}
+			const session=db.mongoClient.startSession(),
+			opt={
+				readPreference: 'secondaryPreferred',
+				readConcern: { level: 'majority' },
+				writeConcern: { w: 'majority' }
+			};
 			try {
 				var dbuser=await db.users.findOne({phone:socket.user.phone});
 				if (!dbuser) throw('no such user');
 				var bankinfo={...withdrawOrder};
 				delete bankinfo.amount;
-				var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, balance:{$gte:withdrawOrder.amount}}, {$inc:{balance:-withdrawOrder.amount}, $set:{bankinfo}}, {w:'majority'});
-				dbuser=dedecimal(value);
-				if (!dbuser) throw 'not enough balance';
 				var id=new ObjectId();
-				var withdraw={_id:id, time:new Date(), phone:socket.user.phone, snapshot:{balance:dbuser.balance, ...withdrawOrder}};
-				db.withdraw.insertOne(withdraw);
+				await session.withTransaction(async ()=>{
+					var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, balance:{$gte:withdrawOrder.amount}}, {$inc:{balance:-withdrawOrder.amount}, $set:{bankinfo}}, {session});
+					dbuser=dedecimal(value);
+					if (!dbuser) throw 'not enough balance';
+					var withdraw={_id:id, time:new Date(), phone:socket.user.phone, snapshot:{balance:dbuser.balance, ...withdrawOrder}};
+					await db.withdraw.insertOne(withdraw, {session});
+				}, opt);
 				var tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
 				db.withdraw.updateOne({_id:id}, {$set:{luckyshopee_tradeno:tradeno}});
-				socket.emit('statechanged', {user:{balance:dbuser.balance-withdrawOrder.amount}});
+				socket.emit('statechanged', {user:{balance:(dbuser.balance||0)-withdrawOrder.amount}});
 				cb();
 			} 
 			catch(e) {
-				db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}});
+				// db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}});
 				debugout(e);
 				return cb(e)
+			}finally{
+				await session.endSession();
 			}
 		})
 		// admin tools

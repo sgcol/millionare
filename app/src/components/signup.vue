@@ -117,13 +117,10 @@
 </template>
 
 <script>
-import forgot from './forgot.vue'
 import { validationMixin } from "vuelidate";
 import { required, numeric, minLength, sameAs } from "vuelidate/lib/validators";
 import {openLink} from "../client.js"
 import md5 from 'md5'
-import VFacebookLogin from 'vue-facebook-login-component'
-import GoogleLogin from 'vue-google-login';
 import {BIconstack, BIconPersonFill, BIconCircle} from 'bootstrap-vue'
 import conf from '../conf'
 
@@ -150,28 +147,28 @@ const docCookies = {
 		}
 	}
 	document.cookie = encodeURIComponent(sKey) + "=" + encodeURIComponent(sValue) + sExpires + (sDomain ? "; domain=" + sDomain : "") + (sPath ? "; path=" + sPath : "") + (bSecure ? "; secure" : "");
-	return true;
+		return true;
 	},
 	removeItem: function (sKey, sPath, sDomain) {
-	if (!sKey || !this.hasItem(sKey)) { return false; }
-	document.cookie = encodeURIComponent(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + ( sDomain ? "; domain=" + sDomain : "") + ( sPath ? "; path=" + sPath : "");
-	return true;
+		if (!sKey || !this.hasItem(sKey)) { return false; }
+		document.cookie = encodeURIComponent(sKey) + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT" + ( sDomain ? "; domain=" + sDomain : "") + ( sPath ? "; path=" + sPath : "");
+		return true;
 	},
 	hasItem: function (sKey) {
-	return (new RegExp("(?:^|;\\s*)" + encodeURIComponent(sKey).replace(/[-.+*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
+		return (new RegExp("(?:^|;\\s*)" + encodeURIComponent(sKey).replace(/[-.+*]/g, "\\$&") + "\\s*\\=")).test(document.cookie);
 	},
 	keys: /* optional method: you can safely remove it! */ function () {
 		// eslint-disable-next-line
-	var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
-	for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = decodeURIComponent(aKeys[nIdx]); }
-	return aKeys;
+		var aKeys = document.cookie.replace(/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "").split(/\s*(?:\=[^;]*)?;\s*/);
+		for (var nIdx = 0; nIdx < aKeys.length; nIdx++) { aKeys[nIdx] = decodeURIComponent(aKeys[nIdx]); }
+		return aKeys;
 	}
 };
 
 function uuidv4() {
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-	var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-	return v.toString(16);
+		var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+		return v.toString(16);
 	});
 }
 
@@ -179,7 +176,11 @@ export default {
 	name:'signup',
 	mixins: [validationMixin],
 	components:{
-		RDA:()=>import('./RDA.vue'), forgot,VFacebookLogin, GoogleLogin,BIconstack, BIconPersonFill, BIconCircle
+		RDA:()=>import('./RDA.vue'), 
+		forgot:()=>import('./forgot.vue'),
+		VFacebookLogin:()=>import('vue-facebook-login-component'), 
+		GoogleLogin:()=>import('vue-google-login'),
+		BIconstack, BIconPersonFill, BIconCircle
 	},
 	data(){
 		return {
