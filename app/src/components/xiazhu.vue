@@ -1,4 +1,5 @@
 <template>
+<div>
 <b-modal ref="modal1" id='modal-betting' size="xl" :hide-header="true" :hide-footer="true">
 	<section class="el-drawer__body">
 		<div class="drawer-top">
@@ -60,10 +61,14 @@
 		</div>
 	</section>
 </b-modal>
+<mymenu ref="mymenu"></mymenu>
+</div>
 </template>
 
 <script>
 import conf from '../conf';
+import mymenu from './mymenu.vue'
+import { mapState } from 'vuex'
 
 export default {
 	name:'xiazhu',
@@ -73,7 +78,10 @@ export default {
 			betting:null,
 			multiple:1
 		}
-	},
+    },
+    components:{
+		mymenu
+    },
 	computed:{
 		title() {
 			if (isNaN(Number(this.bet))) return this.$i18n.t('Join')+' '+this.$i18n.t(this.bet);
@@ -86,6 +94,9 @@ export default {
         xiazhulist() {
             return conf.locale=='in_ID'?[2000, 20000, 200000, 2000000]:[10, 100, 1000, 10000]
         },
+		...mapState({
+			me: state => state.me,
+		}),
 	},
 	methods:{
         formatedMoney(money) {
@@ -117,6 +128,12 @@ export default {
             if (this.multiple<1) return alert(this.$i18n.t('At least 1 hand'));
             if (this.multiple>999) return alert(this.$i18n.t('Maximum is 999 hands'));
             if (!this.betting || this.xiazhulist.indexOf(this.bettig)<0) this.betting=this.xiazhulist[0];
+            var money=this.betting*(this.multiple||1);
+            if (money>this.me.balance) {
+                alert(this.$i18n.t('Insuffient balance, please recharge first'));
+                this.$refs.mymenu.showtopup();
+                return;
+            }
 			window.socket.emit('betting', {select:this.bet, money:this.betting*(this.multiple||1)}, function(err, contract) {
 				if (err) {
 					alert(self.$i18n.t(err));

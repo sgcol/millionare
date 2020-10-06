@@ -42,12 +42,12 @@ export default {
 	},
 	computed:{
 		amountState() {
-			return this.amount<=this.me.balance && this.amount>=500000 && Math.floor(this.amount/1000)*1000==this.amount;
+			return this.amount<=this.me.balance && this.amount>=500000 && Math.floor(this.amount/10000)*10000==this.amount;
 		},
 		amountInvalid() {
 			if (this.amount>this.me.balance) return this.$i18n.t('Not enough balance');
 			if (this.amount<500000) return this.$i18n.t('The amount must be exceeded 500000');
-			if (Math.floor(this.amount/1000)*1000!=this.amount) return this.$i18n.t('The amount must be divisible by 1000')
+			if (Math.floor(this.amount/10000)*10000!=this.amount) return this.$i18n.t('The amount must be divisible by 10000')
 			return '';
 		},
 		ownerState() {
