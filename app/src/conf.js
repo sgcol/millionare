@@ -1,5 +1,6 @@
+
 export default {
     lang:'idn',
-    login: 'social',
+    login: process.env.NODE_ENV=='production'?'social':null,
     locale:'in_ID'
 }

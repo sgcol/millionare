@@ -116,6 +116,7 @@ export default {
             var self=this;
             if (this.multiple<1) return alert(this.$i18n.t('At least 1 hand'));
             if (this.multiple>999) return alert(this.$i18n.t('Maximum is 999 hands'));
+            if (!this.betting || this.xiazhulist.indexOf(this.bettig)<0) this.betting=this.xiazhulist[0];
 			window.socket.emit('betting', {select:this.bet, money:this.betting*(this.multiple||1)}, function(err, contract) {
 				if (err) {
 					alert(self.$i18n.t(err));
