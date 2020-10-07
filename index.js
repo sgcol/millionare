@@ -12,7 +12,7 @@ var server = require('http').createServer()
 	, md5=require('md5')
 	, getDB=require('./db.js')
 	, ObjectId =require('mongodb').ObjectId
-	, {dedecimal, decimalfy, ID} =require('./etc.js')
+	, {dec2num, dedecimal, decimalfy, ID} =require('./etc.js')
 	, rndstring=require('randomstring').generate
 	, {sendSms, createOrder, createWithdraw, createIdrWithdraw, chgSettings} =require('./luckyshopee.js')
 	, argv=require('yargs')
@@ -27,7 +27,15 @@ require('colors');
 
 var {router, chgSettings}=require('./luckyshopee');
 
-app.use(express.static(path.join(__dirname, 'app/dist'), {maxAge:7*24*3600*1000, index: 'index.html' }));
+app.use(express.static(path.join(__dirname, 'app/dist'), 
+	{
+		maxAge:7*24*3600*1000, 
+		index: 'index.html',
+		setHeaders:(res, fn)=>{
+			if (path.extname(fn)=='.html') res.setHeader('Cache-Control', 'public, max-age=0');
+		},
+	}
+));
 if (argv.debugout) {
     app.use(function(req, res, next) {
         debugout('access', req.url, {...req.query, ...req.body});
@@ -103,7 +111,6 @@ const onlineUsers=(function() {
 })();
 
 function Game(settings, db) {
-	var feeRate=settings.feeRate, withdrawFee=settings.withdrawFee;
 	var status='not_running', countdown, starttime, endtime, period;
 	var today, setno=0;
 	var contracts=[];
@@ -257,7 +264,7 @@ function Game(settings, db) {
 			if (!dbuser) return cb('can not manipulate user data right now');
 			if (dbuser.balance<money) return cb('no enough balance');
 			await db.users.updateOne({phone:user.phone}, {$set:decimalfy({locked:false, balance:dbuser.balance-money})}, {w:'majority'});
-			var fee=Math.floor(money*feeRate*100)/100;
+			var fee=Math.floor(money*settings.feeRate*100)/100;
 			var contract={_id:new ObjectId(), time:new Date(), user:user.phone, money:money-fee, fee:fee, betting:money, select:select, game:{status, period, starttime, endtime, setno}};
 			db.contracts.insertOne(contract);
 			contracts.push(contract);
@@ -303,8 +310,9 @@ getDB(async (err, db, dbm)=>{
 
 	var settings= await db.settings.findOne();
 	if (!settings) settings={};
-	settings.feeRate=settings.feeRate||0.02
-	var withdrawFee=settings.withdrawFee=settings.withdrawFee||0.05;
+	settings.feeRate=settings.feeRate||0.02;
+	settings.withdrawPercent=settings.withdrawPercent||0;
+	settings.withdrawFixed=settings.withdrawFixed||100000;
 	const game=Game(settings, db);
 	game.start();
 
@@ -366,7 +374,7 @@ getDB(async (err, db, dbm)=>{
 			} else tokenData.expired=new Date()+24*60*60*1000;
 
 			cb(null, tokenData.t);
-			var content={user:dedecimal({_id:dbuser._id, balance:dbuser.balance, paytm_id:dbuser.paytm_id}), ...game.snapshot(pack.phone)};
+			var content={user:dedecimal({_id:dbuser._id, phone:pack.phone, balance:dbuser.balance, paytm_id:dbuser.paytm_id}), ...game.snapshot(pack.phone)};
 			socket.emit('statechanged', content);
 		})
 		.on('adminexists', async (cb)=>{
@@ -446,8 +454,14 @@ getDB(async (err, db, dbm)=>{
 					socket.user=new User(socket, dbuser);
 					onlineUsers.add(socket.user);
 				}
-				cb(null);
-				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`https://graph.facebook.com/${res.id}/picture?type=album`}), ...game.snapshot(res.id)});
+				
+				var tokenData=tokens[dbuser.phone];
+				if (!tokenData) {
+					tokenData=tokens[dbuser.phone]={expired:new Date()+24*60*60*1000, t:ID()}
+				} else tokenData.expired=new Date()+24*60*60*1000;
+
+				cb(null, tokenData.t, dbser.phone);
+				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, phone:res.id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`https://graph.facebook.com/${res.id}/picture?type=album`}), ...game.snapshot(res.id)});
 			});
 		})
 		.on('google_login', async (id_token, cb)=>{
@@ -481,8 +495,14 @@ getDB(async (err, db, dbm)=>{
 					socket.user=new User(socket, dbuser);
 					onlineUsers.add(socket.user);
 				}
-				cb(null);
-				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:icon}), ...game.snapshot(userid)});
+
+				var tokenData=tokens[dbuser.phone];
+				if (!tokenData) {
+					tokenData=tokens[dbuser.phone]={expired:new Date()+24*60*60*1000, t:ID()}
+				} else tokenData.expired=new Date()+24*60*60*1000;
+
+				cb(null, tokenData.t, dbser.phone);
+				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, phone:userid, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:icon}), ...game.snapshot(userid)});
 			} catch(e) {
 				debugout(e);
 				cb(e);
@@ -540,7 +560,7 @@ getDB(async (err, db, dbm)=>{
 				var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, locked:{$ne:true}, balance:{$gte:money}}, {$set:{locked:true}}, {w:'majority'});
 				var dbuser=dedecimal(value);
 				if (!dbuser) return cb('can not manipulate user data right now');
-				var fee=Math.floor(money*withdrawFee*100)/100;
+				var fee=Math.floor(money*settings.withdrawPercent*100)/100+settings.withdrawFixed;
 				var id=new ObjectId();
 				var tradeno=await createWithdraw(id.toHexString(), money-fee, dbuser.paytm_id, req);
 				await db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}, $inc:{balance:-money}});
@@ -579,17 +599,21 @@ getDB(async (err, db, dbm)=>{
 				if (!dbuser) throw('no such user');
 				var bankinfo={...withdrawOrder};
 				delete bankinfo.amount;
+				var money=withdrawOrder.amount;
+				var fee=Math.floor(money*settings.withdrawPercent*100)/100+settings.withdrawFixed;
+
 				var id=new ObjectId();
 				await session.withTransaction(async ()=>{
 					var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, balance:{$gte:withdrawOrder.amount}}, {$inc:{balance:-withdrawOrder.amount}, $set:{bankinfo}}, {session});
 					dbuser=dedecimal(value);
 					if (!dbuser) throw 'not enough balance';
-					var withdraw={_id:id, time:new Date(), phone:socket.user.phone, snapshot:{balance:dbuser.balance, ...withdrawOrder}};
+					var withdraw={_id:id, time:new Date(), phone:socket.user.phone, snapshot:{balance:dbuser.balance, ...withdrawOrder, fee}};
 					await db.withdraw.insertOne(withdraw, {session});
 				}, opt);
+				withdrawOrder.amount-=fee;
 				var tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
 				db.withdraw.updateOne({_id:id}, {$set:{luckyshopee_tradeno:tradeno}});
-				socket.emit('statechanged', {user:{balance:(dbuser.balance||0)-withdrawOrder.amount}});
+				socket.emit('statechanged', {user:{balance:(dbuser.balance||0)-money}});
 				cb();
 			} 
 			catch(e) {
@@ -599,6 +623,23 @@ getDB(async (err, db, dbm)=>{
 			}finally{
 				await session.endSession();
 			}
+		})
+		.on('dailywithdraw', async (timezone, cb)=>{
+			if (socket.user==null) {
+				cb('Can not withdraw before login');
+				return console.error('withdraw before login');	
+			}
+			var today=new Date();
+			var strToday=''+today.getFullYear().pad(4)+(today.getMonth()+1).pad(2)+today.getDate().pad(2);
+			var [userTotal]=await db.withdraw.aggregate([
+				{$addToData:{dot:{$dateToString:{date:'$time', format:'%Y%m%d', timezone:'+07'}}}},
+				{$match:{dot:strToday, phone:socket.user.phone, luckyshopee_tradeno:{$ne:null}}}, 
+				{$group:{
+					_id:'1', 
+					total:{$sum:'$snapshot.amount'}
+				}}
+			]).toArray();
+			cb(null, dec2num(userTotal.total));
 		})
 		// admin tools
 		.on('getsettings', (cb)=>{

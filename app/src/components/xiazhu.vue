@@ -130,7 +130,7 @@ export default {
             if (!this.betting || this.xiazhulist.indexOf(this.betting)<0) this.betting=this.xiazhulist[0];
             var money=this.betting*(this.multiple||1);
             if (money>this.me.balance) {
-                alert(this.$i18n.t('Insuffient balance, please recharge first'));
+                alert(this.$i18n.t('Insufficent funds, please recharge first'));
                 this.$refs.mymenu.showtopup();
                 return;
             }

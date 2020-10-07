@@ -19,9 +19,9 @@
 		<b-form-group :label="$t('Account No.')" :state="accountNoState" :invalid-feedback="$t('Please enter your account number')">
 			<b-form-input v-model="accountNo" :data="banklist" :state="accountNoState"></b-form-input>
 		</b-form-group>
-		<p>Nominal harus lebih dari Rp 500.000，</p>
-		<p>Pengambilan cash max Rp 6.000.000 perhari</p>
-		<p>Nominal yang dimasukkan harus kelipatan dari Rp 10.000</p>
+		<p>{{$t('The denomination should exceed Rp 500,000')}}</p>
+		<p>{{$t('The maximum withdrawal amount per day is Rp 6,000,000')}}</p>
+		<p>{{$t('Input must be a multiple of Rp 10.000')}}</p>
 		<b-button type="submit" variant="primary" block @click="idr_withdraw">{{$t('Withdraw')}}</b-button>
 	</b-form>
 </template>
@@ -31,24 +31,44 @@ import Vue from 'vue'
 import { mapState } from 'vuex'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import {openLink} from '../client'
+import AsyncComputed from 'vue-async-computed'
+
+Vue.use(AsyncComputed)
 
 // Global registration
 Vue.component('vue-bootstrap-typeahead', VueBootstrapTypeahead)
+
+function currentTimezone() {
+	var tz=new Date().getTimezoneOffset(), hh=Math.floor(tz/60), mm=tz-hh*60;
+	if (hh>=0) return '-'+('00'+hh).slice(-2)+':'+('00'+mm).slice(-2);
+	else return '+'+('00'+(-hh)).slice(-2)+':'+('00'+mm).slice(-2);
+}
 
 export default {
 	name:'WithdrawIdr',
 	components:{
 		VueBootstrapTypeahead,
 	},
-	computed:{
+	asyncComputed :{
 		amountState() {
-			return this.amount<=this.me.balance && this.amount>=500000 && Math.floor(this.amount/10000)*10000==this.amount;
+			var self=this;
+			return new Promise((resolve, reject)=>{
+				var preChk=self.amount<=self.me.balance && self.amount>=500000 && Math.floor(self.amount/10000)*10000==self.amount;
+				if (!preChk) return resolve(preChk);
+				var sock=openLink();
+				sock.emit('dailywithdraw', currentTimezone(), (err, total)=>{
+					if (err) return reject(err);
+					return resolve((self.amount+total)<=6000000)
+				})
+			})
 		},
+	},
+	computed:{
 		amountInvalid() {
 			if (this.amount>this.me.balance) return this.$i18n.t('Not enough balance');
 			if (this.amount<500000) return this.$i18n.t('The amount must be exceeded 500000');
-			if (Math.floor(this.amount/10000)*10000!=this.amount) return this.$i18n.t('The amount must be divisible by 10000')
-			return '';
+			if (Math.floor(this.amount/10000)*10000!=this.amount) return this.$i18n.t('The amount must be divisible by 10000');
+			return this.$i18n.t('The maximum withdrawal amount per day is Rp 6,000,000');
 		},
 		ownerState() {
 			return this.accountName.length>0;

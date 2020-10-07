@@ -2,9 +2,9 @@
 	<div>
 		<b-modal ref="menu" hide-header hide-footer>
 			<form>
-				<b-button variant="outline-primary" block v-b-modal.topup>{{$t('Top up')}}</b-button>
-				<b-button variant="outline-primary" block v-b-modal.withdraw>{{$t('Withdraw')}}</b-button>
-				<b-button variant="outline-primary" block v-b-modal.lang>{{$t('Language')}}</b-button>
+				<b-button variant="outline-primary" block @click="showtopup">{{$t('Top up')}}</b-button>
+				<b-button variant="outline-primary" block @click="showwithdraw">{{$t('Withdraw')}}</b-button>
+				<b-button variant="outline-primary" block @click="showlang">{{$t('Language')}}</b-button>
 				<b-button variant="outline-primary" block @click="showRule">{{$t('Rules')}}</b-button>
 				<b-button variant="outline-primary" block v-if="fb.connected" @click="signoutfromfb">{{$t('Logout from Facebook')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="signout" v-else>{{$t('Sign out')}}</b-button>
@@ -68,7 +68,7 @@
 				</b-form-group>
 			</b-form>
 		</b-modal>
-		<b-modal id="lang" :title="$t('Language')" ok-only>
+		<b-modal ref="lang" id="lang" :title="$t('Language')" ok-only>
 			<b-form>
 				<b-form-group :label="$t('Choose your language')">
 					<b-form-radio-group
@@ -158,20 +158,15 @@ var vueSettings= {
 		showtopup() {
 			this.$refs.topup.show();
 		},
+		showwithdraw() {
+			this.$refs.withdraw.show();
+		},
+		showlang() {
+			this.$refs.lang.show();
+		},
 		signoutfromfb() {
 			this.fb.logout();
-			this.hide();
-			this.$store.commit('setMe', {
-				balance:null,
-				_id:null,
-				paytm_id:null,
-				name:null,
-				icon:null
-			})
-			openLink((socket)=>{
-				socket.close();
-				eventBus.$emit('relogin');
-			})
+			this.signout();
 		},
 		signout() {
 			this.hide();
@@ -185,6 +180,7 @@ var vueSettings= {
 			openLink((socket)=>{
 				socket.close();
 				docCookies.removeItem('token');
+				docCookies.removeItem('phone');
 				eventBus.$emit('relogin');
 			})
 		},

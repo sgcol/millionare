@@ -21,6 +21,7 @@ Vue.config.productionTip = false
 const store =new Vuex.Store({
 	state:{
 		me:{
+			phone:null,
 			balance:null,
 			_id:null,
 			paytm_id:null,

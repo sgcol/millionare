@@ -235,8 +235,8 @@ export default {
 						alert(self.$i18n.t('Can not reach the server'));
 					}
 					socket.on('reconnect_failed', errHandler);
-					socket.emit('fb_login', response.authResponse.accessToken, (err)=>{
-						self.handlelogin(err);
+					socket.emit('fb_login', response.authResponse.accessToken, (err, t, phone)=>{
+						self.handlelogin(err, t, phone);
 						socket.off('reconnect_failed', errHandler);
 					})
 				})
@@ -273,11 +273,11 @@ export default {
 			return $dirty ? !$error : null;
 			// return name;
 		},
-		handlelogin(err, token) {
+		handlelogin(err, token, phone) {
 			this.longop=false;
 			if (err) return alert(err);
 			if (token) docCookies.setItem('token', token);
-			if (this.mobile) docCookies.setItem('phone', this.mobile);
+			if (phone||this.mobile) docCookies.setItem('phone', phone||this.mobile);
 			this.hide();
 		},
 		signin(e) {
