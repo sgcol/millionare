@@ -343,8 +343,10 @@ getDB(async (err, db, dbm)=>{
 				var dbuser=await db.users.findOne({phone:pack.phone});
 			} catch(e) {return cb(e.message)}
 			// check password if token was not set
-			if (dbuser.pwd==null) return cb("can not login with password")
-			if (!pack.t && pack.pwd!=dbuser.pwd) return cb('Incorrect password');
+			if (!pack.t) {
+				if (dbuser.pwd==null) return cb("can not login with password")
+				if (pack.pwd!=dbuser.pwd) return cb('Incorrect password');
+			}
 			if (new Date(dbuser.block)>new Date()) {
 				cb('Account has been banned');
 				socket.disconnect(true);
