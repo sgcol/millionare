@@ -460,7 +460,7 @@ getDB(async (err, db, dbm)=>{
 					tokenData=tokens[dbuser.phone]={expired:new Date()+24*60*60*1000, t:ID()}
 				} else tokenData.expired=new Date()+24*60*60*1000;
 
-				cb(null, tokenData.t, dbser.phone);
+				cb(null, tokenData.t, res.id);
 				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, phone:res.id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`https://graph.facebook.com/${res.id}/picture?type=album`}), ...game.snapshot(res.id)});
 			});
 		})
@@ -501,7 +501,7 @@ getDB(async (err, db, dbm)=>{
 					tokenData=tokens[dbuser.phone]={expired:new Date()+24*60*60*1000, t:ID()}
 				} else tokenData.expired=new Date()+24*60*60*1000;
 
-				cb(null, tokenData.t, dbser.phone);
+				cb(null, tokenData.t, dbuser.phone);
 				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, phone:userid, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:icon}), ...game.snapshot(userid)});
 			} catch(e) {
 				debugout(e);
