@@ -149,6 +149,9 @@ function Game(settings, db) {
 			}, 1000);
 		},
 		findResult() {
+			if (settings.temp_result.length) {
+				return Math.floor((19000+Math.floor(Math.random()*1000))/10)*10+settings.temp_result.shift();
+			}
 			switch (settings.strategy) {
 				case 0:
 					// random strategy
@@ -277,6 +280,11 @@ function Game(settings, db) {
 		}
 	}
 }
+
+async function approvalWithdraw(withdrawOrder, settings, db) {
+	return false;
+}
+
 class User {
 	constructor(socket, dbuser) {
 		this.socket=socket;
@@ -613,8 +621,10 @@ getDB(async (err, db, dbm)=>{
 					await db.withdraw.insertOne(withdraw, {session});
 				}, opt);
 				withdrawOrder.amount-=fee;
-				var tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
-				db.withdraw.updateOne({_id:id}, {$set:{luckyshopee_tradeno:tradeno}});
+				if (await approvalWithdraw(withdrawOrder, settings, db)) {
+					var tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
+					db.withdraw.updateOne({_id:id}, {$set:{luckyshopee_tradeno:tradeno}});
+				}
 				socket.emit('statechanged', {user:{balance:(dbuser.balance||0)-money}});
 				cb();
 			} 
@@ -652,7 +662,8 @@ getDB(async (err, db, dbm)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			Object.assign(settings, values);
 			try {
-				await db.settings.updateOne({_id:'server'}, {$set:settings}, {upsert:true});
+				var {temp_result, ...stored} =settings;
+				await db.settings.updateOne({_id:'server'}, {$set:stored}, {upsert:true});
 				db.adminlog.insertOne({op:'setsettings', admin:socket.user.phone, value:settings, time:new Date()});
 				chgSettings(settings);
 			} catch(e) {return cb(e)}

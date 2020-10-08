@@ -22,7 +22,13 @@
 			<p>{{online}}</p>
 		</b-form-group>
 		<b-form-group label="获胜策略">
-			<b-form-radio-group v-model="strategy" :options="[{text:'随机', value:0}, {text:'必胜', value:1}]"></b-form-radio-group>
+			<b-form-radio-group stacked v-model="strategy" :options="[{text:'随机', value:0}, {text:'必胜', value:1}]">
+				<b-form-radio value="2">
+					<b-form-group label="指定结果" label-cols-sm="4" :invalid-feedback="spec_result_error" :state="spec_result_state">
+						<b-form-input v-model="spec_result" @update="strategy=2" placeholder="输入7,8,9，3盘结果分别是7,8,9" :state="spec_result_state"></b-form-input>
+					</b-form-group>
+				</b-form-radio>
+			</b-form-radio-group>
 		</b-form-group>
 		<b-form-group label="下注抽水" >
 			<b-form-input v-model="feeRate" :formatter="feeFormatter"></b-form-input>
@@ -48,6 +54,7 @@ export default {
 		return {
 			online:null,
 			strategy:0,
+			spec_result:null,
 			feeRate:'2%',
 			withdrawFee:'5%',
 			luckyshopee: {
@@ -61,7 +68,33 @@ export default {
 		}
 	},
 	computed:{
+		spec_result_state() {
+			if (this.strategy!=2) return null;
+			if (!this.spec_result) return null;
+			var temp=this.spec_result.split(/[\s,，]+/);
+			for (var i=0; i<temp.length; i++) {
+				var v=temp[i], n=Number(v);
+				if (v===''||v==null) return false;
+				if (isNaN(n)) return false;
+				if (n<0 || n>9) return false;
+			}
+			return true;
+		},
+		spec_result_error() {
+			if (!this.spec_result) return null;
+			var temp=this.spec_result.split(/[\s,，]+/);
+			var last=temp[temp.length-1];
+			if (last=='' || last==null) return '结尾必须是数字';
+			for (var i=0; i<temp.length; i++) {
+				var v=temp[i], n=Number(v);
+				if (v===''||v==null) return `第${i+1}个数字是空的`;
+				if (isNaN(n)) return `第${i+1}个不是数字`;
+				if (n<0 || n>9) return `第${i+1}个数字不在0～9之间`;
+			}
+			return null;
+		},
 		wfState() {
+			if (this.withdrawFee.length==0) return false;
 			var parts=this.withdrawFee.split('%');
 			if (parts.length>2) return false;
 			for (var i=0; i<parts.length; i++) {
@@ -93,8 +126,13 @@ export default {
 				return parts;
 			})();
 			if (!wfs) return;
+			if (strategy==2) {
+				if (!this.spec_result_state) return;
+				strategy=undefined;
+				var temp_result=this.spec_result.split(/[\s,，]+/);
+			}
 			openLink((socket)=>{
-				socket.emit('setsettings', {strategy, feeRate, withdrawPercent:(wfs[0]||0)/100, withdrawFixed:wfs[1]||0, luckyshopee}, (err)=>{
+				socket.emit('setsettings', {strategy, temp_result, feeRate, withdrawPercent:(wfs[0]||0)/100, withdrawFixed:wfs[1]||0, luckyshopee}, (err)=>{
 					if (err) return alert(err);
 					alert('success');
 				})
@@ -113,6 +151,10 @@ export default {
 				if (setting.withdrawFixed) {
 					if (s.length>0) s+='+';
 					s+=setting.withdrawFixed;
+				}
+				if (setting.temp_result && setting.temp_result.length) {
+					setting.spec_result=setting.temp_result.join(',');
+					setting.strategy=2;
 				}
 				setting.withdrawFee=s;
 				setting.feeRate=setting.feeRate*100+'%';

@@ -6,7 +6,7 @@
 				<b-button variant="outline-primary" block @click="showwithdraw">{{$t('Withdraw')}}</b-button>
 				<b-button variant="outline-primary" block @click="showlang">{{$t('Language')}}</b-button>
 				<b-button variant="outline-primary" block @click="showRule">{{$t('Rules')}}</b-button>
-				<b-button variant="outline-primary" block v-if="fb.connected" @click="signoutfromfb">{{$t('Logout from Facebook')}}</b-button>
+				<b-button variant="outline-primary" block v-if="isFBLogined()" @click="signoutfromfb">{{$t('Logout from Facebook')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="signout" v-else>{{$t('Sign out')}}</b-button>
 				<b-button variant="outline-primary" block v-on:click="hide" style="margin-top:40px">{{$t('Close')}}</b-button>
 			</form>
@@ -125,6 +125,9 @@ var vueSettings= {
 		}
 	},
 	methods:{
+		isFBLogined() {
+			return this.fb.connected || docCookies.getItem('fb');
+		},
 		withdrawOrgName() {
 			switch (conf.locale) {
 				case 'in_ID':
@@ -166,6 +169,7 @@ var vueSettings= {
 		},
 		signoutfromfb() {
 			this.fb.logout();
+			docCookies.removeItem('fb');
 			this.signout();
 		},
 		signout() {

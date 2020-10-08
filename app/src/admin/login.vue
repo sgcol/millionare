@@ -3,9 +3,8 @@
 		<b-form-group	id="login-phone">
 			<b-form-input
 				v-model="mobile"
-				type="tel"
 				required
-				placeholder="Phone number"
+				placeholder="User name"
 			></b-form-input>
 		</b-form-group>
 		<b-form-group>
@@ -17,7 +16,7 @@
 			></b-form-input>
 		</b-form-group>
 		<b-form-group v-if="regmode">
-			<b-button type="submit" variant="primary" block @click="reg" v-show="regmode">Sign up</b-button>
+			<b-button type="submit" variant="primary" block @click="reg">Sign up</b-button>
 			<p>首次使用，请注册管理员账号，一旦注册不可更改</p>
 		</b-form-group>
 		<b-button type="submit" variant="primary" block @click="dologin" v-else>Sign in</b-button>
