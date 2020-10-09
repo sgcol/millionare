@@ -149,7 +149,7 @@ function Game(settings, db) {
 			}, 1000);
 		},
 		findResult() {
-			if (settings.temp_result.length) {
+			if (Array.isArray(settings.temp_result) && settings.temp_result.length) {
 				return Math.floor((19000+Math.floor(Math.random()*1000))/10)*10+settings.temp_result.shift();
 			}
 			switch (settings.strategy) {
@@ -282,7 +282,7 @@ function Game(settings, db) {
 }
 
 async function approvalWithdraw(withdrawOrder, settings, db) {
-	return false;
+	return null;
 }
 
 class User {
@@ -621,10 +621,11 @@ getDB(async (err, db, dbm)=>{
 					await db.withdraw.insertOne(withdraw, {session});
 				}, opt);
 				withdrawOrder.amount-=fee;
-				if (await approvalWithdraw(withdrawOrder, settings, db)) {
-					var tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
-					db.withdraw.updateOne({_id:id}, {$set:{luckyshopee_tradeno:tradeno}});
+				var refuse=await approvalWithdraw(withdrawOrder, settings, db), tradeno;
+				if (!refuse) {
+					tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
 				}
+				db.withdraw.updateOne({_id:id}, {$set:{stat:refuse,luckyshopee_tradeno:tradeno}});
 				socket.emit('statechanged', {user:{balance:(dbuser.balance||0)-money}});
 				cb();
 			} 
@@ -742,6 +743,21 @@ getDB(async (err, db, dbm)=>{
 				ud.socket && ud.socket.disconnect(true);
 			}
 			cb(null);
+		})
+		.on('withdrawlist', async(cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			try {
+				var data=await db.withdraw.find({luckyshopee_tradeno:null}).toArray();
+				return cb(null, dedecimal(data));
+			}catch(e) {return cb(e)}
+		})
+		.on('admin-approve-withdraw', async(id, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			try {
+				var tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
+				db.withdraw.updateOne({_id:id}, {$set:{luckyshopee_tradeno:tradeno}});
+				return cb();
+			} catch(e) {cb(e)}
 		})
 		.on('error', console.error)
 		.on('disconnect', function() {

@@ -2,6 +2,7 @@ import VueRouter from 'vue-router'
 
 import serverlet from './serverlet.vue'
 import userMoney from './userMoney'
+import approveWithdraw from './approve-withdraw'
 import login from './login.vue'
 import auth from './auth'
 
@@ -21,6 +22,7 @@ export const router=new VueRouter({
         {path:'/', component:serverlet, beforeEnter:requireAuth},
         {path:'/serverlet',component:serverlet, beforeEnter:requireAuth},
         {path:'/userMoney',component:userMoney, beforeEnter:requireAuth},
+        {path:'/approve', component:approveWithdraw, beforeEnter:requireAuth},
         {path:'/login', component:login},
         { path: '/logout',
           beforeEnter (to, from, next) {

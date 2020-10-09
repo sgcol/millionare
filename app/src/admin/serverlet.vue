@@ -1,7 +1,7 @@
 <template>
 <b-form>
 <b-tabs>
-	<b-tab title="luckyshopee配置">
+	<b-tab title="支付配置">
 		<b>必须配置以下参数，否则充值提现都是测试版本</b>
 		<p></p>
 		<label>下单接口</label>
@@ -37,6 +37,8 @@
 			<b-form-input v-model="withdrawFee" :state="wfState"></b-form-input>
 		</b-form-group>
 	</b-tab>
+	<b-tab title="提款配置"></b-tab>
+	<b-tab title="审核提款"><approve-withdraw /></b-tab>
 </b-tabs>
 <b-button block v-on:click="submit" variant="info">Submit</b-button>
 </b-form>
@@ -45,11 +47,15 @@
 <script>
 import {openLink} from '../client.js'
 import auth from './auth'
+import approveWithdraw from './approve-withdraw'
 
 const stdret=auth.stdret;
 
 export default {
 	name:'serverlet',
+	components:{
+		approveWithdraw,
+	},
 	data() {
 		return {
 			online:null,
