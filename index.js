@@ -645,14 +645,14 @@ getDB(async (err, db, dbm)=>{
 			var today=new Date();
 			var strToday=''+today.getFullYear().pad(4)+(today.getMonth()+1).pad(2)+today.getDate().pad(2);
 			var [userTotal]=await db.withdraw.aggregate([
-				{$addToData:{dot:{$dateToString:{date:'$time', format:'%Y%m%d', timezone:'+07'}}}},
+				{$addFields:{dot:{$dateToString:{date:'$time', format:'%Y%m%d', timezone:'+07'}}}},
 				{$match:{dot:strToday, phone:socket.user.phone, luckyshopee_tradeno:{$ne:null}}}, 
 				{$group:{
 					_id:'1', 
 					total:{$sum:'$snapshot.amount'}
 				}}
 			]).toArray();
-			cb(null, dec2num(userTotal.total));
+			cb(null, userTotal?dec2num(userTotal.total):0);
 		})
 		// admin tools
 		.on('getsettings', (cb)=>{
