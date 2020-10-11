@@ -30,6 +30,7 @@ module.exports={
     "Open Time":"Dibuka pada :",
     "Fee":"Biaya",
     "Amount":"Jumlah",
+    "Select Amount:":"Pilih Jumlah:",
     "no records":"Catatan kosong",
     
     "Waiting":"Menunggu",

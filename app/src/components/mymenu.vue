@@ -22,7 +22,7 @@
 					</b-col>
 				</b-row>
 			</form>
-			<b-form-group label="Select amount:" style="margin-top:12px">
+			<b-form-group :label="$t('Select amount:')" style="margin-top:12px">
 				<b-form-radio-group class="pricelist" buttons button-variant="outline-primary" v-model="amount" name="select_amount" style="display:inline">
 					<b-form-radio v-for="money in [50000, 200000, 500000]" :key="money" :value="money">{{formatedMoney(money)}}</b-form-radio>
 					<b-form-radio v-for="money in [1000000, 2000000, 5000000]" :key="money" :value="money">{{formatedMoney(money)}}</b-form-radio>
