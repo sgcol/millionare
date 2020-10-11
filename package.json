@@ -25,6 +25,8 @@
     "gy-easy-mongo": "^0.5.1",
     "httpf": "0.0.9",
     "md5": "^2.2.1",
+    "node-fetch": "^2.6.1",
+    "node-gzip": "^1.1.2",
     "randomstring": "^1.1.5",
     "request": "^2.88.2",
     "socket.io": "^2.3.0",

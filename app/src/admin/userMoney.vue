@@ -144,6 +144,11 @@ export default {
 				socket.emit('modifybalance', phone, delta, stdret((err, chg)=>{
 					if (err) return alert(err);
 					self.manipulatedata(chg);
+					// for talkingdata
+					window.TDGA.Account({
+						accountId : phone,
+					});
+					window.TDGA.onReward(delta, '管理员操作');
 				}))
 			})
 		},

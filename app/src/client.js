@@ -88,6 +88,11 @@ export function openLink(next) {
 				for (var key in u) {
 					state.me[key]=u[key];
 				}
+				window.TDGA.Account({
+					accountId : state.me.phone,
+					accountName : state.me.name,
+					gender : -1
+				});
 				// if (u._id) state.me._id=u._id;
 				// if (u.balance) state.me.balance=u.balance;
 				// if (u.paytm_id) state.me.paytm_id=u.paytm_id;
@@ -109,6 +114,10 @@ export function openLink(next) {
 				var x=c;
 				x.game.price=data.history.price;
 				state.orders.splice(i, 1, x);
+				var win=dealResult(x);
+				if (win) {
+					window.TDGA.onReward(win, `投注${x.select}获胜`)
+				}
 			}
 		});
 		socket.on('incbalance', (delta)=>{
@@ -140,4 +149,45 @@ export function openLink(next) {
 
 	if (typeof next=='function') next(socket);
 	return socket;
+}
+
+function getResult(p) {
+	p=String(p);
+	return Number(p.substr(p.length-1, 1))
+}
+
+function dealResult(item) {
+	var game_number=getResult(item.game.price);
+	var win;
+	if (item.select=='Green') {
+		if (game_number%2==1) {
+			// item.status='WIN';
+			if (game_number==5) win=1.5*(item.betting-item.fee);
+			else win=2*(item.betting-item.fee);
+			return win;
+		}
+	}
+	if (item.select=='Red') {
+		if (game_number%2==0) {
+			// item.status='WIN';
+			if (game_number==0) win=1.5*(item.betting-item.fee);
+			else win=2*(item.betting-item.fee);
+			return win;
+		}
+	}
+	if (item.select=='Violet') {
+		if (game_number==0 || game_number==5) {
+			// item.status='WIN';
+			win=4.5*(item.betting-item.fee);
+			return win;
+		}
+	}
+	if (item.select==game_number) {
+		// item.status="WIN";
+		win=9*(item.betting-item.fee);
+		return win;
+	}
+	// item.status='LOSE';
+	// item.amount=-item.betting;
+	return 0;
 }

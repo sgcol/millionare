@@ -37,8 +37,8 @@
 			<b-form-input v-model="withdrawFee" :state="wfState"></b-form-input>
 		</b-form-group>
 	</b-tab>
-	<b-tab title="提款配置"></b-tab>
-	<b-tab title="审核提款"><approve-withdraw /></b-tab>
+	<!-- <b-tab title="提款配置"></b-tab>
+	<b-tab title="审核提款"><approve-withdraw /></b-tab> -->
 </b-tabs>
 <b-button block v-on:click="submit" variant="info">Submit</b-button>
 </b-form>

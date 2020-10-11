@@ -1,5 +1,7 @@
 var server = require('http').createServer()
-	, url = require('url')
+	, fetch=require('node-fetch')
+	, {gzip} =require('node-gzip')
+	// , url = require('url')
 	, path = require('path')
 	// , WebSocketServer = require('ws').Server
 	// , wss = new WebSocketServer({ server: server })
@@ -8,7 +10,7 @@ var server = require('http').createServer()
 	, app = express()
 	// , compression = require('compression')
 	// , bodyParser = require('body-parser')
-	, qs = require('querystring')
+	// , qs = require('querystring')
 	, md5=require('md5')
 	, getDB=require('./db.js')
 	, ObjectId =require('mongodb').ObjectId
@@ -19,11 +21,13 @@ var server = require('http').createServer()
 		.default('port', 7008)
 		.argv
 	, debugout =require('debugout')(argv.debugout)
-	, {FB, FacebookApiException} = require('fb')
+	, {FB} = require('fb')
 	, {OAuth2Client} = require('google-auth-library')
 	, gooclient = new OAuth2Client('647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com')
 
 require('colors');
+
+const timezone='+07';
 
 var {router, chgSettings}=require('./luckyshopee');
 
@@ -53,6 +57,32 @@ if (argv.fbaccess) {
 
 server.on('request', app);
 server.listen(argv.port, function () { console.log(`Listening on ${server.address().port}`.green) });
+
+async function confirmOrder(orderid, money, cb) {
+	cb=cb || function (err, r) {
+		if (err) throw err;
+		return r;
+	};
+	var db=await getDB();
+	try {
+		var {value}=await db.bills.findOneAndUpdate({_id:ObjectId(orderid), used:{$ne:true}}, {$set:{used:true, confirmedAmount:money, lastTime:new Date()}}, {w:'majority'});
+		if (!value) throw 'no such orderid or order is processing';
+		value=dedecimal(value);
+		await db.users.updateOne({phone:value.phone}, {$inc:decimalfy({balance:money, recharge:money})}, {w:'majority'});
+		var user=onlineUsers.get(value.phone);
+		if (user) {
+			user.socket.emit('incbalance', money);
+		}
+		orderid=value._id.toHexString();
+		fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
+			method:'post',
+			body:await gzip(JSON.stringify([{msgID:orderid, status:'success', /*OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'CNY', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime()*/}])),
+			headers: { 'Content-Type': 'application/json' },
+		});
+		return cb();
+	} catch(e) {return cb(e)}
+}
+exports.confirmOrder=confirmOrder;
 
 const default_user={balance:0};
 
@@ -248,7 +278,7 @@ function Game(settings, db) {
 			}
 			var dbop=[];
 			for (var u in userwins) {
-				dbop.push({updateOne:{filter:{phone:u}, update:{$inc:decimalfy({balance:userwins[u].balance})}}});
+				dbop.push({updateOne:{filter:{phone:u}, update:{$inc:decimalfy({balance:userwins[u].balance, win:userwins[u].balance})}}});
 				var onlineu=onlineUsers.get(u);
 				if (onlineu) onlineu.socket.emit('incbalance', userwins[u].balance);
 			}
@@ -259,30 +289,57 @@ function Game(settings, db) {
 			if (status!='running') return cb('Betting is not allowed at this time');
 			if (money<=0) return cb('Illegal operation');
 			try {
-				var {value}=await db.users.findOneAndUpdate({phone:user.phone, locked:{$ne:true}}, {$set:{locked:true}}, {w:'majority'});
+				var dbuser=await db.users.findOne({phone:user.phone});
+				if (!dbuser) throw('no such user');
+				var inc=decimalfy({balance:-money, bet:money});
+
+				var {value}=await db.users.findOneAndUpdate({phone:user.phone, balance:{$gte:money}}, {$inc:inc}, {w:'majority'});
+				dbuser=dedecimal(value);
+				if (!dbuser) throw 'not enough balance';
+				var fee=Math.floor(money*settings.feeRate*100)/100;
+				var contract={_id:new ObjectId(), time:new Date(), user:user.phone, money:money-fee, fee:fee, betting:money, select:select, game:{status, period, starttime, endtime, setno}};
+				db.contracts.insertOne(contract);
+				contracts.push(contract);
+				cb(null, 
+					{
+						select:contract.select, fee:contract.fee, betting:money,
+						time:contract.time, game:{period:contract.game.period, endtime:contract.game.endtime}
+					}
+				);
 			} catch(e) {
 				return cb(e);
 			}
-			var dbuser=dedecimal(value);
-			if (!dbuser) return cb('can not manipulate user data right now');
-			if (dbuser.balance<money) return cb('no enough balance');
-			await db.users.updateOne({phone:user.phone}, {$set:decimalfy({locked:false, balance:dbuser.balance-money})}, {w:'majority'});
-			var fee=Math.floor(money*settings.feeRate*100)/100;
-			var contract={_id:new ObjectId(), time:new Date(), user:user.phone, money:money-fee, fee:fee, betting:money, select:select, game:{status, period, starttime, endtime, setno}};
-			db.contracts.insertOne(contract);
-			contracts.push(contract);
-
-			cb(null, 
-			{
-				select:contract.select, fee:contract.fee, betting:money,
-				time:contract.time, game:{period:contract.game.period, endtime:contract.game.endtime}
-			});
 		}
 	}
 }
 
-async function approvalWithdraw(withdrawOrder, settings, db) {
+async function approvalWithdraw(user, withdrawOrder, settings, db) {
 	return null;
+	// 运营要求不限制
+	// if (!settings.withdrawAmountLimit && !settings.withdrawTimesLimit && !settings.withdrawTakenLimit) return null;
+	// var dbw=db.db.collection('withdraw', {
+	// 	readPreference: 'secondaryPreferred',
+	// 	readConcern: { level: 'majority' },
+	// 	writeConcern: { w: 'majority' }
+	// });
+	// var today=new Date();
+	// var strToday=''+today.getFullYear().pad(4)+(today.getMonth()+1).pad(2)+today.getDate().pad(2);
+	// var [userStat] =await dbw.aggregate([
+	// 	{$addFields:{dot:{$dateToString:{date:'$time', format:'%Y%m%d', timezone}}}},
+	// 	{$match:{dot:strToday, phone:user.phone, luckyshopee_tradeno:{$ne:null}}},
+	// 	{$group:{
+	// 		_id:1,
+	// 		times:{$sum:1},
+	// 		taken:{$sum:'$snapshot.amount'}
+	// 	}}
+	// ]).toArray();
+	// if (!userStat) return null;
+	// var {_id, ...refuse}=userStat;
+	// if ((!settings.withdrawTimesLimit || userStat.times<=settings.withdrawTimesLimit) &&
+	// 	(!settings.withdrawAmountLimit || withdrawOrder.amount<=settings.withdrawAmountLimit) &&
+	// 	(!settings.withdrawTakenLimit || (withdrawOrder.amount+userStat.taken)<=settings.withdrawAmountLimit)
+	// ) return null;
+	// return refuse;
 }
 
 class User {
@@ -542,8 +599,14 @@ getDB(async (err, db, dbm)=>{
 				var dbuser=await db.users.findOne({phone:socket.user.phone});
 				if (!dbuser) cb('no such user');
 				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), lastTime:new Date(), used:false}, {w:'majority'});
-				var url=await createOrder(insertedId.toHexString(), amount, req);
-				cb(null, {jumpto:url});
+				var orderid=insertedId.toHexString();
+				await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
+					method:'post',
+					body:await gzip(JSON.stringify([{msgID:orderid, status:'success', OS:'h5', accountID:socket.user.phone, orderID:orderid, currencyAmount:amount, currencyType:'IDR', virtualCurrencyAmount:amount, partner:dbuser.partner}])),
+					headers: { 'Content-Type': 'application/json' },
+				});
+				var url=await createOrder(orderid, amount, req);
+				cb(null, {orderid:orderid, jumpto:url});
 			} catch(e) {return cb(e)}
 		})
 		.on('setpaytmid', async (id, cb)=>{
@@ -593,6 +656,7 @@ getDB(async (err, db, dbm)=>{
 		 * property withdrawOrder {amount,accountNo, accountName, bankCode, phone} 
 		*/
 		.on('idr_withdraw', async (withdrawOrder, cb)=>{
+			withdrawOrder.amount=Number(withdrawOrder.amount);
 			if (withdrawOrder.amount<=0) return cb('Illegal operation');
 			if (socket.user==null) {
 				cb('Can not withdraw before login');
@@ -621,11 +685,11 @@ getDB(async (err, db, dbm)=>{
 					await db.withdraw.insertOne(withdraw, {session});
 				}, opt);
 				withdrawOrder.amount-=fee;
-				var refuse=await approvalWithdraw(withdrawOrder, settings, db), tradeno;
+				var refuse=await approvalWithdraw(socket.user, withdrawOrder, settings, db), tradeno;
 				if (!refuse) {
 					tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
 				}
-				db.withdraw.updateOne({_id:id}, {$set:{stat:refuse,luckyshopee_tradeno:tradeno}});
+				db.withdraw.updateOne({_id:id}, {$set:{stat:refuse||undefined,luckyshopee_tradeno:tradeno}});
 				socket.emit('statechanged', {user:{balance:(dbuser.balance||0)-money}});
 				cb();
 			} 
@@ -637,15 +701,29 @@ getDB(async (err, db, dbm)=>{
 				await session.endSession();
 			}
 		})
-		.on('dailywithdraw', async (timezone, cb)=>{
+		.on('idr_withdrawqualified', async(cb)=>{
 			if (socket.user==null) {
+				cb('Can not withdraw before login');
+				return console.error('withdraw before login');	
+			}
+			try {
+				var [qualified]=await db.users.aggregate([
+					{$match:{phone:socket.user.phone}},
+					{$project:{ab: {$cmp: ['$bet','$recharge']}}},
+					{$match:{ab:{$gte:0}}}
+				]).toArray();
+				return cb(null, !!qualified)
+			} catch(e) {cb(e)}
+		})
+		.on('dailywithdraw', async (unused_timezone, cb)=>{
+		if (socket.user==null) {
 				cb('Can not withdraw before login');
 				return console.error('withdraw before login');	
 			}
 			var today=new Date();
 			var strToday=''+today.getFullYear().pad(4)+(today.getMonth()+1).pad(2)+today.getDate().pad(2);
 			var [userTotal]=await db.withdraw.aggregate([
-				{$addFields:{dot:{$dateToString:{date:'$time', format:'%Y%m%d', timezone:'+07'}}}},
+				{$addFields:{dot:{$dateToString:{date:'$time', format:'%Y%m%d', timezone}}}},
 				{$match:{dot:strToday, phone:socket.user.phone, luckyshopee_tradeno:{$ne:null}}}, 
 				{$group:{
 					_id:'1', 
@@ -683,7 +761,7 @@ getDB(async (err, db, dbm)=>{
 		.on('modifybalance', async(phone, delta, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			delta=Number(delta);
-			var {value}=await db.users.findOneAndUpdate({phone:phone}, {$inc:{balance:delta}});
+			var {value}=await db.users.findOneAndUpdate({phone:phone}, {$inc:decimalfy({balance:delta, recharge:delta})});
 			if (!value) return cb('没有这个用户');
 			db.adminlog.insertOne({op:'modifybalance', admin:socket.user.phone, target:value, change:delta, time:new Date()});
 			value=dedecimal(value);

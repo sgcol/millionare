@@ -96,4 +96,18 @@ module.exports={
     "The maximum withdrawal amount per day is Rp 6,000,000":"Pengambilan cash max Rp 6.000.000 perhari",
     "Input must be a multiple of Rp 10.000":"Nominal yang dimasukkan harus kelipatan dari Rp 10.000",
 
+    "Please enter account name.":	"Masukkan nama akun",
+    "Please enter your account number":	"Masukkan nomor akun",
+    "Please enter your phone number":	"Masukkan nomor hp",
+    "Recharge":	"Isi saldo",
+    "Save":	"Simpan",
+    "Sign out":	"Keluar",
+    "This is a required field must be 10 numerics starts with 7, 8, or 9":	"Data ini harus terdiri dari 10 angka yang berawal dari angka 7,8 atau 9",
+	
+    "Withdraw":	"Tarik tunai",
+    "Withdrawable":	"Bisa ditarik",
+	
+    "Insufficent funds, please recharge first":	"Saldo tidak mencukupi, silakan isi terlebih dahulu",
+    "At least 1 hand":	"Minimal 1 x",
+    "Maximum is 999 hands":	"Maksimal 999 x",
 };

@@ -173,6 +173,7 @@ var vueSettings= {
 			this.signout();
 		},
 		signout() {
+			window.TDGA.onPageLeave();
 			this.hide();
 			this.$store.commit('setMe', {
 				balance:null,
@@ -193,7 +194,14 @@ var vueSettings= {
 			openLink((socket)=>{
 				socket.emit('recharge', amount, (err, pack)=>{
 					if (err) return alert(err);
-					if (pack.jumpto) location.href=pack.jumpto;
+					window.TDGA.onChargeSuccess({
+						orderId:pack.orderid,
+						currencyAmount:amount,
+						currencyType:'IDR',
+						virtualCurrencyAmount:amount,
+						paymentType:''
+					})
+					// if (pack.jumpto) location.href=pack.jumpto;
 				});
 			})
 		},

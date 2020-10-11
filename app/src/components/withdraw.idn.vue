@@ -5,16 +5,16 @@
 		</b-form-group>
 
 		<b-form-group :label="$t('Amount')" :invalid-feedback="amountInvalid" :state="amountState">
-			<b-form-input v-model="amount" :state="amountState"></b-form-input>
+			<b-form-input type="number" v-model="amount" :state="amountState"></b-form-input>
 		</b-form-group>
 		<b-form-group :label="$t('Account Name')" :invalid-feedback="$t('Please enter account name.')" :state="ownerState">
 			<b-form-input v-model="accountName" :state="ownerState"></b-form-input>
 		</b-form-group>
 		<b-form-group :label="$t('Phone')" :invalid-feedback="$t('Please enter your phone number')" :state="phoneState">
-			<b-form-input v-model="phone" :state="phoneState"></b-form-input>
+			<b-form-input type="tel" v-model="phone" :state="phoneState"></b-form-input>
 		</b-form-group>
-		<b-form-group :label="$t('Bank Name')">
-			<vue-bootstrap-typeahead v-model="bank" :data="banklist"></vue-bootstrap-typeahead>
+		<b-form-group :label="$t('Bank Name')" :state="!!bank" :invalid-feedback="$t('Please select a bank')">
+			<vue-bootstrap-typeahead v-model="bank" :data="banklist" :state="bankState"></vue-bootstrap-typeahead>
 		</b-form-group>
 		<b-form-group :label="$t('Account No.')" :state="accountNoState" :invalid-feedback="$t('Please enter your account number')">
 			<b-form-input v-model="accountNo" :data="banklist" :state="accountNoState"></b-form-input>
@@ -52,23 +52,49 @@ export default {
 	asyncComputed :{
 		amountState() {
 			var self=this;
-			return new Promise((resolve, reject)=>{
+			var sock=openLink();
+			if (this.amount>this.me.balance) {
+				this.amountErr='Not enough balance';
+				return false;
+			}
+			if (this.amount<500000) {
+				this.amountErr='The amount must be exceeded 500000';
+				return false;
+			}
+			if (Math.floor(this.amount/10000)*10000!=this.amount) {
+				this.amountErr=('The amount must be divisible by 10000');
+				return false;
+			}
+			var dailylimit=new Promise((resolve, reject)=>{
 				var preChk=self.amount<=self.me.balance && self.amount>=500000 && Math.floor(self.amount/10000)*10000==self.amount;
 				if (!preChk) return resolve(preChk);
-				var sock=openLink();
 				sock.emit('dailywithdraw', currentTimezone(), (err, total)=>{
 					if (err) return reject(err);
-					return resolve((self.amount+total)<=6000000)
+					if ((Number(self.amount)+total)<=6000000) return resolve(true);
+					self.amountErr='The maximum withdrawal amount per day is Rp 6,000,000';
+					return resolve(false);
 				})
-			})
+			}),
+			qualified=new Promise((resolve, reject)=>{
+				sock.emit('idr_withdrawqualified', (err, q)=>{
+					if (err) return reject(err);
+					if (!q) self.amountErr='The bet amount MUST be greater than the top-up amount to withdraw cash';
+					resolve(q);
+				})
+			});
+			return Promise.all([dailylimit, qualified]).then(results=>(results[0]&&results[1]), ()=>(null));
 		},
 	},
 	computed:{
+		// amountInvalid() {
+		// 	if (this.amount>this.me.balance) return this.$i18n.t('Not enough balance');
+		// 	if (this.amount<500000) return this.$i18n.t('The amount must be exceeded 500000');
+		// 	if (Math.floor(this.amount/10000)*10000!=this.amount) return this.$i18n.t('The amount must be divisible by 10000');
+		// 	return this.$i18n.t('The maximum withdrawal amount per day is Rp 6,000,000');
+		// },
 		amountInvalid() {
-			if (this.amount>this.me.balance) return this.$i18n.t('Not enough balance');
-			if (this.amount<500000) return this.$i18n.t('The amount must be exceeded 500000');
-			if (Math.floor(this.amount/10000)*10000!=this.amount) return this.$i18n.t('The amount must be divisible by 10000');
-			return this.$i18n.t('The maximum withdrawal amount per day is Rp 6,000,000');
+			if (!this.amountErr) return null;
+			return this.$i18n.t(this.amountErr);
 		},
 		ownerState() {
 			return this.accountName.length>0;
@@ -120,7 +146,8 @@ export default {
 			bank:'',
 			phone:null,
 			accountNo:null,
-			banklist:banklist.map(v=>v.text)
+			banklist:banklist.map(v=>v.text),
+			amountErr:null,
 		}
 	}
 }

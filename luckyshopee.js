@@ -1,5 +1,7 @@
 const crypto=require('crypto')
 	, request=require('request')
+	, fetch=require('node-fetch')
+	, {gzip}=require('node-gzip')
 	, url =require('url')
 	, router=require('express').Router()
 	, bodyParser = require('body-parser')
@@ -9,6 +11,7 @@ const crypto=require('crypto')
 	, httpf=require('httpf')
 	, args=require('yargs').argv
 	, debugout=require('debugout')(args.debugout)
+	,{confirmOrder}=require('./index')
 
 var sms_url='https://pay.luckyshopee.com/sms/send',
 	pay_url='https://pay-test.upayout.com/pay/createPaymentOrder',
@@ -75,10 +78,17 @@ getDB((err, db)=>{
 		debugout(this.req.body);
 		if (transStatus!='success') return cb(null, httpf.text('success'));
 		try {
-			var {value}=await db.bills.findOneAndUpdate({_id:ObjectId(merTransNo), used:{$ne:true}}, {$set:{used:true, lastTime:new Date()}}, {w:'majority'});
-			if (!value) throw 'no such orderid or order is processing';
-			value=dedecimal(value);
-			await db.users.updateOne({phone:value.phone}, {$inc:{balance:value.money}}, {w:'majority'});
+			await confirmOrder(merTransNo, amount);
+			// var {value}=await db.bills.findOneAndUpdate({_id:ObjectId(merTransNo), used:{$ne:true}}, {$set:{used:true, lastTime:new Date()}}, {w:'majority'});
+			// if (!value) throw 'no such orderid or order is processing';
+			// value=dedecimal(value);
+			// await db.users.updateOne({phone:value.phone}, {$inc:{balance:value.money}}, {w:'majority'});
+			// orderid=value._id.toHexString();
+			// fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
+			// 	method:'post',
+			// 	body:await gzip(JSON.stringify([{msgID:orderid, status:'success', /*OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'CNY', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime()*/}])),
+			// 	headers: { 'Content-Type': 'application/json' },
+			// });
 			return cb(null, httpf.text('success'));
 		} catch(e) {
 			debugout(e);
@@ -100,7 +110,7 @@ exports.sendSms=function(phone, deviceId, ip, captcha, content) {
 const createOrder=exports.createOrder=function(orderid, money, req, cb) {
 	return new Promise((resolve, reject)=>{
 		cb=cb||function (err, r){
-			if (err) reject(err);
+			if (err) return reject(err);
 			return resolve(r);
 		}
 		const reqobj={uri:pay_url, json:orderForm(req, {userId:'123456', merTransNo:orderid, amount:money.toFixed(2)})};
@@ -118,7 +128,7 @@ const createOrder=exports.createOrder=function(orderid, money, req, cb) {
 const createWithdraw=exports.createWithdraw=function(orderid, money, phone, req, cb) {
 	return new Promise((resolve, reject)=>{
 		cb=cb||function (err, r){
-			if (err) reject(err);
+			if (err) return reject(err);
 			return resolve(r);
 		}
 		request.post({uri:withdraw_url, json:orderForm(req, {
@@ -141,7 +151,7 @@ const createWithdraw=exports.createWithdraw=function(orderid, money, phone, req,
 const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, req, cb) {
 	return new Promise((resolve, reject)=>{
 		cb=cb||function (err, r){
-			if (err) reject(err);
+			if (err) return reject(err);
 			return resolve(r);
 		}
 		var {protocol}=url.parse(req.headers.origin);
@@ -158,6 +168,7 @@ const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, 
 		})}, (err, header, body)=>{
 			if (err) return cb(err);
 			var ret=body;
+			if (typeof ret!='object') return cb('luckyshopee return wrong data');
 			if (ret.Code!='200') return cb(ret.Msg);
 			return cb(null, ret.Data.tradeNo);
 		})	
@@ -186,6 +197,21 @@ if (module==require.main) {
 	} catch(e) {
 		console.error(e);
 	}
+	(async () =>{
+		var orderid=ID(), value={phone:'8123456782', money:2000000};
+		var result=await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
+			method:'post',
+			body:gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'CNY', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime(), gameServer:'', level:1, paymentType:'default'}])),
+			headers: { 'Content-Type': 'application/json' },
+		});	
+		console.log(result)
+		console.log(await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
+			method:'post',
+			body:await gzip(JSON.stringify({msgID:orderid, orderID:orderid, status:'success'})),
+			headers: { 'Content-Type': 'application/json' },
+		}));
+	})();
+
 	// try {
 	//     createOrder('test'+ID(), 1, {headers:{host:'127.0.0.1:9000', origin:'http://127.0.0.1:9000'}}, (err, r)=>{
 	//         console.log(r);

@@ -1,6 +1,26 @@
 <template>
 	<b-modal id="signup_modal" size='lg' hide-header hide-footer no-close-on-backdrop no-close-on-esc>
 		<b-overlay :show="longop" rounded="sm">
+
+		<div class="third-login-list" v-if="inApp">
+			<div class="third-login-item google-click">
+				<div style="width:100%;height: 36px;line-height: 36px;background: #4285f4;color: #fff;border-radius: 2px"
+					@click="googleLogin">
+				<div style="float: left;background: #f1f1f1;margin: 1px;height: 34px">
+					<img src="../assets/google.png" alt="google" style="display:block;height: 30px;width: auto;">
+				</div>
+				<div style="text-align: center">Google</div>
+				</div>
+			</div>
+			<div class="third-login-item">
+				<div style="width:100%;height: 36px;line-height: 36px;background: #354c8c;color: #fff;border-radius: 2px"
+					@click="facebookLogin">
+				<img src="../assets/facebook.png" alt="facebook" style="float: left;height: 36px;width: auto;">
+				<div style="text-align: center">Facebook</div>
+				</div>
+			</div>
+		</div>
+		<div v-else>
 			<div style="width: 100%; text-align: center; vertical-align: middle; min-height:280px" v-if="socialLogin">
 				<b-iconstack font-scale="7.5" class="mt-4 mb-5">
 					<b-icon-person-fill stacked variant="secondary" scale="0.85"></b-icon-person-fill>
@@ -112,6 +132,7 @@
 			</b-tabs>
 			<RDA ref="rda"></RDA>
 			<forgot ref="forgot"></forgot>
+		</div>
 		</b-overlay>
 	</b-modal>
 </template>
@@ -135,11 +156,16 @@ export default {
 	name:'signup',
 	mixins: [validationMixin],
 	components:{
-		RDA:()=>import('./RDA.vue'), 
+		RDA:()=>import('./RDA.vue'),
 		forgot:()=>import('./forgot.vue'),
-		VFacebookLogin:()=>import('vue-facebook-login-component'), 
+		VFacebookLogin:()=>import('vue-facebook-login-component'),
 		GoogleLogin:()=>import('vue-google-login'),
 		BIconstack, BIconPersonFill, BIconCircle
+	},
+	computed:{
+		inApp() {
+			return window.LuckyJsBridge;
+		}
 	},
 	data(){
 		return {
@@ -149,7 +175,7 @@ export default {
 			socialLogin:conf.login=='social',
 			FB:{},
 			scope:{},
-			FB_model:{}
+			FB_model:{},
 		}
 	},
 	watch:{
@@ -158,6 +184,40 @@ export default {
 		}
 	},
 	methods:{
+		onLoginRespone(response) {
+			console.log("onLoginRespone:"+response.toString());
+			const token = response.userinfo.token;
+			const loginType = response.type === 1 ? "google_login" : "fb_login";
+			const self = this;
+			self.longop=true;
+			openLink(socket=>{
+				function errHandler() {
+					self.longop=false;
+					socket.off('reconnect_failed', errHandler);
+					alert(self.$i18n.t('Can not reach the server'));
+				}
+				socket.on('reconnect_failed', errHandler);
+				socket.emit(loginType, token, (err, t, phone)=>{
+					self.handlelogin(err, t, phone);
+					if (loginType=='fb_login') docCookies.setItem('fb', true);
+					socket.off('reconnect_failed', errHandler);
+					window.TDGA.Account({
+						accountId : phone,
+						accountType : [null,12, 11][response.type],
+					})
+				})
+			})
+		},
+		luckyAndoridLogin(type){
+			console.log("luckyAndoridLogin:"+type);
+			window.LuckyJsBridge.login(type);
+		},
+		googleLogin(){
+			this.luckyAndoridLogin(1)
+		},
+		facebookLogin(){
+			this.luckyAndoridLogin(2)
+		},
 		onSuccess(googleUser) {
 			console.log(googleUser, googleUser.getAuthResponse().id_token);
 			var self=this;
@@ -169,9 +229,13 @@ export default {
 					alert(self.$i18n.t('Can not reach the server'));
 				}
 				socket.on('reconnect_failed', errHandler);
-				socket.emit('google_login', googleUser.getAuthResponse().id_token, (err)=>{
-					self.handlelogin(err);
+				socket.emit('google_login', googleUser.getAuthResponse().id_token, (err, t, phone)=>{
+					self.handlelogin(err, t, phone);
 					socket.off('reconnect_failed', errHandler);
+					window.TDGA.Account({
+						accountId : phone,
+						accountType : 12,
+					})
 				})
 			})
 		},
@@ -198,10 +262,15 @@ export default {
 						self.handlelogin(err, t, phone);
 						docCookies.setItem('fb', true);
 						socket.off('reconnect_failed', errHandler);
+						window.TDGA.Account({
+							accountId : phone,
+							accountType : 11,
+						})
 					})
 				})
 			})
 		},
+
 		show(showLoginPage) {
 			var ele=document.getElementById('signup_modal');
 			if (ele && ele.className.indexOf('show')>0) return;
@@ -261,6 +330,10 @@ export default {
 					socket.emit('login', {phone, pwd:md5(''+salt+password)}, (err, t)=>{
 						self.handlelogin(err, t);
 						socket.off('reconnect_failed', errHandler);
+						window.TDGA.Account({
+							accountId : phone,
+							accountType : 1,
+						})
 					})
 				})
 			})
@@ -281,29 +354,34 @@ export default {
 				socket.emit('reg', {phone, pwd, otp}, (err, t)=>{
 					self.handlelogin(err ,t);
 					socket.off('reconnect_failed', errHandler);
+					window.TDGA.Account({
+						accountId : phone,
+						accountType : 1,
+					})
 				})
 			})
 		},
 		sendOTP(e) {
 			e.preventDefault();
 			e.stopPropagation();
-			var phone=this.mobile, self=this;
-			this.otpSending=30;
-			var timer=setInterval(()=>{
-				if (self.otpSending>0) self.otpSending--;
+			var phone = this.mobile, self = this;
+			this.otpSending = 30;
+			var timer = setInterval(() => {
+				if (self.otpSending > 0) self.otpSending--;
 				else clearInterval(timer);
 			}, 1000);
-			openLink((socket)=>{
-				var uuid=docCookies.getItem('mil_uuid');
+			openLink((socket) => {
+				var uuid = docCookies.getItem('mil_uuid');
 				if (!uuid) {
-					uuid=uuidv4();
-					docCookies.setItem('mil_uuid', uuid);
+				uuid = uuidv4();
+				docCookies.setItem('mil_uuid', uuid);
 				}
 				socket.emit('beforereg', phone, uuid);
 			})
 		}
 	},
 	mounted() {
+		window.onLoginRespone = this.onLoginRespone.bind(this);
 	},
 	validations:{
 		mobile:{
@@ -328,3 +406,80 @@ export default {
 }
 
 </script>
+<style scoped>
+	.third-login{
+		padding: 0 .4rem .5rem;
+		width: 100%;
+	}
+	.third-login p{
+		width: 100%;
+		text-align: center;
+		position: relative;
+	}
+	.third-login p span{
+		color: #737373;
+		padding: 0 .4rem;
+		background: #f8f8f8;
+		position: relative;
+		z-index: 2;
+	}
+	.third-login p::after{
+		content: '';
+		width: 100%;
+		border-top: 1px solid #d2d2d2;
+		position: absolute;
+		top: 50%;
+		left: 0;
+		-webkit-transform: translateY(-50%) scaleY(.5);
+				transform: translateY(-50%) scaleY(.5);
+		-webkit-transform-origin: 0 50%;
+				transform-origin: 0 50%;
+		z-index: 1;
+	}
+	.third-login .third-login-info{
+		text-align: center;
+		margin-top: 1.2rem;
+		display:-webkit-box;
+		display:-webkit-flex;
+		display: flex;
+		-webkit-justify-content:center;
+		-webkit-box-pack: center; 
+		justify-content:center;
+	}
+	.third-login .third-login-info .weixin-login{
+		display:-webkit-box;
+		display:-webkit-flex;
+		display: flex;
+		-webkit-box-orient: vertical;
+		-webkit-flex-direction:column;
+		flex-direction:column;/*���򲼾�*/
+		-webkit-box-align: center;
+		-webkit-align-items:center;
+		align-items:center;
+	}
+	.third-login .third-login-info .weixin-login i{
+		width: .8rem;
+		height: .8rem;
+		text-align: center;
+		line-height: .8rem;
+		border-radius: 50%;
+		background: #31ce39;
+		color: #fff;
+		display:block;
+		font-size: .5rem;
+	}
+	.third-login .third-login-info .weixin-login span{
+		line-height: 1.4rem;
+	}
+
+	.third-login-btn {
+		margin: 20px auto;
+	}
+
+	.third-login-list {
+		margin-top: 30px;
+	}
+	.third-login-item {
+		margin: 10px 0;
+	}
+</style>

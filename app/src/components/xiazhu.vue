@@ -141,7 +141,12 @@ export default {
 					return;
 				}
 				window.v.$store.commit('addContract', contract);
-				self.hide();
+                self.hide();
+                window.TDGA.onItemPurchase({
+                    item :'投入'+contract.select,
+                    itemNumber : contract.betting,
+                    priceInVirtualCurrency : 1
+                });
 			});
 		}
 	},
