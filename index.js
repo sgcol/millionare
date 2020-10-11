@@ -602,7 +602,7 @@ getDB(async (err, db, dbm)=>{
 				var orderid=insertedId.toHexString();
 				await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
 					method:'post',
-					body:await gzip(JSON.stringify([{msgID:orderid, status:'success', OS:'h5', accountID:socket.user.phone, orderID:orderid, currencyAmount:amount, currencyType:'IDR', virtualCurrencyAmount:amount, partner:dbuser.partner}])),
+					body:await gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:socket.user.phone, orderID:orderid, currencyAmount:amount, currencyType:'IDR', virtualCurrencyAmount:amount, partner:dbuser.partner}])),
 					headers: { 'Content-Type': 'application/json' },
 				});
 				var url=await createOrder(orderid, amount, req);
