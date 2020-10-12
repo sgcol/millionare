@@ -1,138 +1,137 @@
 <template>
 	<b-modal id="signup_modal" size='lg' hide-header hide-footer no-close-on-backdrop no-close-on-esc>
 		<b-overlay :show="longop" rounded="sm">
-
-		<div class="third-login-list" v-if="inApp">
-			<div class="third-login-item google-click">
-				<div style="width:100%;height: 36px;line-height: 36px;background: #4285f4;color: #fff;border-radius: 2px"
-					@click="googleLogin">
-				<div style="float: left;background: #f1f1f1;margin: 1px;height: 34px">
-					<img src="../assets/google.png" alt="google" style="display:block;height: 30px;width: auto;">
+		<div style="width: 100%; text-align: center; vertical-align: middle; min-height:280px" v-if="socialLogin">
+			<b-iconstack font-scale="7.5" class="mt-4 mb-5">
+				<b-icon-person-fill stacked variant="secondary" scale="0.85"></b-icon-person-fill>
+				<b-icon-circle stacked variant="secondary"></b-icon-circle>
+			</b-iconstack>
+			<div class="third-login-list" v-if="inApp">
+				<div class="third-login-item google-click">
+					<div style="width:100%;height: 36px;line-height: 36px;background: #4285f4;color: #fff;border-radius: 2px"
+						@click="googleLogin">
+					<div style="float: left;background: #f1f1f1;margin: 1px;height: 34px">
+						<img src="../assets/google.png" alt="google" style="display:block;height: 30px;width: auto;">
+					</div>
+					<div style="text-align: center">Google</div>
+					</div>
 				</div>
-				<div style="text-align: center">Google</div>
+				<div class="third-login-item">
+					<div style="width:100%;height: 36px;line-height: 36px;background: #354c8c;color: #fff;border-radius: 2px"
+						@click="facebookLogin">
+					<img src="../assets/facebook.png" alt="facebook" style="float: left;height: 36px;width: auto;">
+					<div style="text-align: center">Facebook</div>
+					</div>
 				</div>
 			</div>
-			<div class="third-login-item">
-				<div style="width:100%;height: 36px;line-height: 36px;background: #354c8c;color: #fff;border-radius: 2px"
-					@click="facebookLogin">
-				<img src="../assets/facebook.png" alt="facebook" style="float: left;height: 36px;width: auto;">
-				<div style="text-align: center">Facebook</div>
-				</div>
-			</div>
-		</div>
-		<div v-else>
-			<div style="width: 100%; text-align: center; vertical-align: middle; min-height:280px" v-if="socialLogin">
-				<b-iconstack font-scale="7.5" class="mt-4 mb-5">
-					<b-icon-person-fill stacked variant="secondary" scale="0.85"></b-icon-person-fill>
-					<b-icon-circle stacked variant="secondary"></b-icon-circle>
-				</b-iconstack>
+			<div v-else>
 				<!-- <b-icon icon="person-circle" font-scale="7.5" variant="secondary" class="mt-4 mb-5"></b-icon> -->
 				<v-facebook-login app-id="658156324804891" style="margin:auto" @login="fb_login" @sdk-init="handleSdkInit" v-model="FB_model"></v-facebook-login>
 				<p>or</p>
 				<GoogleLogin :params="{client_id:'647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com'}" :onSuccess="onSuccess" :onFailure="onFailure" class="btn btn-outline-secondary">Signed in with Google</GoogleLogin>
 			</div>
-			<b-tabs content-class='mt-3' fill v-model="page" v-else>
-				<b-tab :title="$t('Register')">
-					<b-form>
-						<b-form-group
-							id="phone"
-							:description="$t(`We'll never share your phone with anyone else.`)"
-						>
-							<b-form-input
-								v-model="$v.mobile.$model"
-								type="tel"
-								:placeholder="$t('Phone number')"
-								:state="validateState('mobile')"
-								aria-describedby="input-phone-live-feedback"
-							></b-form-input>
-							<b-form-invalid-feedback id="input-phone-live-feedback">{{$t('The phone number must be 10 numerics starts with 7, 8, or 9')}}</b-form-invalid-feedback>
-						</b-form-group>
-						<b-form-group	id="password">
-							<b-form-input
-								v-model="$v.password.$model"
-								type="password"
-								:placeholder="$t('Password')"
-								:state="validateState('password')"
-								aria-describedby="input-password-live-feedback"
-							></b-form-input>
-							<b-form-invalid-feedback id="input-password-live-feedback">{{$t('The password must be at least 6 characters')}}</b-form-invalid-feedback>
-						</b-form-group>
-						<b-form-group>
-							<b-form-input
-								v-model="$v.repeat_password.$model"
-								type="password"
-								:placeholder="$t('Repeat password')"
-								:state="validateState('repeat_password')"
-								aria-describedby="input-repeat-password-live-feedback"
-							></b-form-input>
-							<b-form-invalid-feedback id="input-repeat-password-live-feedback">{{$t('Must be same as password')}}</b-form-invalid-feedback>
-						</b-form-group>
-						<b-form-group	id="otp">
-							<b-input-group>
-								<b-form-input
-									v-model="otp"
-									type="text"
-									required
-									:placeholder="$t('Enter OTP')"
-								></b-form-input>
-								<b-input-group-append>
-									<b-button variant="outline-info" style="min-width:100px" :disabled="!validateState('mobile')||!!otpSending" v-on:click="sendOTP">{{$t(otpSending?otpSending:'Send OTP')}}</b-button>
-								</b-input-group-append>
-							</b-input-group>
-						</b-form-group>
-						<b-form-checkbox
-							v-model="agree"
-							name="checkbox-1"
-							value="acceptedRDA"
-							required
-						>
-							<i18n path="term" tag="label" for="Privacy Policy">
-								<!-- Agree <a href='#' v-on:click="showRDA">Privacy Policy</a> -->
-								<a href="#" v-on:click="showRDA">{{ $t('Privacy Policy')}} </a>
-							</i18n>
-						</b-form-checkbox>
-						<b-form-group class="text-center">
-							<a href="" @click="flip('login', $event)">{{$t('Already have an account?')}}</a>
-						</b-form-group>
-						<b-button type="submit" variant="primary" block v-on:click="signup">{{$t('Sign up')}}</b-button>
-					</b-form>
-				</b-tab>
-				<b-tab :title="$t('Login')" ref="signin">
-					<b-form>
-						<b-form-group	id="login-phone">
-							<b-form-input
-								v-model="mobile"
-								type="tel"
-								required
-								:placeholder="$t('Phone number')"
-							></b-form-input>
-						</b-form-group>
-						<b-form-group>
-							<b-form-input
-								v-model="password"
-								type="password"
-								required
-								:placeholder="$t('Password')"
-							></b-form-input>
-						</b-form-group>
-						<b-form-group class="text-center">
-							<!-- <b-form-checkbox
-								id="checkbox-2"
-								v-model="remember_me"
-								name="checkbox-2"
-								value="remember_me"
-							>
-								Remember me
-							</b-form-checkbox> -->
-							<a href="#" v-on:click="forgotPassword">{{$t('Forgot your password?')}}</a>
-						</b-form-group>
-						<b-button type="submit" variant="primary" block v-on:click="signin">{{$t('Sign in')}}</b-button>
-					</b-form>
-				</b-tab>
-			</b-tabs>
-			<RDA ref="rda"></RDA>
-			<forgot ref="forgot"></forgot>
 		</div>
+		<b-tabs content-class='mt-3' fill v-model="page" v-else>
+			<b-tab :title="$t('Register')">
+				<b-form>
+					<b-form-group
+						id="phone"
+						:description="$t(`We'll never share your phone with anyone else.`)"
+					>
+						<b-form-input
+							v-model="$v.mobile.$model"
+							type="tel"
+							:placeholder="$t('Phone number')"
+							:state="validateState('mobile')"
+							aria-describedby="input-phone-live-feedback"
+						></b-form-input>
+						<b-form-invalid-feedback id="input-phone-live-feedback">{{$t('The phone number must be 10 numerics starts with 7, 8, or 9')}}</b-form-invalid-feedback>
+					</b-form-group>
+					<b-form-group	id="password">
+						<b-form-input
+							v-model="$v.password.$model"
+							type="password"
+							:placeholder="$t('Password')"
+							:state="validateState('password')"
+							aria-describedby="input-password-live-feedback"
+						></b-form-input>
+						<b-form-invalid-feedback id="input-password-live-feedback">{{$t('The password must be at least 6 characters')}}</b-form-invalid-feedback>
+					</b-form-group>
+					<b-form-group>
+						<b-form-input
+							v-model="$v.repeat_password.$model"
+							type="password"
+							:placeholder="$t('Repeat password')"
+							:state="validateState('repeat_password')"
+							aria-describedby="input-repeat-password-live-feedback"
+						></b-form-input>
+						<b-form-invalid-feedback id="input-repeat-password-live-feedback">{{$t('Must be same as password')}}</b-form-invalid-feedback>
+					</b-form-group>
+					<b-form-group	id="otp">
+						<b-input-group>
+							<b-form-input
+								v-model="otp"
+								type="text"
+								required
+								:placeholder="$t('Enter OTP')"
+							></b-form-input>
+							<b-input-group-append>
+								<b-button variant="outline-info" style="min-width:100px" :disabled="!validateState('mobile')||!!otpSending" v-on:click="sendOTP">{{$t(otpSending?otpSending:'Send OTP')}}</b-button>
+							</b-input-group-append>
+						</b-input-group>
+					</b-form-group>
+					<b-form-checkbox
+						v-model="agree"
+						name="checkbox-1"
+						value="acceptedRDA"
+						required
+					>
+						<i18n path="term" tag="label" for="Privacy Policy">
+							<!-- Agree <a href='#' v-on:click="showRDA">Privacy Policy</a> -->
+							<a href="#" v-on:click="showRDA">{{ $t('Privacy Policy')}} </a>
+						</i18n>
+					</b-form-checkbox>
+					<b-form-group class="text-center">
+						<a href="" @click="flip('login', $event)">{{$t('Already have an account?')}}</a>
+					</b-form-group>
+					<b-button type="submit" variant="primary" block v-on:click="signup">{{$t('Sign up')}}</b-button>
+				</b-form>
+			</b-tab>
+			<b-tab :title="$t('Login')" ref="signin">
+				<b-form>
+					<b-form-group	id="login-phone">
+						<b-form-input
+							v-model="mobile"
+							type="tel"
+							required
+							:placeholder="$t('Phone number')"
+						></b-form-input>
+					</b-form-group>
+					<b-form-group>
+						<b-form-input
+							v-model="password"
+							type="password"
+							required
+							:placeholder="$t('Password')"
+						></b-form-input>
+					</b-form-group>
+					<b-form-group class="text-center">
+						<!-- <b-form-checkbox
+							id="checkbox-2"
+							v-model="remember_me"
+							name="checkbox-2"
+							value="remember_me"
+						>
+							Remember me
+						</b-form-checkbox> -->
+						<a href="#" v-on:click="forgotPassword">{{$t('Forgot your password?')}}</a>
+					</b-form-group>
+					<b-button type="submit" variant="primary" block v-on:click="signin">{{$t('Sign in')}}</b-button>
+				</b-form>
+			</b-tab>
+		</b-tabs>
+		<RDA ref="rda"></RDA>
+		<forgot ref="forgot"></forgot>
 		</b-overlay>
 	</b-modal>
 </template>
