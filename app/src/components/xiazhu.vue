@@ -226,7 +226,7 @@ export default {
     width: 150px;
     text-align: center;
     color: #fff;
-    font-size: 26px;
+    font-size: 22px;
 }
 .drawer-bg {
     background: #007acc;
