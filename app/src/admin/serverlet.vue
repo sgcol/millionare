@@ -37,6 +37,11 @@
 			<b-form-input v-model="withdrawFee" :state="wfState"></b-form-input>
 		</b-form-group>
 	</b-tab>
+	<b-tab title="老师配置">
+		<b-form-group label="老师WhatsUp" >
+			<b-form-input v-model="whatsup"></b-form-input>
+		</b-form-group>
+	</b-tab>
 	<!-- <b-tab title="提款配置"></b-tab>
 	<b-tab title="审核提款"><approve-withdraw /></b-tab> -->
 </b-tabs>
@@ -70,7 +75,8 @@ export default {
 				appId:null,
 				appKey:null,
 				appChannel:null
-			}
+			},
+			whatsup:null,
 		}
 	},
 	computed:{
@@ -107,6 +113,7 @@ export default {
 				parts[i]=Number(parts[i]);
 				if (isNaN(parts[i])) return false;
 			}
+			if (parts.length==2 && parts[0]>=100) return false;
 			return true;
 		}
 	},
@@ -117,7 +124,7 @@ export default {
 		},
 		submit() {
 			if (!this.wfState) return;
-			var strategy=this.strategy, feeRate=Number(this.feeRate.slice(0, -1))/100, luckyshopee=this.luckyshopee;
+			var strategy=this.strategy, feeRate=Number(this.feeRate.slice(0, -1))/100, luckyshopee=this.luckyshopee, whatsup=this.whatsup;
 			var wfs=(()=>{
 				var parts=this.withdrawFee.split('%');
 				if (parts.length>2) return false;
@@ -138,7 +145,7 @@ export default {
 				var temp_result=this.spec_result.split(/[\s,，]+/);
 			}
 			openLink((socket)=>{
-				socket.emit('setsettings', {strategy, temp_result, feeRate, withdrawPercent:(wfs[0]||0)/100, withdrawFixed:wfs[1]||0, luckyshopee}, (err)=>{
+				socket.emit('setsettings', {strategy, temp_result, feeRate, withdrawPercent:(wfs[0]||0)/100, withdrawFixed:wfs[1]||0, luckyshopee, whatsup}, (err)=>{
 					if (err) return alert(err);
 					alert('success');
 				})

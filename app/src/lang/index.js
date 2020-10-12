@@ -5,6 +5,7 @@ import conf from '../conf'
 Vue.use(VueI18n);
 
 const en=new Proxy ({
+    whatsup:'Add this whatsup {0} to get reward',
     term:'Agree {0}',
     "Select amount:(₹500-₹50000)":"Select amount:(Rp500k-Rp50000k)",
     "The amount must be between 500 and 50,000 and be divisible by 100":'The amount must be between 500k and 50,000k and be divisible by 100k',

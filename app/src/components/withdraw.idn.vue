@@ -14,7 +14,7 @@
 			<b-form-input type="tel" v-model="phone" :state="phoneState"></b-form-input>
 		</b-form-group>
 		<b-form-group :label="$t('Bank Name')" :state="!!bank" :invalid-feedback="$t('Please select a bank')">
-			<vue-bootstrap-typeahead v-model="bank" :data="banklist" :state="bankState"></vue-bootstrap-typeahead>
+			<vue-bootstrap-typeahead v-model="bank" :data="banklist"></vue-bootstrap-typeahead>
 		</b-form-group>
 		<b-form-group :label="$t('Account No.')" :state="accountNoState" :invalid-feedback="$t('Please enter your account number')">
 			<b-form-input v-model="accountNo" :data="banklist" :state="accountNoState"></b-form-input>
@@ -116,7 +116,7 @@ export default {
 			e.preventDefault();
 			var self=this;
 			if (!this.amountState || !this.ownerState || !this.accountNoState ||!this.phoneState || !this.bank) return;
-			var order={amount:this.amount, accountName:this.accountName, accountNo:this.accountNo, phone:this.phone, bankCode:toBankCode[this.bank]};
+			var order={amount:this.amount, accountName:this.accountName, accountNo:this.accountNo, phone:this.phone, bankCode:toBankCode[this.bank], bankName:this.bank};
 			console.log(order);
 			openLink(sock=>{
 				sock.emit('idr_withdraw', order, (err)=>{
@@ -151,6 +151,7 @@ export default {
 		}
 	}
 }
+
 const banklist=[
 			{code:'ABAMIDD1', text:'BANK ABN AMRO'},
 			{code:'ABNAIDJA', text:'Royal Bank of Scotland (RBS)'},
@@ -162,6 +163,9 @@ const banklist=[
 			{code:'AMEXIDD1', text:'AMERICAN EXPRESS BANK LTD'},
 			{code:'ANINIDD1', text:'ANGLOMAS INTERNASIONAL BANK'},
 			{code:'ANTAIDD1', text:'BANK ANTARDAERAH'},
+			{code:'PDWGIDJ1', text:'BPD SULAWESI TENGAH'},
+			{code:'PDIJIDJ1', text:'BPD PAPUA'},
+			{code:'BSDRIDJA', text:'BANK SAUDARA'},
 			{code:'ANZBIDJX', text:'ANZ PANIN BANK'},
 			{code:'ARFAIDJ1', text:'Bank Panin Syariah'},
 			{code:'ARNKIDJ1', text:'BANK ARTA NIAGA KENCANA'},
@@ -171,12 +175,15 @@ const banklist=[
 			{code:'ATPLIDD1', text:'ATMB PLUS'},
 			{code:'AWANIDJA', text:'BANK QNB KESAWAN'},
 			{code:'BBAIIDJA', text:'BANK BUMI ARTA'},
+			{code:'PDBKIDJ1', text:'BPD BENGKULU'},
 			{code:'BBBAIDJA', text:'PERMATA BANK'},
 			{code:'BBIJIDJA', text:'BANK UOB INDONESIA'},
+			{code:'PDMLIDJ1', text:'BPD MALUKU'},
 			{code:'BBUKIDJA', text:'BANK BUKOPIN'},
 			{code:'BCIAIDJA', text:'BANK CAPITAL INDONESIA'},
-			{code:'BDINIDJA', text:'BANK DANAMON'},
+			{code:'BDINIDJA', text:'BANK DANAMON INDONESIA'},
 			{code:'BDIPIDJ1', text:'Bank Sahabat Sampoerna'},
+			{code:'VICTIDJ1', text:'BANK VICTORIA INTERNASIONAL'},
 			{code:'BDKIIDJA', text:'BANK DKI'},
 			{code:'BENGIDD1', text:'BANK BENGKULU'},
 			{code:'BHAGIDS1', text:'BANK HAGAKITA'},
@@ -199,6 +206,7 @@ const banklist=[
 			{code:'BPKSIDD1', text:'BPR KS'},
 			{code:'BPLSIDD1', text:'BPR/LSB'},
 			{code:'BRINIDJA', text:'BANK BRI'},
+			{code:'SYNIIDJ1', text:'BANK BNI SYARIAH'},
 			{code:'BSSPIDSP', text:'BANK SUMSEL'},
 			{code:'BTANIDJA', text:'BANK TABUNGAN NEGARA (BTN)'},
 			{code:'BUINIDD1', text:'BANK BUANA IND'},
@@ -210,12 +218,15 @@ const banklist=[
 			{code:'CENAIDJA', text:'BANK BCA'},
 			{code:'CHASIDJX', text:'JP. MORGAN CHASE BANK, N.A.'},
 			{code:'CICTIDJA', text:'Bank Mutiara'},
+			{code:'PDJGIDJ1', text:'BPD JAWA TENGAH'},
 			{code:'CIMBIDD1', text:'BANK CIMB NIAGA SYARIAH'},
 			{code:'CITIIDD1', text:'CITIBANK N.A.'},
 			{code:'CITIIDJX', text:'CITIBANK'},
+			{code:'UOBBIDJA', text:'UOB Indonesia'},
 			{code:'CNBAIDJ1', text:'CENTRATAMA NASIONAL BANK'},
 			{code:'CRAGIDD1', text:'BANK CREDIT AGRICOLE INDOSUEZ'},
 			{code:'CTCBIDJA', text:'BANK CHINA TRUST INDONESIA'},
+			{code:'MASPIDJA', text:'BANK MASPION INDONESIA'},
 			{code:'DBSBIDJA', text:'BANK DBS INDONESIA'},
 			{code:'DEUTIDJA', text:'DEUTSCHE BANK AG.'},
 			{code:'DIINIDD1', text:'BANK DIPO INTERNATIONAL'},
@@ -239,6 +250,7 @@ const banklist=[
 			{code:'HVBKIDJ1', text:'BANK WOORI INDONESIA'},
 			{code:'HVBKIDJA', text:'BANK HIMPUNAN SAUDARA 1906'},
 			{code:'IBBKIDJA', text:'BANK BII MAYBANK'},
+			{code:'PDRIIDJ1', text:'BPD RIAU'},
 			{code:'ICBKIDJA', text:'Bank ICBC Indonesia'},
 			{code:'IDMOIDJ1', text:'Bank SBI Indonesia'},
 			{code:'IDSTIDD1', text:'INDOSAT (DOMPETKU)'},
@@ -266,12 +278,15 @@ const banklist=[
 			{code:'MAINIDD1', text:'BANK MAYBANK INDOCORP'},
 			{code:'MALUIDD1', text:'BANK MALUKU'},
 			{code:'MASDIDJS', text:'BANK MASPION'},
-			{code:'MAYAIDJA', text:'BANK MAYAPADA'},
+			{code:'MAYAIDJA', text:'BANK MAYAPADA INTERNATIONAL'},
+			{code:'BDKIIDJ1', text:'BPD DKI JAKARTA'},
 			{code:'MAYOIDJA', text:'BANK MAYORA'},
 			{code:'MBBEIDJA', text:'MAYBANK INDONESIA SYARIAH'},
+			{code:'PDSBIDJ1', text:'BPD SUMATERA BARAT/BANK NAGARI'},
 			{code:'MEDHIDS1', text:'BANK MESTIKA'},
 			{code:'MEEKIDJ1', text:'BANK METRO EXPRESS'},
 			{code:'MEGAIDJA', text:'BANK MEGA'},
+			{code:'899', text:'DOKU'},
 			{code:'MERIIDD1', text:'BANK MERINCORP'},
 			{code:'MGABIDJ1', text:'BANK MITRANIAGA'},
 			{code:'MHCCIDJA', text:'BANK MIZUHO INDONESIA'},
@@ -282,12 +297,15 @@ const banklist=[
 			{code:'OCINIDD1', text:'BANK OCBC – INDONESIA'},
 			{code:'PAPUIDD1', text:'BPD PAPUA'},
 			{code:'PDACIDJ1', text:'BPD ACEH'},
+			{code:'PDSUIDJ1', text:'BPD SUMATERA UTARA'},
 			{code:'PDBAIDJ1', text:'BPD BALI'},
 			{code:'PDBBIDJ1', text:'BPD Banten (formerly Bank Pundi Indonesia)'},
 			{code:'PDJBIDJA', text:'Bank BJB'},
 			{code:'PDJGIDJA', text:'BANK JATENG'},
 			{code:'PDJTIDJ1', text:'BANK JATIM'},
+			{code:'PDJMIDJ1', text:'BPD JAMBI'},
 			{code:'PDKBIDJ1', text:'BPD KALIMANTAN BARAT'},
+			{code:'PDKTIDJ1', text:'BPD KALIMANTAN TIMUR'},
 			{code:'PDKGIDJ1', text:'BPD Kalimantan Tengah'},
 			{code:'PDKSIDJ1', text:'BPD KALSEL'},
 			{code:'PDKTIDJA', text:'BPD KALTIM'},
@@ -298,9 +316,10 @@ const banklist=[
 			{code:'PDSBIDSP', text:'BANK NAGARI'},
 			{code:'PDSUIDSA', text:'BANK SUMUT'},
 			{code:'PDWRIDJ1', text:'BPD Sulawesi Tenggara'},
-			{code:'PDWSIDJ1', text:'BPD SULSEL'},
+			{code:'PDWSIDJ1', text:'BPD SULAWESI SELATAN'},
+			{code:'LFIBIDJ1', text:'BANK NATIONAL NOBU'},
 			{code:'PDWUIDJ1', text:'BANK SULUT'},
-			{code:'PDYKIDJ1', text:'BPD DIY'},
+			{code:'PDYKIDJ1', text:'BPD YOGYAKARTA'},
 			{code:'PDYSIDJ1', text:'BPD DIY SYARIAH'},
 			{code:'PERSIDD1', text:'BANK PERSYARIKATAN INDONESIA'},
 			{code:'PINBIDJA', text:'BANK PANIN'},
@@ -334,6 +353,7 @@ const banklist=[
 			{code:'SYDKIDJ1', text:'Bank DKI UUS'},
 			{code:'SYHSIDJ1', text:'HONGKONG SYARIAH'},
 			{code:'SYJBIDJ1', text:'BANK JABAR BANTEN SYARIAH'},
+			{code:'ANTDIDJD', text:"BANK ANTAR DAERAH"},
 			{code:'SYJGIDJ1', text:'BPD Jawa Tengah UUS'},
 			{code:'SYJMIDJ1', text:'BPD Jambi UUS'},
 			{code:'SYJTIDJ1', text:'BPD Jawa Timur UUS'},

@@ -11,7 +11,7 @@ const crypto=require('crypto')
 	, httpf=require('httpf')
 	, args=require('yargs').argv
 	, debugout=require('debugout')(args.debugout)
-	,{confirmOrder}=require('./index')
+	,{confirmOrder, returnMoney}=require('./index')
 
 var sms_url='https://pay.luckyshopee.com/sms/send',
 	pay_url='https://pay-test.upayout.com/pay/createPaymentOrder',
@@ -95,9 +95,18 @@ getDB((err, db)=>{
 			return cb(e);
 		}
 	}));  
-	router.all('/withdraw_result', bodyParser.urlencoded({extended:true, limit:'1mb'}), verifySign, httpf({resultCode:'string', merTransNo:'string', callback:true}, async function(resultCode, merTransNo, callback) {
-		db.withdraw.updateOne({_id:ObjectId(merTransNo)}, {$set:{result:this.req.body, lastTime:new Date()}});
-		return httpf.text('success');
+	router.all('/withdraw_result', bodyParser.urlencoded({extended:true, limit:'1mb'}), verifySign, httpf({resultCode:'string', merTransNo:'string', tradeStatus:'string', callback:true}, async function(resultCode, merTransNo, tradeStatus, callback) {
+		try {
+			var bill=db.withdraw.findOneAndUpdate({_id:ObjectId(merTransNo)}, {$set:{result:this.req.body, lastTime:new Date()}}, {w:'majority'});
+			if (tradeStatus=='failure') {
+				// back money to user account;
+				bill=dedecimal(bill);
+				returnMoney(bill.phone, bill.snapshot.amount-bill.snapshot.fee);
+			}
+			return httpf.text('success');
+		}catch(e) {
+			return httpf.text('internel error');
+		}
 	}));
 })
 
@@ -163,7 +172,7 @@ const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, 
 			, prodName: 'southeast.asia.payout'
 			, userId: orderInfo.phone
 			, extInfo: {
-				bankCode:orderInfo.bankCode,accountHolderName:orderInfo.accountName,accountNumber:orderInfo.accountNo,payeeMobile:orderInfo.phone
+				bankName:orderInfo.bankName, bankCode:orderInfo.bankCode,accountHolderName:orderInfo.accountName,accountNumber:orderInfo.accountNo,payeeMobile:orderInfo.phone
 			}
 		})}, (err, header, body)=>{
 			if (err) return cb(err);

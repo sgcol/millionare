@@ -83,6 +83,14 @@ async function confirmOrder(orderid, money, cb) {
 	} catch(e) {return cb(e)}
 }
 exports.confirmOrder=confirmOrder;
+exports.returnMoney=async function(phone, money) {
+	var db=await getDB();
+	db.users.updateOne({phone}, {$inc:{balance:money}});
+	var u=onlineUsers.get(phone);
+	if (u) {
+		u.socket.emit('incbalance', money);
+	}
+}
 
 const default_user={balance:0};
 
@@ -441,7 +449,7 @@ getDB(async (err, db, dbm)=>{
 			} else tokenData.expired=new Date()+24*60*60*1000;
 
 			cb(null, tokenData.t);
-			var content={user:dedecimal({_id:dbuser._id, phone:pack.phone, balance:dbuser.balance, paytm_id:dbuser.paytm_id}), ...game.snapshot(pack.phone)};
+			var content={user:dedecimal({_id:dbuser._id, phone:pack.phone, balance:dbuser.balance, paytm_id:dbuser.paytm_id, whatsup:settings.whatsup}), ...game.snapshot(pack.phone)};
 			socket.emit('statechanged', content);
 		})
 		.on('adminexists', async (cb)=>{
@@ -493,7 +501,7 @@ getDB(async (err, db, dbm)=>{
 			} else tokenData.expired=new Date()+24*60*60*1000;
 
 			cb(null, tokenData.t);
-			socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, balance:dbuser.balance}), ...game.snapshot(pack.phone)});
+			socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, balance:dbuser.balance, whatsup:settings.whatsup}), ...game.snapshot(pack.phone)});
 		})
 		.on('fb_login', (accessToken, cb) =>{
 			FB.api('me', { fields: ['id', 'name'], access_token: accessToken }, async (res)=>{
@@ -528,7 +536,7 @@ getDB(async (err, db, dbm)=>{
 				} else tokenData.expired=new Date()+24*60*60*1000;
 
 				cb(null, tokenData.t, res.id);
-				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, phone:res.id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`https://graph.facebook.com/${res.id}/picture?type=album`}), ...game.snapshot(res.id)});
+				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, phone:res.id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`https://graph.facebook.com/${res.id}/picture?type=album`, whatsup:settings.whatsup}), ...game.snapshot(res.id)});
 			});
 		})
 		.on('google_login', async (id_token, cb)=>{
@@ -569,7 +577,7 @@ getDB(async (err, db, dbm)=>{
 				} else tokenData.expired=new Date()+24*60*60*1000;
 
 				cb(null, tokenData.t, dbuser.phone);
-				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, phone:userid, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:icon}), ...game.snapshot(userid)});
+				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, phone:userid, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:icon, whatsup:settings.whatsup}), ...game.snapshot(userid)});
 			} catch(e) {
 				debugout(e);
 				cb(e);
@@ -639,7 +647,7 @@ getDB(async (err, db, dbm)=>{
 				await db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}, $inc:{balance:-money}});
 				var withdraw={_id:id, time:new Date(), phone:socket.user.phone, money:money, fee:fee, snapshot:{balance:dbuser.balance}, luckyshopee_tradeno:tradeno};
 				db.withdraw.insertOne(withdraw);
-				socket.emit('statechanged', {user:{balance:dbuser.balance-money}});
+				socket.emit('incbalance', -money);
 				cb();
 			} catch(e) {return cb(e)}
 		})
@@ -675,6 +683,7 @@ getDB(async (err, db, dbm)=>{
 				delete bankinfo.amount;
 				var money=withdrawOrder.amount;
 				var fee=Math.floor(money*settings.withdrawPercent*100)/100+settings.withdrawFixed;
+				if (fee>money) throw 'not enough money';
 
 				var id=new ObjectId();
 				await session.withTransaction(async ()=>{
@@ -739,6 +748,12 @@ getDB(async (err, db, dbm)=>{
 		})
 		.on('setsettings', async (values, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			if (values.whatsup!=null && values.whatsup!=settings.whatsup) {
+				onlineUsers.all.forEach((phone)=>{
+					var u=onlineUsers.get(phone);
+					if (u.socket && u.socket!=socket) u.socket.emit('statechanged', {user:{whatsup:values.whatsup}});
+				});
+			}
 			Object.assign(settings, values);
 			try {
 				var {temp_result, ...stored} =settings;

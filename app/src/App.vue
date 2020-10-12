@@ -17,6 +17,9 @@
 					<!-- <p >{{$n(me?Number(me.balance).toFixed(2): '100', 'currency')}}</p> -->
 					<!-- <p >{{$t('ID')}} {{ me?me._id:'-'}}</p> -->
 					<p >{{username()}}</p>
+					<i18n path="whatsup" tag="p" for="whatsup" style="margin-left:-30px" v-if="me && me.whatsup">
+						{{me.whatsup}}
+					</i18n>
 				</div>
 			</div>
 			<div class="game">
@@ -432,7 +435,8 @@ a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer,
 	border-color:#007E00;
 }
 .home-rule {
-	bottom: 15px;
+	top:60px;
+	bottom: 27px;
 	padding: 2px 6px;
 	border: 1px solid #fff;
 	border-radius: 6px;
