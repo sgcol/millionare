@@ -168,7 +168,7 @@ var vueSettings= {
 			this.$refs.lang.show();
 		},
 		signoutfromfb() {
-			this.fb.logout();
+			if (this.fb && this.fb.logout) this.fb.logout();
 			docCookies.removeItem('fb');
 			this.signout();
 		},

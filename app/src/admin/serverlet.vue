@@ -47,14 +47,14 @@
 <script>
 import {openLink} from '../client.js'
 import auth from './auth'
-import approveWithdraw from './approve-withdraw'
+// import approveWithdraw from './approve-withdraw'
 
 const stdret=auth.stdret;
 
 export default {
 	name:'serverlet',
 	components:{
-		approveWithdraw,
+		// approveWithdraw,
 	},
 	data() {
 		return {

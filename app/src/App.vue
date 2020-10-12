@@ -11,7 +11,7 @@
 				</div>
 				<div class="info">
 					<p >{{$t('Available Balance')}}</p>
-					<p>{{$t('₹')}}
+					<p>{{conf.locale=='in_ID'?'Rp':'₹'}}
 						<span>{{ me?Number(me.balance).toFixed(2):'-' }}</span>
 					</p>
 					<!-- <p >{{$n(me?Number(me.balance).toFixed(2): '100', 'currency')}}</p> -->
@@ -92,6 +92,7 @@ import mymenu from './components/mymenu.vue'
 
 import { mapState } from 'vuex'
 import {eventBus, openLink, docCookies} from './client.js'
+import conf from './conf'
 
 Number.prototype.pad = function(size) {
 	var s = String(this);
@@ -124,6 +125,7 @@ export default {
 			},
 			fullscreen:false,
 			fullorders:false,
+			conf:conf,
 		}
 	},
 	watch :{
