@@ -17,11 +17,13 @@
 					<!-- <p >{{$n(me?Number(me.balance).toFixed(2): '100', 'currency')}}</p> -->
 					<!-- <p >{{$t('ID')}} {{ me?me._id:'-'}}</p> -->
 					<p >{{username()}}</p>
-					<i18n path="whatsup" tag="p" for="whatsup" style="margin-left:-30px" v-if="me && me.whatsup">
-						{{me.whatsup}}
-					</i18n>
 				</div>
 			</div>
+			<b-alert :show="me && me.whatsup">
+				<i18n path="whatsup" tag="span" for="whatsup">
+					{{me.whatsup}}
+				</i18n>
+			</b-alert>
 			<div class="game">
 				<ul class="game-info">
 					<li ><p >{{ $t('Period') }}<i class="el-icon-s-flag"></i></p><p >{{ period}}</p></li>
