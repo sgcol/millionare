@@ -19,10 +19,8 @@
 					<p >{{username()}}</p>
 				</div>
 			</div>
-			<b-alert :show="me && me.whatsup">
-				<i18n path="whatsup" tag="span" for="whatsup">
-					{{me.whatsup}}
-				</i18n>
+			<b-alert :show="me && !!me.whatsup">
+				{{me.whatsup}}
 			</b-alert>
 			<div class="game">
 				<ul class="game-info">

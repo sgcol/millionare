@@ -169,7 +169,7 @@ function Game(settings, db) {
 			setno++;
 			countdown=60/*2.5*60*/;
 			status='running';
-			endtime=starttime+2.5*60*1000;
+			endtime=new Date(starttime.getTime()+2.5*60*1000);
 			period=today+setno.pad(4);
 			io.sockets.emit('statechanged', {countdown, starttime, endtime, period, status});
 			var self=this;
