@@ -75,6 +75,8 @@
 import {openLink} from '../client.js'
 import auth from "./auth"
 import {get} from 'object-path'
+import TDGA from '../stat'
+
 const stdret=auth.stdret;
 
 export default {
@@ -145,10 +147,10 @@ export default {
 					if (err) return alert(err);
 					self.manipulatedata(chg);
 					// for talkingdata
-					window.TDGA.Account({
+					TDGA.Account({
 						accountId : phone,
 					});
-					window.TDGA.onReward(delta, '管理员操作');
+					TDGA.onReward(delta, '管理员操作');
 				}))
 			})
 		},

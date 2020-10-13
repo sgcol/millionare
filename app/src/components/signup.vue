@@ -143,6 +143,7 @@ import {docCookies, openLink} from "../client.js"
 import md5 from 'md5'
 import {BIconstack, BIconPersonFill, BIconCircle} from 'bootstrap-vue'
 import conf from '../conf'
+import TDGA from '../stat'
 
 function uuidv4() {
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -200,7 +201,7 @@ export default {
 					self.handlelogin(err, t, phone);
 					if (loginType=='fb_login') docCookies.setItem('fb', true);
 					socket.off('reconnect_failed', errHandler);
-					window.TDGA.Account({
+					TDGA.Account({
 						accountId : phone,
 						accountType : [null,12, 11][response.type],
 					})
@@ -231,7 +232,7 @@ export default {
 				socket.emit('google_login', googleUser.getAuthResponse().id_token, (err, t, phone)=>{
 					self.handlelogin(err, t, phone);
 					socket.off('reconnect_failed', errHandler);
-					window.TDGA.Account({
+					TDGA.Account({
 						accountId : phone,
 						accountType : 12,
 					})
@@ -261,7 +262,7 @@ export default {
 						self.handlelogin(err, t, phone);
 						docCookies.setItem('fb', true);
 						socket.off('reconnect_failed', errHandler);
-						window.TDGA.Account({
+						TDGA.Account({
 							accountId : phone,
 							accountType : 11,
 						})
@@ -317,7 +318,7 @@ export default {
 				function errHandler() {
 					self.longop=false;
 					socket.off('reconnect_failed', errHandler);
-					alert(this.$i18n.t('Can not reach the server'));
+					alert(self.$i18n.t('Can not reach the server'));
 				}
 				socket.on('reconnect_failed', errHandler);
 				socket.emit('salt', phone, (err, salt)=>{
@@ -329,7 +330,7 @@ export default {
 					socket.emit('login', {phone, pwd:md5(''+salt+password)}, (err, t)=>{
 						self.handlelogin(err, t);
 						socket.off('reconnect_failed', errHandler);
-						window.TDGA.Account({
+						TDGA.Account({
 							accountId : phone,
 							accountType : 1,
 						})
@@ -347,13 +348,13 @@ export default {
 				function errHandler() {
 					self.longop=false;
 					socket.off('reconnect_failed', errHandler);
-					alert(this.$i18n.t('Can not reach the server'));
+					alert(self.$i18n.t('Can not reach the server'));
 				}
 				socket.on('reconnect_failed', errHandler);
 				socket.emit('reg', {phone, pwd, otp}, (err, t)=>{
 					self.handlelogin(err ,t);
 					socket.off('reconnect_failed', errHandler);
-					window.TDGA.Account({
+					TDGA.Account({
 						accountId : phone,
 						accountType : 1,
 					})

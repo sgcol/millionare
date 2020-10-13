@@ -69,6 +69,7 @@
 import conf from '../conf';
 import mymenu from './mymenu.vue'
 import { mapState } from 'vuex'
+import TDGA from '../stat'
 
 export default {
 	name:'xiazhu',
@@ -142,7 +143,7 @@ export default {
 				}
 				window.v.$store.commit('addContract', contract);
                 self.hide();
-                window.TDGA.onItemPurchase({
+                TDGA.onItemPurchase({
                     item :'投入'+contract.select,
                     itemNumber : contract.betting,
                     priceInVirtualCurrency : 1

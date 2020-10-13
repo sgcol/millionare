@@ -97,11 +97,13 @@
 </template>
 
 <script>
+import 'url-search-params-polyfill';
 import {docCookies, eventBus, openLink} from '../client.js'
 import { mapState } from 'vuex'
 import { validationMixin } from "vuelidate";
 import { required, numeric } from "vuelidate/lib/validators";
 import conf from '../conf'
+import TDGA from '../stat'
 // import Rule from './rule.vue'
 
 var vueSettings= {
@@ -173,7 +175,7 @@ var vueSettings= {
 			this.signout();
 		},
 		signout() {
-			window.TDGA.onPageLeave();
+			TDGA.onPageLeave();
 			this.hide();
 			this.$store.commit('setMe', {
 				balance:null,
@@ -190,9 +192,10 @@ var vueSettings= {
 			})
 		},
 		recharge() {
+			var sp=new URLSearchParams(location.search);
 			var amount=this.amount;
 			openLink((socket)=>{
-				socket.emit('recharge', amount, (err, pack)=>{
+				socket.emit('recharge', amount, sp.get('td_channelid'), (err, pack)=>{
 					if (err) return alert(err);
 					// window.TDGA.onChargeSuccess({
 					// 	orderId:pack.orderid,

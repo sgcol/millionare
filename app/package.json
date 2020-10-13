@@ -14,6 +14,7 @@
     "gy-easy-mongo": "^0.5.1",
     "md5": "^2.2.1",
     "object-path": "^0.11.4",
+    "url-search-params-polyfill": "^8.1.0",
     "vue": "^2.6.11",
     "vue-async-computed": "^3.9.0",
     "vue-bootstrap-typeahead": "^0.2.6",

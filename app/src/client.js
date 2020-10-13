@@ -3,6 +3,7 @@ import url from 'url'
 import path from 'path'
 // import {parseDomain} from 'parse-domain'
 import io from 'socket.io-client'
+import TDGA from './stat'
 
 // import signup from './components/signup.vue'
 
@@ -88,7 +89,7 @@ export function openLink(next) {
 				for (var key in u) {
 					state.me[key]=u[key];
 				}
-				window.TDGA.Account({
+				TDGA.Account({
 					accountId : state.me.phone,
 					accountName : state.me.name,
 					gender : -1
@@ -116,7 +117,7 @@ export function openLink(next) {
 				state.orders.splice(i, 1, x);
 				var win=dealResult(x);
 				if (win) {
-					window.TDGA.onReward(win, `投注${x.select}获胜`)
+					TDGA.onReward(win, `投注${x.select}获胜`)
 				}
 			}
 		});

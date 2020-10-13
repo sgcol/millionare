@@ -32,6 +32,7 @@ import { mapState } from 'vuex'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import {openLink} from '../client'
 import AsyncComputed from 'vue-async-computed'
+import TDGA from '../stat'
 
 Vue.use(AsyncComputed)
 
@@ -121,7 +122,7 @@ export default {
 			openLink(sock=>{
 				sock.emit('idr_withdraw', order, (err)=>{
 					if (err) return alert(err);
-					window.TDGA.onItemPurchase({
+					TDGA.onItemPurchase({
 						item :'提现',
 						itemNumber : order.amount,
 						priceInVirtualCurrency : 1

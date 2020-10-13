@@ -58,40 +58,6 @@ if (argv.fbaccess) {
 server.on('request', app);
 server.listen(argv.port, function () { console.log(`Listening on ${server.address().port}`.green) });
 
-async function confirmOrder(orderid, money, cb) {
-	cb=cb || function (err, r) {
-		if (err) throw err;
-		return r;
-	};
-	var db=await getDB();
-	try {
-		var {value}=await db.bills.findOneAndUpdate({_id:ObjectId(orderid), used:{$ne:true}}, {$set:{used:true, confirmedAmount:money, lastTime:new Date()}}, {w:'majority'});
-		if (!value) throw 'no such orderid or order is processing';
-		value=dedecimal(value);
-		await db.users.updateOne({phone:value.phone}, {$inc:decimalfy({balance:money, recharge:money})}, {w:'majority'});
-		var user=onlineUsers.get(value.phone);
-		if (user) {
-			user.socket.emit('incbalance', money);
-		}
-		orderid=value._id.toHexString();
-		fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
-			method:'post',
-			body:await gzip(JSON.stringify([{msgID:orderid, status:'success', /*OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'CNY', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime()*/}])),
-			headers: { 'Content-Type': 'application/json' },
-		});
-		return cb();
-	} catch(e) {return cb(e)}
-}
-exports.confirmOrder=confirmOrder;
-exports.returnMoney=async function(phone, money) {
-	var db=await getDB();
-	db.users.updateOne({phone}, {$inc:{balance:money}});
-	var u=onlineUsers.get(phone);
-	if (u) {
-		u.socket.emit('incbalance', money);
-	}
-}
-
 const default_user={balance:0};
 
 Number.prototype.pad = function(size) {
@@ -104,49 +70,7 @@ const datestring =(t)=>{
 	return `${t.getFullYear().pad(4)}${(t.getMonth()+1).pad()}${t.getDate().pad()}`;
 }
 
-const onlineUsers=(function() {
-	var _online={}, _online_userkeys=null, _dirty=true;
-	var o={
-		add:function(user) {
-			var u=_online[user.phone];
-			if (u) {
-				user.copyfrom(u);
-				u.socket.emit('kicked', 'Account has logined from another place');
-				u.socket.disconnect(true);
-			}
-			_online[user.phone]=user;
-			_dirty=true;
-		},
-		remove:function(user) {
-			if (_online[user.phone]==user) {
-				delete _online[user.phone];
-				_dirty=true;
-			}
-		},
-		get:function(phone) {
-			return _online[phone];
-		}
-	};
-	Object.defineProperties(o, {
-		length:{
-			get:function() {
-				if (!_dirty) return _online_userkeys.length;
-				_online_userkeys=Object.keys(_online);
-				_dirty=false;
-				return _online_userkeys.length; 
-			}
-		},
-		all:{
-			get:function() {
-				if (!_dirty) return _online_userkeys;
-				_online_userkeys=Object.keys(_online);
-				_dirty=false;
-				return _online_userkeys; 
-			}
-		}
-	});
-	return o;
-})();
+const onlineUsers=require('./onlineuser');
 
 function Game(settings, db) {
 	var status='not_running', countdown, starttime, endtime, period;
@@ -167,9 +91,9 @@ function Game(settings, db) {
 				today=thisday;
 			}
 			setno++;
-			countdown=60/*2.5*60*/;
+			countdown=3*60;
 			status='running';
-			endtime=new Date(starttime.getTime()+2.5*60*1000);
+			endtime=new Date(starttime.getTime()+countdown*1000);
 			period=today+setno.pad(4);
 			io.sockets.emit('statechanged', {countdown, starttime, endtime, period, status});
 			var self=this;
@@ -597,7 +521,7 @@ getDB(async (err, db, dbm)=>{
 
 			sendSms(phone, deviceid, socket.remoteAddress, c.captcha);
 		})
-		.on('recharge', async (amount, cb)=>{
+		.on('recharge', async (amount, partner, cb)=>{
 			if (amount<=0) return cb('Illegal operation');
 			if (!socket.user) {
 				cb('Can not top up before login');
@@ -610,7 +534,7 @@ getDB(async (err, db, dbm)=>{
 				var orderid=insertedId.toHexString();
 				await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
 					method:'post',
-					body:await gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:socket.user.phone, orderID:orderid, currencyAmount:amount, currencyType:'IDR', virtualCurrencyAmount:amount, partner:dbuser.partner}])),
+					body:await gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:socket.user.phone, orderID:orderid, currencyAmount:amount, currencyType:'IDR', virtualCurrencyAmount:amount, partner:partner}])),
 					headers: { 'Content-Type': 'application/json' },
 				});
 				var url=await createOrder(orderid, amount, req);

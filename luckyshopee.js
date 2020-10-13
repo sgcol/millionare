@@ -11,7 +11,7 @@ const crypto=require('crypto')
 	, httpf=require('httpf')
 	, args=require('yargs').argv
 	, debugout=require('debugout')(args.debugout)
-	,{confirmOrder, returnMoney}=require('./index')
+	,{confirmOrder, returnMoney}=require('./order')
 
 var sms_url='https://pay.luckyshopee.com/sms/send',
 	pay_url='https://pay-test.upayout.com/pay/createPaymentOrder',
@@ -97,15 +97,16 @@ getDB((err, db)=>{
 	}));  
 	router.all('/withdraw_result', bodyParser.urlencoded({extended:true, limit:'1mb'}), verifySign, httpf({resultCode:'string', merTransNo:'string', tradeStatus:'string', callback:true}, async function(resultCode, merTransNo, tradeStatus, callback) {
 		try {
-			var bill=db.withdraw.findOneAndUpdate({_id:ObjectId(merTransNo)}, {$set:{result:this.req.body, lastTime:new Date()}}, {w:'majority'});
+			var {value:bill}=await db.withdraw.findOneAndUpdate({_id:ObjectId(merTransNo), result:null}, {$set:{result:this.req.body, lastTime:new Date()}}, {w:'majority'});
+			if (!bill) return callback(null, httpf.text('no such withdraw order'));
 			if (tradeStatus=='failure') {
 				// back money to user account;
 				bill=dedecimal(bill);
 				returnMoney(bill.phone, bill.snapshot.amount-bill.snapshot.fee);
 			}
-			return httpf.text('success');
+			return callback(null, httpf.text('success'));
 		}catch(e) {
-			return httpf.text('internel error');
+			return callback(null, httpf.text('internel error'));
 		}
 	}));
 })
