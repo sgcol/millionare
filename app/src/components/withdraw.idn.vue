@@ -121,6 +121,11 @@ export default {
 			openLink(sock=>{
 				sock.emit('idr_withdraw', order, (err)=>{
 					if (err) return alert(err);
+					window.TDGA.onItemPurchase({
+						item :'提现',
+						itemNumber : order.amount,
+						priceInVirtualCurrency : 1
+					});
 					alert(self.$i18n.t('Success'));
 				})
 			})

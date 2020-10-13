@@ -24,7 +24,7 @@ function makeSign(data) {
 	var hash = crypto.createHash('sha256');
 
 	delete data.sign;
-	var message ='', o=Object.assign({}, data);
+	var o=Object.assign({}, data);
 	function assembleObj(o) {
 		var message='';
 		Object.keys(o).sort().map((key)=>{
@@ -58,7 +58,7 @@ function orderForm(req, o) {
 function verifySign(req, res, next) {
 	var sign=req.body.sign, wanted=makeSign(req.body);
 	if (sign==wanted.sign) return next();
-	debugout({...req.body, sign, wanted});
+	debugout({body:req.body, wanted});
 	res.send({err:'sign error'});
 }
 
