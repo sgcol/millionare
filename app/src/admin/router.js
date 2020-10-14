@@ -5,6 +5,7 @@ import userMoney from './userMoney'
 // import approveWithdraw from './approve-withdraw'
 import login from './login.vue'
 import auth from './auth'
+import accounts from './accounts'
 
 function requireAuth(to, from, next) {
     if (!auth.loggedIn()) {
@@ -22,6 +23,7 @@ export const router=new VueRouter({
         {path:'/', component:serverlet, beforeEnter:requireAuth},
         {path:'/serverlet',component:serverlet, beforeEnter:requireAuth},
         {path:'/userMoney',component:userMoney, beforeEnter:requireAuth},
+        {path:'/accounts',component:accounts, beforeEnter:requireAuth},
         // {path:'/approve', component:approveWithdraw, beforeEnter:requireAuth},
         {path:'/login', component:login},
         { path: '/logout',

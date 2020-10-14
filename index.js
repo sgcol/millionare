@@ -309,7 +309,7 @@ getDB(async (err, db, dbm)=>{
 	if (!settings) settings={};
 	settings.feeRate=settings.feeRate||0.02;
 	settings.withdrawPercent=settings.withdrawPercent||0;
-	settings.withdrawFixed=settings.withdrawFixed||100000;
+	settings.withdrawFixed=settings.withdrawFixed||10000;
 	const game=Game(settings, db);
 	game.start();
 
@@ -775,6 +775,37 @@ getDB(async (err, db, dbm)=>{
 				db.withdraw.updateOne({_id:id}, {$set:{luckyshopee_tradeno:tradeno}});
 				return cb();
 			} catch(e) {cb(e)}
+		})
+		.on('$list', async(op, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			try {
+				cb(null, await db[op.target].find(op.query).toArray());
+			}catch(e) {cb(e)}
+		})
+		.on('$del', async(op, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			try {
+				await db[op.target].remove(op.query);
+				cb();
+			}catch(e) {cb(e)}
+		})
+		.on('$upd', async(op, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			try {
+				await db[op.target].updateMany(op.query, {$set:op.content});
+				cb();
+			}catch(e) {cb(e)}
+		})
+		.on('$create', async(op, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			try {
+				if (!op.content.phone) return cb('phone must be specified');
+				if (!op.content.pwd) return cb('pwd must be specified');
+				var salt=rndstring(16);
+				var pwd=md5(''+salt+op.content.pwd);
+				await db[op.target].insertOne({...op.content, salt, pwd, regTime:new Date(), regIP:socket.remoteAddress, lastIP:socket.remoteAddress});
+				cb();
+			}catch(e) {cb(e)}
 		})
 		.on('error', console.error)
 		.on('disconnect', function() {

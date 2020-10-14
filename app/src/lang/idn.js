@@ -61,12 +61,12 @@ module.exports={
     "Chapter 1.Booking/Collection Description":"Bab 1. Booking/Deskripsi koleksi",
     
     "3 minutes 1 issue, 2 minutes and 30 seconds to order, 30 seconds to show the lottery result. It opens all day. The total number of trade is 480 issues.":"1 masalah dalam 3 menit, sisa 2 menit dan 30 detik lagi untuk memesan, 30 detik lagi untuk melihat hasil lotre. Lotre dibuka setiap hari. Total masalah perdagangan adalah 480.",
-    "If you spend 100 rupees to trade, after deducting 10 rupees service fee, your contract amount is 90 rupees:":"Jika kamu memakai 100 rupiah untuk berdagang, setelah dikurangi biaya admin sebesar 10 rupiah. Jumlah pada kontrak pada akhirnya adalah 90 rupiah. ",
-    ">1. JOIN GREEN: if the result shows 1,3,7,9, you will get (90*2) 180 rupees;":">1. JOIN HIJAU ：Jika hasil menunjukkan 1,3,7,9, kamu akan dapat (90*2) 180 rupiah",
-    "If the result shows 5, you will get (90*1.5) 145 rupees.":"Jika hasil menunjukkan 5, kamu akan dapdat (90*1.5) 145 rupiah",
-    "2. JOIN RED: if the result shows 2,4,6,8, you will get (90*2) 180 rupees; If the result shows 0, you will get (90*1.5) 145 rupees.":"2. JOIN MERAH : Jika hasil menunjukkan 2,4,6,8, kamu akan dapat (90*2) rupiah; Jika hasil menunjukkan 0, kamu akan dapat (90*1.5) 145 rupiah",
-    "3. JOIN VIOLET: if the result shows 0 or 5, you will get (90*4.5) 405 rupees.":"3. JOIN UNGU : Jika hasil menunjukkan 0 atau 5, kamu akan dapdat (90*4.5) 405 rupiah",
-    "4. SELECT NUMBER: if the result is the same as the number you selected, you will get (90*9) 810 rupees.":"4.  PILIH NOMOR : Jika nomor yang keluar atau hasil sama dengan nomor yang kamu pilih, kamu akan dapat (90*9) 810 rupees",
+    "If you spend 10000 rupiah to trade, after deducting 200 rupiah service fee, your contract amount is 9800 rupiah:":"Jika kamu memakai 10000 rupiah untuk berdagang, setelah dikurangi biaya admin sebesar 200 rupiah. Jumlah pada kontrak pada akhirnya adalah 9800 rupiah. ",
+    "1. JOIN GREEN: if the result shows 1,3,7,9, you will get (9800*2) 19600 rupiah;":"1. JOIN HIJAU ：Jika hasil menunjukkan 1,3,7,9, kamu akan dapat (9800*2) 19600 rupiah",
+    "If the result shows 5, you will get (9800*1.5) 14700 rupiah.":"Jika hasil menunjukkan 5, kamu akan dapdat (9800*1.5) 14700 rupiah",
+    "2. JOIN RED: if the result shows 2,4,6,8, you will get (9800*2) 19600 rupiah; If the result shows 0, you will get (9800*1.5) 14700 rupiah.":"2. JOIN MERAH : Jika hasil menunjukkan 2,4,6,8, kamu akan dapat (9800*2) 19600 rupiah; Jika hasil menunjukkan 0, kamu akan dapat (9800*1.5) 14700 rupiah",
+    "3. JOIN VIOLET: if the result shows 0 or 5, you will get (9800*4.5) 44100 rupiah.":"3. JOIN UNGU : Jika hasil menunjukkan 0 atau 5, kamu akan dapdat (9800*4.5) 44100 rupiah",
+    "4. SELECT NUMBER: if the result is the same as the number you selected, you will get (9800*9) 88200 rupiah.":"4.  PILIH NOMOR : Jika nomor yang keluar atau hasil sama dengan nomor yang kamu pilih, kamu akan dapat (9800*9) 88200 rupiah",
     
     "Verify your phone":"Verifikasi no. HP",
     "Reset password":"Reset kata sandi ",
