@@ -73,6 +73,7 @@ getDB((err, db)=>{
 		appId=s.appId||appId
 		appKey=s.appKey||appKey;
 		appChannel=s.appChannel||appChannel;
+		debugout('luckyshopee init with', {pay_url, withdraw_url});
 	})
 	router.all('/done', bodyParser.urlencoded({ extended: true, limit: '1mb' }), verifySign, httpf({transNo:'string', merTransNo:'string', amount:'number', processAmount:'number', transStatus:'string', callback:true}, async function(transNo, merTransNo, amount, processAmount, transStatus, cb) {
 		debugout(this.req.body);

@@ -792,6 +792,12 @@ getDB(async (err, db, dbm)=>{
 		.on('$upd', async(op, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			try {
+				if (op.content.pwd) {
+					var salt=rndstring(16);
+					var pwd=md5(''+salt+op.content.pwd);
+					op.content.salt=salt;
+					op.content.pwd=pwd;
+				}
 				await db[op.target].updateMany(op.query, {$set:op.content});
 				cb();
 			}catch(e) {cb(e)}
