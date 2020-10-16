@@ -88,6 +88,7 @@ export function openLink(next) {
 			if (msg.user) {
 				var  u=msg.user;
 				for (var key in u) {
+					if (key=='whatsup' && state.me.whatsup!=u.whatsup) eventBus.$emit('whatsupchgd', u.whatsup, state.me.whatsup);
 					state.me[key]=u[key];
 				}
 				TDGA.Account({

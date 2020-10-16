@@ -311,6 +311,7 @@ export default {
 	events:{
 	},
 	mounted() {
+		eventBus.$on('whatsupchgd', (v)=>{alert(v)});
 		eventBus.$on('relogin', this.checkLoginState.bind(this));
 		// this.$refs.signup.show();
 		this.checkLoginState();
