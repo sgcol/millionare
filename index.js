@@ -77,6 +77,7 @@ function Game(settings, db) {
 	var today, setno=0;
 	var contracts=[];
 	var history=[];
+	var wait_stop;
 	return {
 		snapshot(user) {
 			return {
@@ -185,12 +186,12 @@ function Game(settings, db) {
 			}
 			return 0;
 		},
-		onEnd() {
+		async onEnd() {
 			var r=this.findResult();
 			var gr={period, price:r, starttime, endtime};
 			status='not_running';
 			io.sockets.emit('gameresult', {status, history:gr})
-			db.games.insertOne(gr);
+			await db.games.insertOne(gr, {w:'majority'});
 			history.push(gr);
 			if (history.length>=50) history.splice(0, history.length-40);
 
@@ -214,8 +215,12 @@ function Game(settings, db) {
 				var onlineu=onlineUsers.get(u);
 				if (onlineu) onlineu.socket.emit('incbalance', userwins[u].balance);
 			}
-			if (dbop.length) db.users.bulkWrite(dbop);
-			setTimeout(this.start.bind(this), 2*1000);
+			if (dbop.length) await db.users.bulkWrite(dbop, {w:'majority'});
+			if (wait_stop) wait_stop();
+			else setTimeout(this.start.bind(this), 2*1000);
+		},
+		stopGameAfterThisSet(cb) {
+			wait_stop=cb;
 		},
 		async bet(user, select, money, cb) {
 			if (status!='running') return cb('Betting is not allowed at this time');
@@ -312,6 +317,14 @@ getDB(async (err, db, dbm)=>{
 	settings.withdrawFixed=settings.withdrawFixed||10000;
 	const game=Game(settings, db);
 	game.start();
+	process.on('SIGINT', ()=>{
+		onlineUsers.all.forEach((u)=>{
+			u.socket && u.socket.emit('notify', 'The server will be updated before the next set. Usually this process will only take a few seconds. After the update, you only need to login again to continue the game.')
+		})
+		game.stopGameAfterThisSet(()=>{
+			process.exit(0);
+		});
+	})
 
 	io.on('connection', function connection(socket) {
 		var req=socket.request;

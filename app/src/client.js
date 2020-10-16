@@ -146,6 +146,9 @@ export function openLink(next) {
 		.on('disconnect', ()=>{
 			eventBus.$emit('relogin');
 		})
+		.on('notify', (str)=>{
+			eventBus.$emit('notify', str);
+		})
 		.on('kicked', (str)=>{
 			docCookies.removeItem('token');
 			alert(i18n.t(str));

@@ -22,6 +22,9 @@
 			<b-alert :show="me && !!me.whatsup">
 				{{me.whatsup}}
 			</b-alert>
+			<b-alert :show="notify" dismissible variant="warning">
+				{{notify}}
+			</b-alert>
 			<div class="game">
 				<ul class="game-info">
 					<li ><p >{{ $t('Period') }}<i class="el-icon-s-flag"></i></p><p >{{ period}}</p></li>
@@ -129,6 +132,7 @@ export default {
 			fullscreen:false,
 			fullorders:false,
 			conf:conf,
+			notify:null,
 		}
 	},
 	watch :{
@@ -316,6 +320,9 @@ export default {
 		// this.$refs.signup.show();
 		this.checkLoginState();
 		var self=this;
+		eventBus.$on('notify', (str)=>{
+			self.notify=str;			
+		})
 		eventBus.$on('connect', (socket)=>{
 			if (socket.disable_relogin) return;
 			var token=docCookies.getItem('token'), phone=docCookies.getItem('phone');
