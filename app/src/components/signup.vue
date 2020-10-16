@@ -382,6 +382,7 @@ export default {
 	},
 	mounted() {
 		window.onLoginRespone = this.onLoginRespone.bind(this);
+		this.mobile=docCookies.getItem('phone');
 	},
 	validations:{
 		mobile:{

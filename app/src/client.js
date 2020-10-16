@@ -4,6 +4,7 @@ import path from 'path'
 // import {parseDomain} from 'parse-domain'
 import io from 'socket.io-client'
 import TDGA from './stat'
+import i18n from './lang'
 
 // import signup from './components/signup.vue'
 
@@ -143,6 +144,10 @@ export function openLink(next) {
 		})
 		.on('disconnect', ()=>{
 			eventBus.$emit('relogin');
+		})
+		.on('kicked', (str)=>{
+			docCookies.removeItem('token');
+			alert(i18n.t(str));
 		})
 	}else {
 		if (socket.disconnected) socket.connect();
