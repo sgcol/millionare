@@ -318,8 +318,9 @@ getDB(async (err, db, dbm)=>{
 	const game=Game(settings, db);
 	game.start();
 	process.on('SIGINT', ()=>{
-		onlineUsers.all.forEach((u)=>{
-			u.socket && u.socket.emit('notify', 'The server will be updated before the next set. Usually this process will only take a few seconds. After the update, you only need to login again to continue the game.')
+		onlineUsers.all.forEach((phone)=>{
+			var u=onlineUsers.get(phone);
+			u.socket && u.socket.emit('notify', 'The server will be updated before the next set. Usually this process will only take a few seconds. After the update, login again to continue the game.')
 		})
 		game.stopGameAfterThisSet(()=>{
 			process.exit(0);

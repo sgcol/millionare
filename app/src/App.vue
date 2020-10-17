@@ -22,7 +22,7 @@
 			<b-alert :show="me && !!me.whatsup">
 				{{me.whatsup}}
 			</b-alert>
-			<b-alert :show="notify" dismissible variant="warning">
+			<b-alert :show="!!notify" dismissible variant="danger">
 				{{notify}}
 			</b-alert>
 			<div class="game">
@@ -324,6 +324,7 @@ export default {
 			self.notify=str;			
 		})
 		eventBus.$on('connect', (socket)=>{
+			self.notify=null;
 			if (socket.disable_relogin) return;
 			var token=docCookies.getItem('token'), phone=docCookies.getItem('phone');
 			if (!phone) return this.showLogin();
