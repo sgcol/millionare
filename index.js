@@ -576,7 +576,7 @@ getDB(async (err, db, dbm)=>{
 			try {
 				var dbuser=await db.users.findOne({phone:socket.user.phone});
 				if (!dbuser) cb('no such user');
-				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), lastTime:new Date(), used:false}, {w:'majority'});
+				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), lastTime:new Date(), partner:parnter, used:false}, {w:'majority'});
 				var orderid=insertedId.toHexString();
 				await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
 					method:'post',
