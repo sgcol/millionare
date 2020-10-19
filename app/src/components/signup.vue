@@ -137,6 +137,7 @@
 </template>
 
 <script>
+import 'url-search-params-polyfill';
 import { validationMixin } from "vuelidate";
 import { required, numeric, minLength, sameAs } from "vuelidate/lib/validators";
 import {docCookies, openLink} from "../client.js"
@@ -144,6 +145,8 @@ import md5 from 'md5'
 import {BIconstack, BIconPersonFill, BIconCircle} from 'bootstrap-vue'
 import conf from '../conf'
 import TDGA from '../stat'
+
+var sp=new URLSearchParams(location.search);
 
 function uuidv4() {
 	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -186,6 +189,7 @@ export default {
 	methods:{
 		onLoginRespone(response) {
 			console.log("onLoginRespone:"+response.toString());
+			
 			const token = response.userinfo.token;
 			const loginType = response.type === 1 ? "google_login" : "fb_login";
 			const self = this;
@@ -197,7 +201,7 @@ export default {
 					alert(self.$i18n.t('Can not reach the server'));
 				}
 				socket.on('reconnect_failed', errHandler);
-				socket.emit(loginType, token, (err, t, phone)=>{
+				socket.emit(loginType, token, sp.get('td_channelid')||'default', (err, t, phone)=>{
 					self.handlelogin(err, t, phone);
 					if (loginType=='fb_login') docCookies.setItem('fb', true);
 					socket.off('reconnect_failed', errHandler);
@@ -229,7 +233,7 @@ export default {
 					alert(self.$i18n.t('Can not reach the server'));
 				}
 				socket.on('reconnect_failed', errHandler);
-				socket.emit('google_login', googleUser.getAuthResponse().id_token, (err, t, phone)=>{
+				socket.emit('google_login', googleUser.getAuthResponse().id_token, sp.get('td_channelid')||'default', (err, t, phone)=>{
 					self.handlelogin(err, t, phone);
 					socket.off('reconnect_failed', errHandler);
 					TDGA.Account({
@@ -258,7 +262,7 @@ export default {
 						alert(self.$i18n.t('Can not reach the server'));
 					}
 					socket.on('reconnect_failed', errHandler);
-					socket.emit('fb_login', response.authResponse.accessToken, (err, t, phone)=>{
+					socket.emit('fb_login', response.authResponse.accessToken, sp.get('td_channelid')||'default', (err, t, phone)=>{
 						self.handlelogin(err, t, phone);
 						docCookies.setItem('fb', true);
 						socket.off('reconnect_failed', errHandler);
@@ -351,7 +355,7 @@ export default {
 					alert(self.$i18n.t('Can not reach the server'));
 				}
 				socket.on('reconnect_failed', errHandler);
-				socket.emit('reg', {phone, pwd, otp}, (err, t)=>{
+				socket.emit('reg', {phone, pwd, otp, partner:sp.get('td_channelid')||'default'}, (err, t)=>{
 					self.handlelogin(err ,t);
 					socket.off('reconnect_failed', errHandler);
 					TDGA.Account({

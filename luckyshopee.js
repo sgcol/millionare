@@ -13,12 +13,16 @@ const crypto=require('crypto')
 	, debugout=require('debugout')(args.debugout)
 	,{confirmOrder, returnMoney}=require('./order')
 
-var sms_url='https://pay.luckyshopee.com/sms/send',
-	pay_url='https://pay-test.upayout.com/pay/createPaymentOrder',
-	withdraw_url='https://pay-test.upayout.com/pay/createPayoutOrder'
-	appId='devTestAppId', 
-	appKey='fe68e63bea35f8edeae04daec0ecb722',
-	appChannel='wypay'
+const _default={
+	sms_url:'https://pay.luckyshopee.com/sms/send',
+	pay_url:'https://pay-test.upayout.com/pay/createPaymentOrder',
+	withdraw_url:'https://pay-test.upayout.com/pay/createPayoutOrder',
+	appId:'devTestAppId', 
+	appKey:'fe68e63bea35f8edeae04daec0ecb722',
+	appChannel:'wypay'
+}
+
+var sms_url, pay_url, withdraw_url, appId, appKey, appChannel;
 
 function makeSign(data) {
 	var hash = crypto.createHash('sha256');
@@ -66,13 +70,14 @@ getDB((err, db)=>{
 	db.settings.findOne({}, (err, s)=>{
 		if (err) return;
 		if (!s || !s.luckyshopee) return;
-		s=s.luckyshopee;
-		sms_url=s.sms_url||sms_url;
-		pay_url=s.pay_url||pay_url;
-		withdraw_url=s.withdraw_url||withdraw_url;
-		appId=s.appId||appId
-		appKey=s.appKey||appKey;
-		appChannel=s.appChannel||appChannel;
+		chgSettings(s.luckyshopee);
+		// s=s.luckyshopee;
+		// sms_url=s.sms_url||sms_url;
+		// pay_url=s.pay_url||pay_url;
+		// withdraw_url=s.withdraw_url||withdraw_url;
+		// appId=s.appId||appId
+		// appKey=s.appKey||appKey;
+		// appChannel=s.appChannel||appChannel;
 		debugout('luckyshopee init with', {pay_url, withdraw_url});
 	})
 	router.all('/done', bodyParser.urlencoded({ extended: true, limit: '1mb' }), verifySign, httpf({transNo:'string', merTransNo:'string', amount:'number', processAmount:'number', transStatus:'string', callback:true}, async function(transNo, merTransNo, amount, processAmount, transStatus, cb) {
@@ -118,13 +123,13 @@ exports.sendSms=function(phone, deviceId, ip, captcha, content) {
 	})
 }
 
-const createOrder=exports.createOrder=function(orderid,userInfo, money, req, cb) {
+const createOrder=exports.createOrder=function(orderid,userInfo, partner, money, req, cb) {
 	return new Promise((resolve, reject)=>{
 		cb=cb||function (err, r){
 			if (err) return reject(err);
 			return resolve(r);
 		}
-		const reqobj={uri:pay_url, json:orderForm(req, {userId:userInfo.phone, userIp:userInfo.socket.remoteAddress, merTransNo:orderid, amount:money.toFixed(2)})};
+		const reqobj={uri:pay_url, json:orderForm(req, {userId:userInfo.phone, userIp:userInfo.socket.remoteAddress, merTransNo:orderid, amount:money.toFixed(2), appChannel:partner})};
 		debugout(reqobj);
 		request.post(reqobj, (err, header, body)=>{
 			if (err) return cb(err);
@@ -159,14 +164,14 @@ const createWithdraw=exports.createWithdraw=function(orderid, money, phone, req,
 	})
 }
 
-const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, req, cb) {
+const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, partner, req, cb) {
 	return new Promise((resolve, reject)=>{
 		cb=cb||function (err, r){
 			if (err) return reject(err);
 			return resolve(r);
 		}
 		var {protocol}=url.parse(req.headers.origin);
-		request.post({uri:withdraw_url, json:orderForm(req, {
+		var reqobj={uri:withdraw_url, json:orderForm(req, {
 			merTransNo:orderid
 			, amount:orderInfo.amount.toFixed(2)
 			, pmId:'payout.bank.id'
@@ -176,7 +181,10 @@ const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, 
 			, extInfo: {
 				bankName:orderInfo.bankName, bankCode:orderInfo.bankCode,accountHolderName:orderInfo.accountName,accountNumber:orderInfo.accountNo,payeeMobile:orderInfo.phone
 			}
-		})}, (err, header, body)=>{
+			,appChannel:partner
+		})};
+		debugout(reqobj);
+		request.post(reqobj, (err, header, body)=>{
 			if (err) return cb(err);
 			var ret=body;
 			if (typeof ret!='object') return cb('luckyshopee return wrong data');
@@ -188,40 +196,50 @@ const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, 
 }
 
 exports.router=router;
-exports.chgSettings=(s)=>{
-	sms_url=s.sms_url||sms_url;
-	pay_url=s.pay_url||pay_url;
-	withdraw_url=s.withdraw_url||withdraw_url;
-	appId=s.appId||appId
-	appKey=s.appKey||appKey;
-	appChannel=s.appChannel||appChannel;
+const chgSettings=exports.chgSettings=(s)=>{
+	sms_url=s.sms_url||_default.sms_url;
+	pay_url=s.pay_url||_default.pay_url;
+	withdraw_url=s.withdraw_url||_default.withdraw_url;
+	appId=s.appId||_default.appId
+	appKey=s.appKey||_default.appKey;
+	appChannel=s.appChannel||_default.appChannel;
 }
 if (module==require.main) {
 	const {ID}=require('./etc');
 
-	async function test() {
-		var x=await createOrder('test'+ID(), 1, {headers:{host:'127.0.0.1:9000', origin:'http://127.0.0.1:9000'}});
-		console.log(x);
-	}
+	// async function test() {
+	// 	var x=await createOrder('test'+ID(), 1, {headers:{host:'127.0.0.1:9000', origin:'http://127.0.0.1:9000'}});
+	// 	console.log(x);
+	// }
 
-	try {
-		test();
-	} catch(e) {
-		console.error(e);
-	}
+	// try {
+	// 	test();
+	// } catch(e) {
+	// 	console.error(e);
+	// }
 	(async () =>{
 		var orderid=ID(), value={phone:'8123456782', money:100};
-		var result=await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
+		console.log('============first request status=request===============');
+		var msg=[{msgID:orderid, status:'request', OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'IDR', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime(), gameServer:'', level:1, paymentType:'default'}]
+		var reqobj={
 			method:'post',
-			body:gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'IDR', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime(), gameServer:'', level:1, paymentType:'default'}])),
+			body:await gzip(JSON.stringify(msg)),
 			headers: { 'Content-Type': 'application/json' },
-		});	
-		console.log(result)
-		console.log(await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
+		}
+		console.log(msg, reqobj);
+		var result=await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', reqobj);	
+		console.log('==========response=============')
+		console.log(result);
+
+		console.log('==============second request status=success==============');
+		msg=[{msgID:orderid, /*orderID:orderid,*/ status:'success'/*, OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'IDR', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime(), gameServer:'', level:1, paymentType:'default'*/}]
+		reqobj={
 			method:'post',
-			body:await gzip(JSON.stringify({msgID:orderid, orderID:orderid, status:'success', OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'IDR', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime(), gameServer:'', level:1, paymentType:'default'})),
+			body:await gzip(JSON.stringify(msg)),
 			headers: { 'Content-Type': 'application/json' },
-		}));
+		}
+		console.log(msg, reqobj);
+		console.log(await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', reqobj));
 	})();
 
 	// try {

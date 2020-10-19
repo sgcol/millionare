@@ -1,0 +1,184 @@
+source:
+	(async () =>{
+		var orderid=ID(), value={phone:'8123456782', money:100};
+		console.log('============first request status=request===============');
+		var reqobj={
+			method:'post',
+			body:await gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'IDR', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime(), gameServer:'', level:1, paymentType:'default'}])),
+			headers: { 'Content-Type': 'application/json' },
+		}
+		console.log(reqobj);
+		var result=await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', reqobj);	
+		console.log('==========response=============')
+		console.log(result);
+
+		console.log('==============second request status=success==============');
+		reqobj={
+			method:'post',
+			body:await gzip(JSON.stringify({msgID:orderid, orderID:orderid, status:'success', OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'IDR', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime(), gameServer:'', level:1, paymentType:'default'})),
+			headers: { 'Content-Type': 'application/json' },
+		}
+		console.log(reqobj);
+		console.log(await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', reqobj));
+	})();
+
+
+
+log:
+=======first request status=requst===========
+{
+  method: 'post',
+  body: <Buffer 1f 8b 08 00 00 00 00 00 00 13 6d 8d c1 0e 82 30 0c 86 df a5 67 0e 83 09 2c dc 8c 5c 38 99 08 37 63 cc 82 75 90 30 c0 6e 23 21 c6 77 b7 1a 13 0f 7a 6b ... 138 more bytes>,
+  headers: { 'Content-Type': 'application/json' }
+}
+==========response=============
+Response {
+  size: 0,
+  timeout: 0,
+  [Symbol(Body internals)]: {
+    body: PassThrough {
+      _readableState: [ReadableState],
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      _writableState: [WritableState],
+      allowHalfOpen: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kTransformState)]: [Object]
+    },
+    disturbed: false,
+    error: null
+  },
+  [Symbol(Response internals)]: {
+    url: 'http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD',
+    status: 200,
+    statusText: 'OK',
+    headers: Headers { [Symbol(map)]: [Object: null prototype] },
+    counter: 0
+  }
+}
+==============second request status=success==============
+{
+  method: 'post',
+  body: <Buffer 1f 8b 08 00 00 00 00 00 00 13 6d 8d 3d 0f 82 30 10 86 ff cb cd 0c 05 04 1a 36 23 0b 93 89 b0 9b a6 9c 85 84 02 b9 b6 24 8d f1 bf 7b 1a 13 07 dd ee 9e ... 134 more bytes>,
+  headers: { 'Content-Type': 'application/json' }
+}
+Response {
+  size: 0,
+  timeout: 0,
+  [Symbol(Body internals)]: {
+    body: PassThrough {
+      _readableState: [ReadableState],
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      _writableState: [WritableState],
+      allowHalfOpen: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kTransformState)]: [Object]
+    },
+    disturbed: false,
+    error: null
+  },
+  [Symbol(Response internals)]: {
+    url: 'http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD',
+    status: 200,
+    statusText: 'OK',
+    headers: Headers { [Symbol(map)]: [Object: null prototype] },
+    counter: 0
+  }
+}
+
+
+log2
+
+[
+  {
+    msgID: '_av15vk6ps',
+    status: 'request',
+    OS: 'h5',
+    accountID: '8123456782',
+    orderID: '_av15vk6ps',
+    currencyAmount: 100,
+    currencyType: 'IDR',
+    virtualCurrencyAmount: 100,
+    chargeTime: 1603089915440,
+    gameServer: '',
+    level: 1,
+    paymentType: 'default'
+  }
+] {
+  method: 'post',
+  body: <Buffer 1f 8b 08 00 00 00 00 00 00 13 6d 8d 3b 0f 82 40 10 84 ff cb d5 14 77 bc 04 3a 23 0d 95 89 d0 19 63 2e c7 0a 44 0e 70 ef 91 10 e3 7f 77 35 26 16 da ed ... 139 more bytes>,
+  headers: { 'Content-Type': 'application/json' }
+}
+==========response=============
+Response {
+  size: 0,
+  timeout: 0,
+  [Symbol(Body internals)]: {
+    body: PassThrough {
+      _readableState: [ReadableState],
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      _writableState: [WritableState],
+      allowHalfOpen: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kTransformState)]: [Object]
+    },
+    disturbed: false,
+    error: null
+  },
+  [Symbol(Response internals)]: {
+    url: 'http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD',
+    status: 200,
+    statusText: 'OK',
+    headers: Headers { [Symbol(map)]: [Object: null prototype] },
+    counter: 0
+  }
+}
+==============second request status=success==============
+{
+  msgID: '_av15vk6ps',
+  orderID: '_av15vk6ps',
+  status: 'success',
+  OS: 'h5',
+  accountID: '8123456782',
+  currencyAmount: 100,
+  currencyType: 'IDR',
+  virtualCurrencyAmount: 100,
+  chargeTime: 1603089915605,
+  gameServer: '',
+  level: 1,
+  paymentType: 'default'
+} {
+  method: 'post',
+  body: <Buffer 1f 8b 08 00 00 00 00 00 00 13 6d 8d 3d 0f 82 30 10 86 ff cb cd 0c 2d 58 04 36 23 0b 93 89 b0 9b a6 9c 60 6c 81 f4 2b 21 c6 ff ee 61 4c 1c 74 bb 7b de ... 133 more bytes>,
+  headers: { 'Content-Type': 'application/json' }
+}
+Response {
+  size: 0,
+  timeout: 0,
+  [Symbol(Body internals)]: {
+    body: PassThrough {
+      _readableState: [ReadableState],
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      _writableState: [WritableState],
+      allowHalfOpen: true,
+      [Symbol(kCapture)]: false,
+      [Symbol(kTransformState)]: [Object]
+    },
+    disturbed: false,
+    error: null
+  },
+  [Symbol(Response internals)]: {
+    url: 'http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD',
+    status: 200,
+    statusText: 'OK',
+    headers: Headers { [Symbol(map)]: [Object: null prototype] },
+    counter: 0
+  }
+}

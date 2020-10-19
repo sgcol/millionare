@@ -458,7 +458,7 @@ getDB(async (err, db, dbm)=>{
 			
 			var salt=rndstring(16);
 			var pwd=md5(''+salt+pack.pwd);
-			var dbuser={phone:pack.phone, pwd:pwd, salt:salt, balance:0, regIP:socket.remoteAddress, lastIP:socket.remoteAddress, regTime:new Date(), lastTime:new Date()};
+			var dbuser={phone:pack.phone, pwd:pwd, salt:salt, balance:0, regIP:socket.remoteAddress, lastIP:socket.remoteAddress, regTime:new Date(), lastTime:new Date(), partner:pack.partner};
 			try {
 				var {insertedId}=await db.users.insertOne(decimalfy(dbuser));
 				dbuser._id=insertedId;
@@ -473,10 +473,14 @@ getDB(async (err, db, dbm)=>{
 			cb(null, tokenData.t);
 			socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, balance:dbuser.balance, whatsup:settings.whatsup}), ...game.snapshot(pack.phone)});
 		})
-		.on('fb_login', (accessToken, cb) =>{
+		.on('fb_login', (accessToken, partner, cb) =>{
+			if (typeof partner=='function') {
+				cb=partner;
+				partner=null;
+			}
 			FB.api('me', { fields: ['id', 'name'], access_token: accessToken }, async (res)=>{
 				const now=new Date();
-				var {value:dbuser}=await db.users.findOneAndUpdate({phone:res.id}, {$set:{name:res.name, fb_id:res.id, lastTime:now, lastIP:socket.remoteAddress}, $setOnInsert:{regIP:socket.remoteAddress, regTime:now}} ,{upsert:true, returnOriginal:false, w:1});
+				var {value:dbuser}=await db.users.findOneAndUpdate({phone:res.id}, {$set:{name:res.name, fb_id:res.id, lastTime:now, lastIP:socket.remoteAddress}, $setOnInsert:{regIP:socket.remoteAddress, regTime:now, partner}} ,{upsert:true, returnOriginal:false, w:1});
 
 				if (new Date(dbuser.block)>now) {
 					cb('Account has been banned');
@@ -509,7 +513,11 @@ getDB(async (err, db, dbm)=>{
 				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, phone:res.id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`https://graph.facebook.com/${res.id}/picture?type=album`, whatsup:settings.whatsup}), ...game.snapshot(res.id)});
 			});
 		})
-		.on('google_login', async (id_token, cb)=>{
+		.on('google_login', async (id_token, partner, cb)=>{
+			if (typeof partner=='function') {
+				cb=partner;
+				partner=null;
+			}
 			try {
 				const ticket = await gooclient.verifyIdToken({
 					idToken: id_token,
@@ -518,7 +526,7 @@ getDB(async (err, db, dbm)=>{
 				const payload = ticket.getPayload();
 				const userid = payload['sub'], name=payload.name, icon=payload.picture;
 				const now=new Date();
-				var {value:dbuser}=await db.users.findOneAndUpdate({phone:userid}, {$set:{name:name, goo_id:userid, lastTime:now, lastIP:socket.remoteAddress}, $setOnInsert:{regIP:socket.remoteAddress, regTime:now}} ,{upsert:true, returnOriginal:false, w:1});
+				var {value:dbuser}=await db.users.findOneAndUpdate({phone:userid}, {$set:{name:name, goo_id:userid, lastTime:now, lastIP:socket.remoteAddress}, $setOnInsert:{regIP:socket.remoteAddress, regTime:now, partner}} ,{upsert:true, returnOriginal:false, w:1});
 				if (new Date(dbuser.block)>now) {
 					cb('Account has been banned');
 					socket.disconnect(true);
@@ -567,7 +575,7 @@ getDB(async (err, db, dbm)=>{
 
 			sendSms(phone, deviceid, socket.remoteAddress, c.captcha);
 		})
-		.on('recharge', async (amount, partner, cb)=>{
+		.on('recharge', async (amount, unused, cb)=>{
 			if (amount<=0) return cb('Illegal operation');
 			if (!socket.user) {
 				cb('Can not top up before login');
@@ -576,14 +584,14 @@ getDB(async (err, db, dbm)=>{
 			try {
 				var dbuser=await db.users.findOne({phone:socket.user.phone});
 				if (!dbuser) cb('no such user');
-				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), lastTime:new Date(), partner:parnter, used:false}, {w:'majority'});
+				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), lastTime:new Date(), partner:dbuser.parnter||'vdm', used:false}, {w:'majority'});
 				var orderid=insertedId.toHexString();
 				await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
 					method:'post',
-					body:await gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:socket.user.phone, orderID:orderid, currencyAmount:amount, currencyType:'IDR', virtualCurrencyAmount:amount, partner:partner}])),
+					body:await gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:socket.user.phone, orderID:orderid, currencyAmount:amount, currencyType:'IDR', virtualCurrencyAmount:amount, partner:dbuser.partner||'vdm'}])),
 					headers: { 'Content-Type': 'application/json' },
 				});
-				var url=await createOrder(orderid, socket.user, amount, req);
+				var url=await createOrder(orderid, socket.user, dbuser.partner||'vdm', amount, req);
 				cb(null, {orderid:orderid, jumpto:url});
 			} catch(e) {return cb(e)}
 		})
@@ -660,13 +668,13 @@ getDB(async (err, db, dbm)=>{
 					var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, balance:{$gte:withdrawOrder.amount}}, {$inc:{balance:-withdrawOrder.amount}, $set:{bankinfo}}, {session});
 					dbuser=dedecimal(value);
 					if (!dbuser) throw 'not enough balance';
-					var withdraw={_id:id, time:new Date(), phone:socket.user.phone, snapshot:{balance:dbuser.balance, ...withdrawOrder, fee}};
+					var withdraw={_id:id, time:new Date(), phone:socket.user.phone, snapshot:{balance:dbuser.balance, ...withdrawOrder, fee, partner:dbuser.partner||'vdm'}};
 					await db.withdraw.insertOne(withdraw, {session});
 				}, opt);
 				withdrawOrder.amount-=fee;
 				var refuse=await approvalWithdraw(socket.user, withdrawOrder, settings, db), tradeno;
 				if (!refuse) {
-					tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
+					tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, dbuser.partner||'vdm', req);
 				}
 				db.withdraw.updateOne({_id:id}, {$set:{stat:refuse||undefined,luckyshopee_tradeno:tradeno}});
 				socket.emit('statechanged', {user:{balance:(dbuser.balance||0)-money}});
@@ -726,7 +734,7 @@ getDB(async (err, db, dbm)=>{
 				var {temp_result, ...stored} =settings;
 				await db.settings.updateOne({_id:'server'}, {$set:stored}, {upsert:true});
 				db.adminlog.insertOne({op:'setsettings', admin:socket.user.phone, value:settings, time:new Date()});
-				chgSettings(settings);
+				chgSettings(settings.luckyshopee);
 			} catch(e) {return cb(e)}
 			cb();
 		})

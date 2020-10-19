@@ -22,7 +22,7 @@ async function confirmOrder(orderid, money, cb) {
 		var {value}=await db.bills.findOneAndUpdate({_id:ObjectId(orderid), used:{$ne:true}}, {$set:{used:true, confirmedAmount:money, lastTime:new Date()}}, {w:'majority'});
 		if (!value) throw 'no such orderid or order is processing';
 		value=dedecimal(value);
-		await db.users.updateOne({phone:value.phone}, {$inc:decimalfy({balance:money, recharge:money})}, {w:'majority'});
+        var {value:dbuser}= await db.users.findOneAndUpdate({phone:value.phone}, {$inc:decimalfy({balance:money, recharge:money})}, {w:'majority'});
 		var user=onlineUsers.get(value.phone);
 		if (user) {
 			user.socket.emit('incbalance', money);
@@ -30,7 +30,7 @@ async function confirmOrder(orderid, money, cb) {
 		orderid=value._id.toHexString();
 		fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
 			method:'post',
-			body:await gzip(JSON.stringify([{msgID:orderid, status:'success', /*OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'CNY', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime()*/}])),
+			body:await gzip(JSON.stringify([{msgID:orderid, status:'success', OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:money, currencyType:'IDR', virtualCurrencyAmount:money, chargeTime:new Date().getTime(), partner:dbuser.partner||'vdm'}])),
 			headers: { 'Content-Type': 'application/json' },
 		});
 		return cb();
