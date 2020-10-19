@@ -99,12 +99,7 @@ import mymenu from './components/mymenu.vue'
 import { mapState } from 'vuex'
 import {eventBus, openLink, docCookies} from './client.js'
 import conf from './conf'
-
-Number.prototype.pad = function(size) {
-	var s = String(this);
-	while (s.length < (size || 2)) {s = "0" + s;}
-	return s;
-}
+import {dateTimeString, timeString} from './etc'
 
 export default {
 	name: 'App',
@@ -162,14 +157,8 @@ export default {
 		capitalizeFirstLetter(string) {
 			return string.charAt(0).toUpperCase() + string.slice(1);
 		},
-		dateTimeString :(t)=>{
-			t=new Date(t);
-			return `${t.getFullYear().pad(4)}-${(t.getMonth()+1).pad()}-${t.getDate().pad()} ${t.getHours().pad()}:${t.getMinutes().pad()}:${t.getSeconds().pad()}`;
-		},
-		timeString(t) {
-			t=new Date(t);
-			return `${t.getHours().pad()}:${t.getMinutes().pad()}:${t.getSeconds().pad()}`;
-		},
+		dateTimeString:dateTimeString,
+		timeString: timeString,
 		getResult(p) {
 			p=String(p);
 			return Number(p.substr(p.length-1, 1))

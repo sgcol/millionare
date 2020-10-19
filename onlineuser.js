@@ -1,41 +1,51 @@
+const {dedecimal} =require('./etc')
+
 const onlineUsers=module.exports=(function() {
-	var _online={}, _online_userkeys=null, _dirty=true;
+	var _online=new Map();
 	var o={
 		add:function(user) {
-			var u=_online[user.phone];
+			var u=_online.get(user.phone);
 			if (u) {
 				user.copyfrom(u);
 				u.socket.emit('kicked', 'Account has logined from another place');
 				u.socket.disconnect(true);
 			}
-			_online[user.phone]=user;
-			_dirty=true;
-		},
-		remove:function(user) {
-			if (_online[user.phone]==user) {
-				delete _online[user.phone];
-				_dirty=true;
+			else {
+				_online.set(user.phone, user);
+				var {dbuser}=user, {salt, ...rest}=dbuser;
+				this.broadcast('userin', dedecimal(rest));
 			}
 		},
+		remove:function(user) {
+			var ret= _online.delete(user.phone);
+			if (ret) this.broadcast('userout', user.phone);
+			return ret;
+		},
 		get:function(phone) {
-			return _online[phone];
+			return _online.get(phone);
+		},
+		broadcast(cmd, content, except) {
+			_online.forEach((u, phone)=>{
+				if (phone==except) return;
+				u.socket.emit(cmd, content);
+			})
+		},
+		forEach(fn) {
+			_online.forEach(fn);
+		},
+		_data() {
+			return _online;
 		}
 	};
 	Object.defineProperties(o, {
 		length:{
 			get:function() {
-				if (!_dirty) return _online_userkeys.length;
-				_online_userkeys=Object.keys(_online);
-				_dirty=false;
-				return _online_userkeys.length; 
+				return _online.size;
 			}
 		},
 		all:{
 			get:function() {
-				if (!_dirty) return _online_userkeys;
-				_online_userkeys=Object.keys(_online);
-				_dirty=false;
-				return _online_userkeys; 
+				return Array.from(_online.keys());
 			}
 		}
 	});

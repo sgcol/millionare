@@ -49,17 +49,7 @@
 import {openLink} from '../client'
 import { BIconPersonPlus } from 'bootstrap-vue'
 import {router} from './router'
-
-Number.prototype.pad = function(size) {
-	var s = String(this);
-	while (s.length < (size || 2)) {s = "0" + s;}
-	return s;
-}
-
-const dateTimeString =(t)=>{
-	t=new Date(t);
-	return `${t.getFullYear().pad(4)}-${(t.getMonth()+1).pad()}-${t.getDate().pad()} ${t.getHours().pad()}:${t.getMinutes().pad()}:${t.getSeconds().pad()}`;
-}
+import {dateTimeString} from '../etc'
 
 export default {
 	name:'Accounts',

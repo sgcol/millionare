@@ -93,6 +93,7 @@ export default {
 			socket.emit('adminexists', (err, hasAdmin)=>{
 				if (err) return alert(err);
 				self.regmode=!hasAdmin;
+				self.mobile='admin';
 			})
 		})
 	}

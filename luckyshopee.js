@@ -118,13 +118,13 @@ exports.sendSms=function(phone, deviceId, ip, captcha, content) {
 	})
 }
 
-const createOrder=exports.createOrder=function(orderid, money, req, cb) {
+const createOrder=exports.createOrder=function(orderid,userInfo, money, req, cb) {
 	return new Promise((resolve, reject)=>{
 		cb=cb||function (err, r){
 			if (err) return reject(err);
 			return resolve(r);
 		}
-		const reqobj={uri:pay_url, json:orderForm(req, {userId:'123456', merTransNo:orderid, amount:money.toFixed(2)})};
+		const reqobj={uri:pay_url, json:orderForm(req, {userId:userInfo.phone, userIp:userInfo.socket.remoteAddress, merTransNo:orderid, amount:money.toFixed(2)})};
 		debugout(reqobj);
 		request.post(reqobj, (err, header, body)=>{
 			if (err) return cb(err);
@@ -210,16 +210,16 @@ if (module==require.main) {
 		console.error(e);
 	}
 	(async () =>{
-		var orderid=ID(), value={phone:'8123456782', money:2000000};
+		var orderid=ID(), value={phone:'8123456782', money:100};
 		var result=await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
 			method:'post',
-			body:gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'CNY', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime(), gameServer:'', level:1, paymentType:'default'}])),
+			body:gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'IDR', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime(), gameServer:'', level:1, paymentType:'default'}])),
 			headers: { 'Content-Type': 'application/json' },
 		});	
 		console.log(result)
 		console.log(await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
 			method:'post',
-			body:await gzip(JSON.stringify({msgID:orderid, orderID:orderid, status:'success'})),
+			body:await gzip(JSON.stringify({msgID:orderid, orderID:orderid, status:'success', OS:'h5', accountID:value.phone, orderID:orderid, currencyAmount:value.money, currencyType:'IDR', virtualCurrencyAmount:value.money, chargeTime:new Date().getTime(), gameServer:'', level:1, paymentType:'default'})),
 			headers: { 'Content-Type': 'application/json' },
 		}));
 	})();

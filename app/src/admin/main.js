@@ -22,25 +22,33 @@ Vue.config.productionTip = false
 
 const store =new Vuex.Store({
 	state:{
-	me:{
-		balance:null,
-		id:null,
-		paytm_id:null
-	},
-	countdown:null,
-	period:null,
-	history:[],
-	// [{period:'20200708001', price:11978}]
-	orders:[],
-	//   {_id:'5e367cd897', betting:30, select:7, fee:3, time:new Date(), game:{period:'202007081001', price:null, endtime:new Date()}},
-	//   {_id:'5e367cd898', betting:10, select:'Green', fee:1, time:new Date(), game:{period:'202007081002', price:0, endtime:new Date()}},
-	//   {_id:'5e367cd899', betting:10, select:'Green', fee:1, time:new Date(), game:{period:'202007081002', price:1, endtime:new Date()}}
-	// ]
-	status:null,
+		me:{
+			balance:null,
+			id:null,
+			paytm_id:null
+		},
+		countdown:null,
+		period:null,
+		history:[],
+		// [{period:'20200708001', price:11978}]
+		orders:[],
+		//   {_id:'5e367cd897', betting:30, select:7, fee:3, time:new Date(), game:{period:'202007081001', price:null, endtime:new Date()}},
+		//   {_id:'5e367cd898', betting:10, select:'Green', fee:1, time:new Date(), game:{period:'202007081002', price:0, endtime:new Date()}},
+		//   {_id:'5e367cd899', betting:10, select:'Green', fee:1, time:new Date(), game:{period:'202007081002', price:1, endtime:new Date()}}
+		// ]
+		status:null,
 	},
 	mutations:{
+		countdown(state) {
+			if (state.countdown>0) state.countdown--;
+			if (state.countdown<=30) state.status='stop_betting';
+		},
 	}
 })
+
+setInterval(()=>{
+	store.commit('countdown');
+}, 1000);
 
 import {router} from './router'
 

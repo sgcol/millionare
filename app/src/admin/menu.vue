@@ -7,6 +7,7 @@
 		<b-collapse id="nav-collapse" is-nav>
 			<b-navbar-nav class="">
 				<b-nav-item to="serverlet">服务器设置</b-nav-item>
+				<b-nav-item to="gameset">游戏监控</b-nav-item>
 				<b-nav-item to="accounts">管理员</b-nav-item>
 				<b-nav-item to="userMoney">用户管理</b-nav-item>
 				<!-- <b-nav-item to="approve">审核提款</b-nav-item> -->

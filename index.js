@@ -24,11 +24,14 @@ var server = require('http').createServer()
 	, {FB} = require('fb')
 	, {OAuth2Client} = require('google-auth-library')
 	, gooclient = new OAuth2Client('647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com')
+	, dataProviders =require('./data-providers')
+	, objPath=require('object-path')
 
 require('colors');
 
 const timezone='+07';
 
+const { online } = require('./data-providers');
 var {router, chgSettings}=require('./luckyshopee');
 
 app.use(express.static(path.join(__dirname, 'app/dist'), 
@@ -72,6 +75,11 @@ const datestring =(t)=>{
 
 const onlineUsers=require('./onlineuser');
 
+function barodcastToAdmin(cmd, content) {
+	onlineUsers.forEach((u)=>{
+		u.isAdmin && u.socket && u.socket.emit(cmd, content);
+	})
+}
 function Game(settings, db) {
 	var status='not_running', countdown, starttime, endtime, period;
 	var today, setno=0;
@@ -79,6 +87,19 @@ function Game(settings, db) {
 	var history=[];
 	var wait_stop;
 	return {
+		contracts_provider() {
+			return {
+				list() {
+					for (var i=contracts.length-1; i>=0; i--) {
+						var c=contracts[i];
+						if (c) {
+							if (c.game.period!=period) break;
+						}
+					}
+					return contracts.slice(i+1);				
+				}
+			}
+		},
 		snapshot(user) {
 			return {
 				status, countdown, starttime, endtime, period, history, orders:contracts.filter((c)=>c.user==user)
@@ -236,7 +257,8 @@ function Game(settings, db) {
 				var fee=Math.floor(money*settings.feeRate*100)/100;
 				var contract={_id:new ObjectId(), time:new Date(), user:user.phone, money:money-fee, fee:fee, betting:money, select:select, game:{status, period, starttime, endtime, setno}};
 				db.contracts.insertOne(contract);
-				contracts.push(contract);
+				contracts.push({...contract, name:user.name, phone:user.phone});
+				barodcastToAdmin('contract', {...contract, name:user.name, phone:user.phone});
 				cb(null, 
 					{
 						select:contract.select, fee:contract.fee, betting:money,
@@ -317,14 +339,24 @@ getDB(async (err, db, dbm)=>{
 	settings.withdrawFixed=settings.withdrawFixed||10000;
 	const game=Game(settings, db);
 	game.start();
+	dataProviders.contracts=game.contracts_provider();
+
 	process.on('SIGINT', ()=>{
-		onlineUsers.all.forEach((phone)=>{
-			var u=onlineUsers.get(phone);
-			u.socket && u.socket.emit('notify', 'The server will be updated before the next set. Usually this process will only take a few seconds. After the update, login again to continue the game.')
-		})
-		game.stopGameAfterThisSet(()=>{
-			process.exit(0);
-		});
+		if (onlineUsers.length==0) process.exit(0);
+		var waitGameEnd=false, allu=onlineUsers.all;
+		for (var i=0; i<allu.length; i++) {
+			var u=onlineUsers.get(allu[i]);
+			if (!u.isAdmin) {
+				waitGameEnd=true;
+				break;
+			}
+		}
+		onlineUsers.broadcast('notify', 'The server will be updated before the next set. Usually this process will only take a few seconds. After the update, login again to continue the game.');
+		if (waitGameEnd)
+			game.stopGameAfterThisSet(()=>{
+				process.exit(0);
+			})
+		else process.exit(0); 
 	})
 
 	io.on('connection', function connection(socket) {
@@ -551,7 +583,7 @@ getDB(async (err, db, dbm)=>{
 					body:await gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:socket.user.phone, orderID:orderid, currencyAmount:amount, currencyType:'IDR', virtualCurrencyAmount:amount, partner:partner}])),
 					headers: { 'Content-Type': 'application/json' },
 				});
-				var url=await createOrder(orderid, amount, req);
+				var url=await createOrder(orderid, socket.user, amount, req);
 				cb(null, {orderid:orderid, jumpto:url});
 			} catch(e) {return cb(e)}
 		})
@@ -687,10 +719,7 @@ getDB(async (err, db, dbm)=>{
 		.on('setsettings', async (values, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			if (values.whatsup!=null && values.whatsup!=settings.whatsup) {
-				onlineUsers.all.forEach((phone)=>{
-					var u=onlineUsers.get(phone);
-					if (u.socket && u.socket!=socket) u.socket.emit('statechanged', {user:{whatsup:values.whatsup}});
-				});
+				onlineUsers.broadcast('statechanged', {user:{whatsup:values.whatsup}});
 			}
 			Object.assign(settings, values);
 			try {
@@ -793,13 +822,23 @@ getDB(async (err, db, dbm)=>{
 		.on('$list', async(op, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			try {
-				cb(null, await db[op.target].find(op.query).toArray());
+				if (dataProviders[op.target]) {
+					var listfn=objPath.get(dataProviders, [op.target, 'list']);
+					if (listfn) cb(null, await listfn(op));
+					else throw ('not supported');
+				}
+				else cb(null, await db[op.target].find(op.query).toArray());
 			}catch(e) {cb(e)}
 		})
 		.on('$del', async(op, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			try {
-				await db[op.target].remove(op.query);
+				if (dataProviders[op.target]) {
+					var delfn=objPath.get(dataProviders, [op.target, 'del']);
+					if (delfn) await delfn(op);
+					else throw ('not supported')
+				}
+				else await db[op.target].remove(op.query);
 				cb();
 			}catch(e) {cb(e)}
 		})
@@ -812,7 +851,12 @@ getDB(async (err, db, dbm)=>{
 					op.content.salt=salt;
 					op.content.pwd=pwd;
 				}
-				await db[op.target].updateMany(op.query, {$set:op.content});
+				if (dataProviders[op.target]) {
+					var updatefn=objPath.get(dataProviders, [op.target, 'update']);
+					if (updatefn) await updatefn(op);
+					else throw ('not supported')
+				}
+				else await db[op.target].updateMany(op.query, {$set:op.content});
 				cb();
 			}catch(e) {cb(e)}
 		})
@@ -823,9 +867,26 @@ getDB(async (err, db, dbm)=>{
 				if (!op.content.pwd) return cb('pwd must be specified');
 				var salt=rndstring(16);
 				var pwd=md5(''+salt+op.content.pwd);
-				await db[op.target].insertOne({...op.content, salt, pwd, regTime:new Date(), regIP:socket.remoteAddress, lastIP:socket.remoteAddress});
+				if (dataProviders[op.target]) {
+					var createfn=objPath.get(dataProviders, [op.target, 'create']);
+					if (createfn) await createfn(op);
+					else throw ('not supported')
+				}
+				else await db[op.target].insertOne({...op.content, salt, pwd, regTime:new Date(), regIP:socket.remoteAddress, lastIP:socket.remoteAddress});
 				cb();
 			}catch(e) {cb(e)}
+		})
+		.on('kick', async(phone, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			try {
+				var user=onlineUsers.get(phone);
+				if (!user) return cb('no such user');
+				user.socket.emit('kicked', 'The administrator kicked you out of the game');
+				user.socket.disconnect();
+				onlineUsers.remove(user);
+				db.adminlog.insertOne({op:'kickuser', admin:socket.user.phone, target:phone, time:new Date()});
+				cb();
+			} catch(e) {cb(e)}
 		})
 		.on('error', console.error)
 		.on('disconnect', function() {
