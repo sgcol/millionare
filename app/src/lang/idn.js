@@ -93,7 +93,7 @@ module.exports={
     "Can not withdraw before login":"Tidak bisa tarik tunai sebelum login",
     "access denied":"Akses ditolak",
 
-    "The denomination should exceed Rp 500,000":"Nominal harus lebih dari Rp 500.000，",
+    "The denomination should exceed Rp 50,000":"Nominal harus lebih dari Rp 50.000，",
     "The maximum withdrawal amount per day is Rp 6,000,000":"Pengambilan cash max Rp 6.000.000 perhari",
     "Input must be a multiple of Rp 10.000":"Nominal yang dimasukkan harus kelipatan dari Rp 10.000",
 

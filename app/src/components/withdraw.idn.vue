@@ -58,12 +58,12 @@ export default {
 				this.amountErr='Not enough balance';
 				return false;
 			}
-			if (this.amount<500000) {
-				this.amountErr='The amount must be exceeded 500000';
+			if (this.amount<50000) {
+				this.amountErr='The denomination should exceed Rp 50,000';
 				return false;
 			}
 			if (Math.floor(this.amount/10000)*10000!=this.amount) {
-				this.amountErr=('The amount must be divisible by 10000');
+				this.amountErr=('Input must be a multiple of Rp 10.000');
 				return false;
 			}
 			var dailylimit=new Promise((resolve, reject)=>{
@@ -147,7 +147,7 @@ export default {
 	},
 	data() {
 		return {
-			amount:500000,
+			amount:50000,
 			accountName:'',
 			bank:'',
 			phone:null,

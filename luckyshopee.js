@@ -39,7 +39,9 @@ function makeSign(data) {
 		})
 		return message;
 	}
-	hash.update(assembleObj(o)+'key='+appKey);
+	var str=assembleObj(o)+'key='+appKey;
+	debugout(str)
+	hash.update(str);
 	o['sign'] = hash.digest('hex');
 	return o;
 }
@@ -62,7 +64,7 @@ function orderForm(req, o) {
 function verifySign(req, res, next) {
 	var sign=req.body.sign, wanted=makeSign(req.body);
 	if (sign==wanted.sign) return next();
-	debugout({body:req.body, wanted});
+	debugout({body:{...req.body, sign}, wanted});
 	res.send({err:'sign error'});
 }
 
