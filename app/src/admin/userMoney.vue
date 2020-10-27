@@ -62,6 +62,14 @@
 				</b-col>
 			</b-row>
 			<b-row>
+				<b-col sm="6">
+					<label for="promotions">拜师送4500</label>
+				</b-col>
+				<b-col>
+					<b-button variant="primary" @click="handle_promotion_baishi">完成</b-button>
+				</b-col>
+			</b-row>
+			<b-row>
 				<!-- <b-form label="提款记录">
 					<b-table striped hover :items="withdrawRecords"></b-table>
 				</b-form> -->
@@ -78,6 +86,7 @@ import {get} from 'object-path'
 import TDGA from '../stat'
 
 const stdret=auth.stdret;
+var sock=openLink();
 
 export default {
 	name:'userMan',
@@ -177,8 +186,21 @@ export default {
 					if (err) return alert(err);
 					self.$set(self.userdata, 'paytm_id', null);
 				}))
-			})			
-		}
+			})
+		},
+		handle_promotion_baishi(e) {
+			e.preventDefault();
+			var self=this;
+			sock.emit('modifybalance', this.phone, 4500, stdret((err, chg)=>{
+				if (err) return alert(err);
+				self.manipulatedata(chg);
+				TDGA.Account({
+					accountId : self.phone,
+				});
+				TDGA.onReward(4500, '拜师送4500');
+				TDGA.onEvent('baishi4500', JSON.stringify({user:self.phone, reward:4500}));
+			}))
+		},
 	},
 	mounted() {
 		this.userdata={};

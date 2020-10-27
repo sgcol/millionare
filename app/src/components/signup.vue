@@ -140,7 +140,7 @@
 import 'url-search-params-polyfill';
 import { validationMixin } from "vuelidate";
 import { required, numeric, minLength, sameAs } from "vuelidate/lib/validators";
-import {docCookies, openLink} from "../client.js"
+import {docCookies, openLink, eventBus} from "../client.js"
 import md5 from 'md5'
 import {BIconstack, BIconPersonFill, BIconCircle} from 'bootstrap-vue'
 import conf from '../conf'
@@ -312,6 +312,7 @@ export default {
 			if (token) docCookies.setItem('token', token);
 			if (phone||this.mobile) docCookies.setItem('phone', phone||this.mobile);
 			this.hide();
+			eventBus.$emit('logined', phone);
 		},
 		signin(e) {
 			e.preventDefault();

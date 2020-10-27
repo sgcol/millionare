@@ -67,8 +67,8 @@ export default {
 				return false;
 			}
 			var dailylimit=new Promise((resolve, reject)=>{
-				var preChk=self.amount<=self.me.balance && self.amount>=500000 && Math.floor(self.amount/10000)*10000==self.amount;
-				if (!preChk) return resolve(preChk);
+				// var preChk=self.amount<=self.me.balance && self.amount>=50000 && Math.floor(self.amount/10000)*10000==self.amount;
+				// if (!preChk) return resolve(preChk);
 				sock.emit('dailywithdraw', currentTimezone(), (err, total)=>{
 					if (err) return reject(err);
 					if ((Number(self.amount)+total)<=6000000) return resolve(true);
@@ -83,7 +83,9 @@ export default {
 					resolve(q);
 				})
 			});
-			return Promise.all([dailylimit, qualified]).then(results=>(results[0]&&results[1]), ()=>(null));
+			return Promise.all([dailylimit, qualified]).then((results)=>{
+				return results[0]&&results[1]
+			}, ()=>(null));
 		},
 	},
 	computed:{

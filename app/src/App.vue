@@ -81,6 +81,7 @@
 				<p v-else>{{$t('no records')}}</p>
 			</div>
 		</div>
+		<promotions/>
 		<mymenu ref="mymenu"></mymenu>
 		<xiazhu ref="xz"></xiazhu>
 		<rule ref='ru'></rule>
@@ -95,6 +96,7 @@
 import signup from './components/signup.vue'
 import xiazhu from './components/xiazhu.vue'
 import mymenu from './components/mymenu.vue'
+import Promotions from "./components/promotions"
 
 import { mapState } from 'vuex'
 import {eventBus, openLink, docCookies} from './client.js'
@@ -108,7 +110,8 @@ export default {
 		xiazhu,
 		rule:()=>import('./components/rule.vue'),
 		signup,
-		mymenu
+		mymenu,
+		Promotions,
 	},
 	computed: mapState({
 		status: state=>state.status,
@@ -304,15 +307,21 @@ export default {
 	events:{
 	},
 	mounted() {
-		eventBus.$on('whatsupchgd', (v)=>{alert(v)});
-		eventBus.$on('relogin', this.checkLoginState.bind(this));
+		// eventBus.$on('whatsupchgd', (v)=>{alert(v)});
+		var lost_connection_relogin_loop=false;
+		var self=this;
+		eventBus.$on('relogin', ()=>{
+			lost_connection_relogin_loop=true;
+			self.checkLoginState();
+		});
 		// this.$refs.signup.show();
 		this.checkLoginState();
-		var self=this;
 		eventBus.$on('notify', (str)=>{
-			self.notify=str;			
+			self.notify=self.$i18n.t(str);		
 		})
 		eventBus.$on('connect', (socket)=>{
+			var emit_login_event=!lost_connection_relogin_loop;
+			lost_connection_relogin_loop=false;
 			self.notify=null;
 			if (socket.disable_relogin) return;
 			var token=docCookies.getItem('token'), phone=docCookies.getItem('phone');
@@ -323,6 +332,7 @@ export default {
 					docCookies.removeItem('token')
 					return self.checkLoginState();
 				}
+				if (emit_login_event) eventBus.$emit('logined');
 			});
 		})
 	}

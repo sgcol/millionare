@@ -17,3 +17,8 @@ export default new Proxy({}, {
         }
     }
 })
+
+// // load TDGA script
+// let TDGAScript = document.createElement('script')
+// TDGAScript.setAttribute('src', 'https://h5.talkingdata.com/g/h5/v1/C860613B522848BAA7F561944C23CFFD')
+// document.head.appendChild(TDGAScript)

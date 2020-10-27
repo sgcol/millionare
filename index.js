@@ -14,7 +14,7 @@ var server = require('http').createServer()
 	, md5=require('md5')
 	, getDB=require('./db.js')
 	, ObjectId =require('mongodb').ObjectId
-	, {dec2num, dedecimal, decimalfy, ID} =require('./etc.js')
+	, {dec2num, dedecimal, decimalfy, ID, isValidNumber} =require('./etc.js')
 	, rndstring=require('randomstring').generate
 	, {sendSms, createOrder, createWithdraw, createIdrWithdraw, chgSettings} =require('./luckyshopee.js')
 	, argv=require('yargs')
@@ -25,13 +25,14 @@ var server = require('http').createServer()
 	, {OAuth2Client} = require('google-auth-library')
 	, gooclient = new OAuth2Client('647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com')
 	, dataProviders =require('./data-providers')
+	, plugins=require('./plugins')
 	, objPath=require('object-path')
 
 require('colors');
 
 const timezone='+07';
 
-const { online } = require('./data-providers');
+// const { online } = require('./data-providers');
 var {router, chgSettings}=require('./luckyshopee');
 
 app.use(express.static(path.join(__dirname, 'app/dist'), 
@@ -364,7 +365,10 @@ getDB(async (err, db, dbm)=>{
 		socket.remoteAddress=req.headers['cf-connecting-ip']||req.headers['x-forwarded-for']||req.headers['X-Real-IP']||req.headers['x-real-ip']||req.connection.remoteAddress;
 		debugout('someone in');
 
-		socket.on('salt', async (phone, cb)=>{
+
+		plugins.attach(socket);
+		socket
+		.on('salt', async (phone, cb)=>{
 			try {
 				var dbuser=await db.users.findOne({phone:phone});
 				if (!dbuser) return cb('no such user '+phone);
@@ -835,7 +839,20 @@ getDB(async (err, db, dbm)=>{
 					if (listfn) cb(null, await listfn(op));
 					else throw ('not supported');
 				}
-				else cb(null, await db[op.target].find(op.query).toArray());
+				else {
+					var cur=db[op.target].find(op.query);
+					if (op.sort) {
+						if (op.order=="ASC" || op.order=='asc') 
+							cur.sort({[op.sort]:1});
+						else cur.sort({[op.sort]:-1});
+					}
+					if (isValidNumber(op.offset)) cur.skip(Number(op.offset));
+					if (isValidNumber(op.limit)) cur.limit(Number(op.limit));
+					// var [rows, total]=await Promise.all([cur.toArray(), cur.count()]);
+					var rows=await cur.toArray(); 
+					dedecimal(rows);
+					cb(null, rows);
+				}
 			}catch(e) {cb(e)}
 		})
 		.on('$del', async(op, cb)=>{

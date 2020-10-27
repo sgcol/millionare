@@ -35,3 +35,13 @@ exports.ID = function () {
     // after the decimal.
     return '_' + Math.random().toString(36).substr(2, 9);
 };
+
+exports.noop=()=>{}
+
+exports.logerr=e=>console.error(e);
+
+exports.isValidNumber =(x)=>{
+	if (x==null) return false;
+	if (isNaN(Number(x))) return false;
+	return true;
+}
