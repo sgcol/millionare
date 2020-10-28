@@ -14,7 +14,7 @@
 			</b-carousel-slide>
 			<b-carousel-slide v-if="promotions.includes('baishi4500')">
 				<template #img>
-				<a href="https://wa.me/6283109828413"><img src="../assets/baishi4500.png" style="width:100%"></a>
+				<a href="https://wa.me/6283109828548"><img src="../assets/baishi4500.png" style="width:100%"></a>
 				</template>
 			</b-carousel-slide>
 		</b-carousel>
