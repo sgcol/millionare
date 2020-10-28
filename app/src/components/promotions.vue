@@ -4,11 +4,17 @@
 		:interval="promotions.length?5000:0"
 		:controls="promotions.length>1"
 		:indicators="promotions.length>1"
+		background="#ababab"
 		img-width=240
 		>
-			<b-carousel-slide v-if="promotions.indexOf('free4500')>=0">
+			<b-carousel-slide v-if="promotions.includes('free4500')">
 				<template #img>
 				<a href="#" @click="handler_free4500"><img src="../assets/free4500.png" style="width:100%"></a>
+				</template>
+			</b-carousel-slide>
+			<b-carousel-slide v-if="promotions.includes('baishi4500')">
+				<template #img>
+				<a href="https://wa.me/6283109828413"><img src="../assets/baishi4500.png" style="width:100%"></a>
 				</template>
 			</b-carousel-slide>
 		</b-carousel>
@@ -19,7 +25,7 @@
 import {openLink, eventBus} from '../client';
 import TDGA from '../stat'
 
-const avaible=['free4500'];
+const avaible=['free4500', 'baishi4500'];
 
 var sock=openLink();
 

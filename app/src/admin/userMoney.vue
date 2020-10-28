@@ -66,7 +66,7 @@
 					<label for="promotions">拜师送4500</label>
 				</b-col>
 				<b-col>
-					<b-button variant="primary" @click="handle_promotion_baishi">完成</b-button>
+					<b-button variant="primary" @click="handle_promotion_baishi" :disabled="!enable_baishi4500">完成</b-button>
 				</b-col>
 			</b-row>
 			<b-row>
@@ -121,12 +121,13 @@ export default {
 		},
 		bankphone() {
 			return get(this.userdata, 'bankInfo.phone');
-		}
+		},
 	},
 	data() {
 		return {
 			phone:null,
-			userdata:{bankInfo:{}}
+			userdata:{bankInfo:{}},
+			enable_baishi4500:false,
 		}
 	},
 	methods:{
@@ -143,7 +144,11 @@ export default {
 			openLink((socket)=>{
 				socket.emit('queryuser', phone, stdret((err, ud)=>{
 					if (err) return alert(err);
-					self.manipulatedata(ud)
+					self.manipulatedata(ud);
+					socket.emit('list', {target:'promotions', query:{phone}}, (err, promotions)=>{
+						if (err) return;
+						if (promotions.includes('baishi4500')) self.enable_baishi4500=true;
+					})
 				}))
 			})
 		},
@@ -191,15 +196,17 @@ export default {
 		handle_promotion_baishi(e) {
 			e.preventDefault();
 			var self=this;
-			sock.emit('modifybalance', this.phone, 4500, stdret((err, chg)=>{
+			sock.emit('upd', {target:'promotions', query:{phone:self.phone}, name:'baishi4500'}, (err)=>{
 				if (err) return alert(err);
-				self.manipulatedata(chg);
+				self.userdata.balance+=4500;
+				self.enable_baishi4500=false;
 				TDGA.Account({
 					accountId : self.phone,
 				});
 				TDGA.onReward(4500, '拜师送4500');
 				TDGA.onEvent('baishi4500', JSON.stringify({user:self.phone, reward:4500}));
-			}))
+
+			})
 		},
 	},
 	mounted() {
