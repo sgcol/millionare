@@ -124,4 +124,5 @@ module.exports={
     "Insufficent funds, please recharge first":	"Saldo tidak mencukupi, silakan isi terlebih dahulu",
     "At least 1 hand":	"Minimal 1 x",
     "Maximum is 999 hands":	"Maksimal 999 x",
+    "At least Rp 10,000": "Minimal Rp 10.000",
 };

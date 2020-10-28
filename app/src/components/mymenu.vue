@@ -23,9 +23,14 @@
 				</b-row>
 			</form>
 			<b-form-group :label="$t('Select amount:')" style="margin-top:12px">
-				<b-form-radio-group class="pricelist" buttons button-variant="outline-primary" v-model="amount" name="select_amount" style="display:inline">
-					<b-form-radio v-for="money in [50000, 200000, 500000]" :key="money" :value="money">{{formatedMoney(money)}}</b-form-radio>
-					<b-form-radio v-for="money in [1000000, 2000000, 5000000]" :key="money" :value="money">{{formatedMoney(money)}}</b-form-radio>
+				<b-form-radio-group class="pricelist" buttons button-variant="outline-primary" v-model="money" name="select_amount" style="display:inline">
+					<b-form-radio v-for="price in pricelist.slice(0, 3)" :key="price" :value="price">{{formatedMoney(price)}}</b-form-radio>
+					<b-form-radio v-for="price in pricelist.slice(3)" :key="price" :value="price">{{formatedMoney(price)}}</b-form-radio>
+					<b-form-radio value="custom" style="width:90.8%; padding-top:11px;">
+						<b-input-group prepend="Rp">
+							<b-form-input v-model="amount" type="number" :placeholder="$t('At least Rp 10,000')"></b-form-input>
+						</b-input-group>
+					</b-form-radio>
 					<!-- <b-form-radio v-bind:value="money">{{money}}</b-form-radio> -->
 					<!-- <b-row>
 						<b-col sm="4" v-for="money in [15000, 25000, 50000]" :key="money">
@@ -106,6 +111,7 @@ import conf from '../conf'
 import TDGA from '../stat'
 // import Rule from './rule.vue'
 
+var _pricelist=[50000, 200000, 500000,1000000, 2000000, 5000000]
 var vueSettings= {
 	name:'mymenu',
 	mixins: [validationMixin],
@@ -113,13 +119,27 @@ var vueSettings= {
 		Rule:()=>import('./rule.vue'),
 		WithdrawIdr:()=>import('./withdraw.idn.vue'),
 	},
-	computed:mapState({
-		status: state=>state.status,
-		me: state => state.me,
-		fb: state=>state.fb,
-	}),
+	computed:{
+		...mapState({
+			status: state=>state.status,
+			me: state => state.me,
+			fb: state=>state.fb,
+		}),
+		money :{
+			get: function() {
+				if (this.amount==null) return null;
+				if (_pricelist.includes(this.amount)) return this.amount;
+				return 'custom';
+			},
+			set: function(v) {
+				if (v==null) return;
+				if (typeof v!='number') return;
+				this.amount=v;
+			}
+		},
+	},
 	data(){
-		return {amount:conf.locale=='in_ID'?50000:100,withdraw_amount:conf.locale=='in_ID'?500000:500, mobile:null, locale:conf.locale, selected_lang:this.$i18n.locale}
+		return {pricelist:_pricelist, amount:conf.locale=='in_ID'?50000:100,withdraw_amount:conf.locale=='in_ID'?500000:500, mobile:null, locale:conf.locale, selected_lang:this.$i18n.locale, user_choosed:null}
 	},
 	watch: {
 		selected_lang(v) {
@@ -193,7 +213,8 @@ var vueSettings= {
 		},
 		recharge() {
 			var sp=new URLSearchParams(location.search);
-			var amount=this.amount;
+			var amount=Number(this.amount);
+			if (amount<10000) return alert(this.$i18n.t('At least Rp 10,000'));
 			openLink((socket)=>{
 				socket.emit('recharge', amount, sp.get('td_channelid'), (err, pack)=>{
 					if (err) return alert(err);

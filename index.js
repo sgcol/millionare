@@ -580,6 +580,7 @@ getDB(async (err, db, dbm)=>{
 			sendSms(phone, deviceid, socket.remoteAddress, c.captcha);
 		})
 		.on('recharge', async (amount, unused, cb)=>{
+			amount=Number(amount);
 			if (amount<=0) return cb('Illegal operation');
 			if (!socket.user) {
 				cb('Can not top up before login');
