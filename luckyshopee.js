@@ -186,6 +186,7 @@ const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, 
 			,appChannel:partner
 		})};
 		debugout(reqobj);
+		// cb(null, 'testcode');
 		request.post(reqobj, (err, header, body)=>{
 			if (err) return cb(err);
 			var ret=body;

@@ -64,6 +64,11 @@ server.listen(argv.port, function () { console.log(`Listening on ${server.addres
 
 const default_user={balance:0};
 
+const defaultPartner=(dbuserPartner)=>{
+	if (!dbuserPartner || dbuserPartner=='default') return 'vdm';
+	return dbuserPartner;
+}
+
 Number.prototype.pad = function(size) {
 	var s = String(this);
 	while (s.length < (size || 2)) {s = "0" + s;}
@@ -589,14 +594,14 @@ getDB(async (err, db, dbm)=>{
 			try {
 				var dbuser=await db.users.findOne({phone:socket.user.phone});
 				if (!dbuser) cb('no such user');
-				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), lastTime:new Date(), partner:dbuser.parnter||'vdm', used:false}, {w:'majority'});
+				var {insertedId}=await db.bills.insertOne({phone:socket.user.phone, snapshot:{balance:dbuser.balance}, money:amount, time:new Date(), lastTime:new Date(), partner:defaultPartner(dbuser.parnter), used:false}, {w:'majority'});
 				var orderid=insertedId.toHexString();
 				await fetch('http://api.talkinggame.com/api/charge/C860613B522848BAA7F561944C23CFFD', {
 					method:'post',
-					body:await gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:socket.user.phone, orderID:orderid, currencyAmount:amount, currencyType:'IDR', virtualCurrencyAmount:amount, partner:dbuser.partner||'vdm'}])),
+					body:await gzip(JSON.stringify([{msgID:orderid, status:'request', OS:'h5', accountID:socket.user.phone, orderID:orderid, currencyAmount:amount, currencyType:'IDR', virtualCurrencyAmount:amount, partner:defaultPartner(dbuser.parnter)}])),
 					headers: { 'Content-Type': 'application/json' },
 				});
-				var url=await createOrder(orderid, socket.user, dbuser.partner||'vdm', amount, req);
+				var url=await createOrder(orderid, socket.user, defaultPartner(dbuser.parnter), amount, req);
 				cb(null, {orderid:orderid, jumpto:url});
 			} catch(e) {return cb(e)}
 		})
@@ -653,6 +658,12 @@ getDB(async (err, db, dbm)=>{
 				cb('Can not withdraw before login');
 				return console.error('withdraw before login');	
 			}
+			var id=new ObjectId();
+			var {amount:money, ...bankinfo}=withdrawOrder;
+			var fee=Math.floor(money*settings.withdrawPercent*100)/100+settings.withdrawFixed;
+			var phone=socket.user.phone;
+			if (fee>money) return cb('not enough money');
+
 			const session=db.mongoClient.startSession(),
 			opt={
 				readPreference: 'secondaryPreferred',
@@ -660,37 +671,33 @@ getDB(async (err, db, dbm)=>{
 				writeConcern: { w: 'majority' }
 			};
 			try {
-				var dbuser=await db.users.findOne({phone:socket.user.phone});
-				if (!dbuser) throw('no such user');
-				var bankinfo={...withdrawOrder};
-				delete bankinfo.amount;
-				var money=withdrawOrder.amount;
-				var fee=Math.floor(money*settings.withdrawPercent*100)/100+settings.withdrawFixed;
-				if (fee>money) throw 'not enough money';
-
-				var id=new ObjectId();
-				await session.withTransaction(async ()=>{
-					var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, balance:{$gte:withdrawOrder.amount}}, {$inc:{balance:-withdrawOrder.amount}, $set:{bankinfo}}, {session});
-					dbuser=dedecimal(value);
-					if (!dbuser) throw 'not enough balance';
-					var withdraw={_id:id, time:new Date(), phone:socket.user.phone, snapshot:{balance:dbuser.balance, ...withdrawOrder, fee, partner:dbuser.partner||'vdm'}};
+				await session.withTransaction(async()=>{
+					var {value:dbuser}=await db.users.findOneAndUpdate({phone}, {$set:{bankinfo, lock:{op:'withdraw', pseudoRandom:new ObjectId()}}}, {session});
+					if (!dbuser) throw('no such user');
+	
+					// var {value}=await db.users.findOneAndUpdate({phone:socket.user.phone, balance:{$gte:withdrawOrder.amount}}, {$inc:{balance:-withdrawOrder.amount}, $set:{bankinfo}});
+					dbuser=dedecimal(dbuser);
+					if (dbuser.balance<money) throw 'not enough balance';
+	
+					withdrawOrder.amount-=fee;
+					var refuse=await approvalWithdraw(socket.user, withdrawOrder, settings, db), tradeno;
+					if (!refuse) {
+						tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, defaultPartner(dbuser.parnter), req)
+					}
+					await db.users.updateOne({phone}, {$inc:{balance:-money}}, {session});
+					var withdraw={_id:id, time:new Date(), phone:socket.user.phone, tradeno, snapshot:{balance:dbuser.balance, ...withdrawOrder, fee, partner:defaultPartner(dbuser.parnter)}};
 					await db.withdraw.insertOne(withdraw, {session});
+					socket.emit('incbalance', -money);
+					cb();
 				}, opt);
-				withdrawOrder.amount-=fee;
-				var refuse=await approvalWithdraw(socket.user, withdrawOrder, settings, db), tradeno;
-				if (!refuse) {
-					tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, dbuser.partner||'vdm', req);
-				}
-				db.withdraw.updateOne({_id:id}, {$set:{stat:refuse||undefined,luckyshopee_tradeno:tradeno}});
-				socket.emit('statechanged', {user:{balance:(dbuser.balance||0)-money}});
-				cb();
 			} 
 			catch(e) {
 				// db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}});
 				debugout(e);
 				return cb(e)
-			}finally{
-				await session.endSession();
+			}
+			finally {
+				session.endSession();
 			}
 		})
 		.on('idr_withdrawqualified', async(cb)=>{
