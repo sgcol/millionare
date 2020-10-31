@@ -19,7 +19,7 @@
 		<b-form-group :label="$t('Account No.')" :state="accountNoState" :invalid-feedback="$t('Please enter your account number')">
 			<b-form-input v-model="accountNo" :data="banklist" :state="accountNoState"></b-form-input>
 		</b-form-group>
-		<p>{{$t('The denomination should exceed Rp 500,000')}}</p>
+		<p>{{$t('The denomination should exceed Rp 50,000')}}</p>
 		<p>{{$t('The maximum withdrawal amount per day is Rp 6,000,000')}}</p>
 		<p>{{$t('Input must be a multiple of Rp 10.000')}}</p>
 		<b-button type="submit" variant="primary" block @click="idr_withdraw">{{$t('Withdraw')}}</b-button>
