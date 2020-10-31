@@ -190,6 +190,7 @@ const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, 
 		request.post(reqobj, (err, header, body)=>{
 			if (err) return cb(err);
 			var ret=body;
+			debugout(body);
 			if (typeof ret!='object') return cb('luckyshopee return wrong data');
 			if (ret.Code!='200') return cb(ret.Msg);
 			if (ret.Data.resultCode!='0000') return cb(ret.Data.message)

@@ -117,6 +117,8 @@ export default {
 	methods:{
 		idr_withdraw(e) {
 			e.preventDefault();
+			return alert('Hai wekend WD sto!!!\r\nTgl 2 November kembali pada normal.');
+			// eslint-disable-next-line no-unreachable
 			var self=this;
 			if (!this.amountState || !this.ownerState || !this.accountNoState ||!this.phoneState || !this.bank) return;
 			var order={amount:this.amount, accountName:this.accountName, accountNo:this.accountNo, phone:this.phone, bankCode:toBankCode[this.bank], bankName:this.bank};
