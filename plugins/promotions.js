@@ -7,7 +7,8 @@ const _getDB=require('../db.js')
     })
     , onlineUsers=require('../onlineuser')
 
-const availble=['free4500', 'baishi4500'];
+// const availble=['free4500', 'baishi4500'];
+const availble=[];
 
 module.exports={
 	async list({user, query}) {
