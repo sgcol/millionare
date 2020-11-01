@@ -58,6 +58,10 @@ export default {
 					if (self.promotions.length) self.$refs.broad.show();
 				}
 			})
+			sock.emit('list', {target:'notify'}, (err, notes)=>{
+				if (err) return;
+				if (notes) notes.forEach(note=>eventBus.$emit('notify', note));
+			})
 		})
 	}
 }

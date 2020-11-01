@@ -1,6 +1,8 @@
 const plugins={
     promotions:require('./promotions'),
+    notify:require('./notifies')
 }
+const debugout = require('debugout');
 const {logerr:noop}=require('../etc');
 
 module.exports={
@@ -14,6 +16,7 @@ module.exports={
                 var ret=await plugins[target].list({...rest, user:sock.user});
                 cb(null, ret);
             } catch(e) {
+                debugout(e);
                 cb(e);
             }
         })

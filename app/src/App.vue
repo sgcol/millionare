@@ -22,8 +22,9 @@
 			<b-alert :show="me && !!me.whatsup">
 				{{me.whatsup}}
 			</b-alert>
-			<b-alert :show="!!notify" dismissible variant="danger">
-				{{notify}}
+			<div ref="notifies"></div>
+			<b-alert :show="!!notify" dismissible variant="danger" v-for="(note, idx) in notify" :key="idx">
+				{{note}}
 			</b-alert>
 			<div class="game">
 				<ul class="game-info">
@@ -97,11 +98,14 @@ import signup from './components/signup.vue'
 import xiazhu from './components/xiazhu.vue'
 import mymenu from './components/mymenu.vue'
 import Promotions from "./components/promotions"
+// import BAlert from "bootstrap-vue"
 
 import { mapState } from 'vuex'
 import {eventBus, openLink, docCookies} from './client.js'
 import conf from './conf'
 import {dateTimeString, timeString} from './etc'
+
+// var nid=0;
 
 export default {
 	name: 'App',
@@ -112,6 +116,7 @@ export default {
 		signup,
 		mymenu,
 		Promotions,
+		// BAlert,
 	},
 	computed: mapState({
 		status: state=>state.status,
@@ -301,6 +306,11 @@ export default {
 				item.amount=-item.betting;
 			});
 			return r;
+		},
+		removeNotify(id) {
+			var idx=this.notify.findIndex(item=>item.nid==id);
+			this.notify.splice(idx,1);
+			console.log(this.notify);
 		}
 
 	},
@@ -317,7 +327,18 @@ export default {
 		// this.$refs.signup.show();
 		this.checkLoginState();
 		eventBus.$on('notify', (str)=>{
-			self.notify=self.$i18n.t(str);		
+			// var BAlertClass=Vue.extend(BAlert);
+			// var inst=new BAlertClass({
+			// 	propsData:{
+			// 		dismissible:true,
+			// 		variant:"danger"
+			// 	}
+			// });
+			// inst.$slots.default = [ self.$i18n.t(str) ];
+			// inst.$mount();
+			// self.$refs.notifies.appendChild(inst.$el);
+			if (self.notify==null) self.notify=[self.$i18n.t(str)];
+			else self.notify.push(self.$i18n.t(str));		
 		})
 		eventBus.$on('connect', (socket)=>{
 			var emit_login_event=!lost_connection_relogin_loop;
