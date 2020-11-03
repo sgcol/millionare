@@ -22,8 +22,8 @@
 		>
 		<template v-slot:cell(actions)="row">
 			<b-button-group size="sm">
-				<b-button @click="approval(row.item)" variant="primary" :disabled="!!row.item.tradeno">提</b-button>
-				<b-button @click="refund(row.item)" variant="danger" :disabled="!!row.item.tradeno">退</b-button>
+				<b-button @click="approval(row.item)" variant="primary" :disabled="!!row.item.tradeno || !!row.item.result">提</b-button>
+				<b-button @click="refund(row.item)" variant="danger" :disabled="!!row.item.tradeno || !!row.item.result">退</b-button>
 			</b-button-group>
 			<!-- <b-button size="sm" v-b-modal.modal-chgpwd @click="account.phone=row.item.phone">reset password</b-button> -->
 		</template>
