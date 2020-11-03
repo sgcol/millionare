@@ -126,16 +126,16 @@ export default {
 			return [this.userdata.paytm_id];
 		},
 		bankCode() {
-			return get(this.userdata, 'bankInfo.bankCode');
+			return get(this.userdata, 'bankinfo.bankCode');
 		},
 		accountName() {
-			return get(this.userdata, 'bankInfo.accountName');
+			return get(this.userdata, 'bankinfo.accountName');
 		},
 		accountNo() {
-			return get(this.userdata, 'bankInfo.accountNo');
+			return get(this.userdata, 'bankinfo.accountNo');
 		},
 		bankphone() {
-			return get(this.userdata, 'bankInfo.phone');
+			return get(this.userdata, 'bankinfo.phone');
 		},
 	},
 	data() {
