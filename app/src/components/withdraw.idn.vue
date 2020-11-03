@@ -124,7 +124,7 @@ export default {
 			console.log(order);
 			openLink(sock=>{
 				sock.emit('idr_withdraw', order, (err)=>{
-					if (err) return alert(err);
+					if (err) return alert(self.$i18n.t(err));
 					TDGA.onItemPurchase({
 						item :'提现',
 						itemNumber : order.amount,
