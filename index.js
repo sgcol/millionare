@@ -16,7 +16,7 @@ var server = require('http').createServer()
 	, ObjectId =require('mongodb').ObjectId
 	, {dec2num, dedecimal, decimalfy, ID, isValidNumber} =require('./etc.js')
 	, rndstring=require('randomstring').generate
-	, {sendSms, createOrder, createWithdraw, createIdrWithdraw, chgSettings} =require('./luckyshopee.js')
+	, {sendSms, createOrder, createWithdraw, createIdrWithdraw, chgSettings, checkWithdrawOrder} =require('./luckyshopee.js')
 	, argv=require('yargs')
 		.default('port', 7008)
 		.argv
@@ -279,7 +279,7 @@ function Game(settings, db) {
 }
 
 async function approvalWithdraw(user, withdrawOrder, settings, db) {
-	return null;
+	return 'wait 3 days';
 	// 运营要求不限制
 	// if (!settings.withdrawAmountLimit && !settings.withdrawTimesLimit && !settings.withdrawTakenLimit) return null;
 	// var dbw=db.db.collection('withdraw', {
@@ -680,12 +680,13 @@ getDB(async (err, db, dbm)=>{
 					if (dbuser.balance<money) throw 'not enough balance';
 	
 					withdrawOrder.amount-=fee;
+					await checkWithdrawOrder(id.toHexString(), withdrawOrder, defaultPartner(dbuser.parnter));
 					var refuse=await approvalWithdraw(socket.user, withdrawOrder, settings, db), tradeno;
 					if (!refuse) {
 						tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, defaultPartner(dbuser.parnter), req)
 					}
 					await db.users.updateOne({phone}, {$inc:{balance:-money}}, {session});
-					var withdraw={_id:id, time:new Date(), phone:socket.user.phone, tradeno, snapshot:{balance:dbuser.balance, ...withdrawOrder, fee, partner:defaultPartner(dbuser.parnter)}};
+					var withdraw={_id:id, time:new Date(), phone:socket.user.phone, tradeno, snapshot:{balance:dbuser.balance, ...withdrawOrder, amount:money, fee, partner:defaultPartner(dbuser.parnter)}};
 					await db.withdraw.insertOne(withdraw, {session});
 					socket.emit('incbalance', -money);
 					cb();
@@ -839,8 +840,52 @@ getDB(async (err, db, dbm)=>{
 				return cb();
 			} catch(e) {cb(e)}
 		})
+		.on('$approval_order', async (orderid, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			try {
+				var order=await db.withdraw.findOne({_id:ObjectId(orderid)});
+				var {fee, partner, ...withdraw}=order.snapshot;
+				withdraw.amount-=fee;
+				var tradeno=await createIdrWithdraw(orderid, withdraw, partner, req);
+				db.withdraw.updateOne({_id:ObjectId(orderid)}, {$set:{tradeno}});
+				cb();
+			} catch(e) {
+				debugout('approval err', e);
+				cb(e)
+			}
+		})
+		.on('$refund', async (orderid, cb)=>{
+			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			try {
+				var order=await db.withdraw.findOne({_id:ObjectId(orderid)});
+				if (order.tradeno) return cb('提单之后不能退款');
+				await db.users.updateOne({phone:order.phone}, {$inc:{balance:order.snapshot.amount}}, {w:1});
+				var u=onlineUsers.get(order.phone);
+				if (u) {
+					u.socket.emit('incbalance', order.snapshot.amount);
+					u.socket.emit('notify', `Permintaan WD anda tidak berhasil, ${order.snapshot.amount} sudah kembali ke akun balance Anda`)
+				} else {
+					db.notifies.insertOne({phone:order.phone, msg:`Permintaan WD anda tidak berhasil, ${order.snapshot.amount} sudah kembali ke akun balance Anda`, read:false});
+				}
+			} catch(e) {
+				debugout('refund err', e);
+				cb(e)				
+			}
+		})
 		.on('$list', async(op, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			if (objPath.get(op, 'query.from')) {
+				op.query.time={$gte:new Date(op.query.from)}
+				delete op.query.from;
+			}
+			if (objPath.get(op, 'query.from')) {
+				op.query.time={$gte:new Date(op.query.from)}
+				delete op.query.from;
+			}
+			if (objPath.get(op, 'query.to')) {
+				objPath.set(op, 'query.time.$lte', new Date(op.query.to));
+				delete op.query.to;
+			}
 			try {
 				if (dataProviders[op.target]) {
 					var listfn=objPath.get(dataProviders, [op.target, 'list']);
@@ -856,10 +901,10 @@ getDB(async (err, db, dbm)=>{
 					}
 					if (isValidNumber(op.offset)) cur.skip(Number(op.offset));
 					if (isValidNumber(op.limit)) cur.limit(Number(op.limit));
-					// var [rows, total]=await Promise.all([cur.toArray(), cur.count()]);
-					var rows=await cur.toArray(); 
+					var [rows, total]=await Promise.all([cur.toArray(), cur.count()]);
+					// var rows=await cur.toArray();
 					dedecimal(rows);
-					cb(null, rows);
+					cb(null, rows, total);
 				}
 			}catch(e) {cb(e)}
 		})

@@ -17,6 +17,7 @@ const _default={
 	sms_url:'https://pay.luckyshopee.com/sms/send',
 	pay_url:'https://pay-test.upayout.com/pay/createPaymentOrder',
 	withdraw_url:'https://pay-test.upayout.com/pay/createPayoutOrder',
+	check_withdraw_url:'https://pay-test.upayout.com/pay/inquiryPayoutOrder',
 	appId:'devTestAppId', 
 	appKey:'fe68e63bea35f8edeae04daec0ecb722',
 	appChannel:'wypay'
@@ -199,11 +200,49 @@ const createIdrWithdraw =exports.createIdrWithdraw=function(orderid, orderInfo, 
 	})
 }
 
+const checkWithdrawOrder=exports.checkWithdrawOrder=async function(orderid, orderInfo, partner, cb) {
+	return new Promise((resolve, reject)=>{
+		cb=cb||function (err, r){
+			if (err) return reject(err);
+			return resolve(r);
+		}
+
+		var reqobj={uri:check_withdraw_url, json:makeSign({
+			version:'1.1', 
+			appId:appId, 
+			country:'ID', 
+			currency:'IDR', 
+			prodName:'southeast.asia',
+			merTransNo:orderid
+			, amount:orderInfo.amount.toFixed(2)
+			, pmId:'payout.bank.id'
+			, prodName: 'southeast.asia.payout'
+			, userId: orderInfo.phone
+			, extInfo: {
+				bankName:orderInfo.bankName, bankCode:orderInfo.bankCode,accountHolderName:orderInfo.accountName,accountNumber:orderInfo.accountNo,payeeMobile:orderInfo.phone
+			}
+			,appChannel:partner
+		})};
+		debugout(reqobj);
+		// cb(null, 'testcode');
+		request.post(reqobj, (err, header, body)=>{
+			if (err) return cb(err);
+			var ret=body;
+			debugout(body);
+			if (typeof ret!='object') return cb('luckyshopee return wrong data');
+			if (ret.Code!='200') return cb(ret.Msg);
+			if (ret.Data.resultCode!='0000') return cb(ret.Data.message)
+			return cb(null, true);
+		})	
+	})
+}
+
 exports.router=router;
 const chgSettings=exports.chgSettings=(s)=>{
 	sms_url=s.sms_url||_default.sms_url;
 	pay_url=s.pay_url||_default.pay_url;
 	withdraw_url=s.withdraw_url||_default.withdraw_url;
+	check_withdraw_url=s.check_withdraw_url||_default.check_withdraw_url;
 	appId=s.appId||_default.appId
 	appKey=s.appKey||_default.appKey;
 	appChannel=s.appChannel||_default.appChannel;

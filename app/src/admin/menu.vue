@@ -10,6 +10,7 @@
 				<b-nav-item to="gameset">游戏监控</b-nav-item>
 				<b-nav-item to="accounts">管理员</b-nav-item>
 				<b-nav-item to="userMoney">用户管理</b-nav-item>
+				<b-nav-item to="withdrawOrders">提现订单</b-nav-item>
 				<!-- <b-nav-item to="approve">审核提款</b-nav-item> -->
 					<!-- <b-dropdown-item to="userHistory">查询</b-dropdown-item>
 					<b-dropdown-item to="userMoney">上下分</b-dropdown-item>

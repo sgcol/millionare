@@ -2,7 +2,7 @@ import VueRouter from 'vue-router'
 
 import serverlet from './serverlet.vue'
 import userMoney from './userMoney'
-// import approveWithdraw from './approve-withdraw'
+import withdrawOrders from './withdraw-orders'
 import login from './login.vue'
 import auth from './auth'
 import accounts from './accounts'
@@ -26,7 +26,7 @@ export const router=new VueRouter({
         {path:'/userMoney',component:userMoney, beforeEnter:requireAuth},
         {path:'/accounts',component:accounts, beforeEnter:requireAuth},
         {path:'/gameset',component:gameset, beforeEnter:requireAuth},
-        // {path:'/approve', component:approveWithdraw, beforeEnter:requireAuth},
+        {path:'/withdrawOrders', component:withdrawOrders, beforeEnter:requireAuth},
         {path:'/login', component:login},
         { path: '/logout',
           beforeEnter (to, from, next) {

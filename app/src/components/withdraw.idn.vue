@@ -117,7 +117,6 @@ export default {
 	methods:{
 		idr_withdraw(e) {
 			e.preventDefault();
-			return alert('Hai wekend WD sto!!!\r\nTgl 2 November kembali pada normal.');
 			// eslint-disable-next-line no-unreachable
 			var self=this;
 			if (!this.amountState || !this.ownerState || !this.accountNoState ||!this.phoneState || !this.bank) return;
@@ -131,7 +130,7 @@ export default {
 						itemNumber : order.amount,
 						priceInVirtualCurrency : 1
 					});
-					alert(self.$i18n.t('Success'));
+					alert(self.$i18n.t('Success, it may takes 3 days to process'));
 				})
 			})
 		}

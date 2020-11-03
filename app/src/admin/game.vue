@@ -2,12 +2,15 @@
 <div>
 	<b-alert dismissible :show="!!err" @dismissed="errDismissed" variant="warning">{{err}}</b-alert>
 	<b-form-group label="在线">
-	<b-table 				
+	<b-table
+		id="online-list-table" 				
 		show-empty
 		small
 		stacked="md"
 		:items="users"
-		:fields="userfields">
+		:fields="userfields"
+		:per-page="perPage"
+		:current-page="currentPage">
 		<template v-slot:cell(recharge)="row">
 			{{row.item.recharge}}
 			<span v-if="row.item.rechargeTime">
@@ -19,6 +22,12 @@
 			<!-- <b-button size="sm" v-b-modal.modal-chgpwd @click="account.phone=row.item.phone">reset password</b-button> -->
 		</template>
 	</b-table>
+	<b-pagination
+      v-model="currentPage"
+      :total-rows="users?users.length:0"
+      :per-page="perPage"
+      aria-controls="online-list-table"
+    ></b-pagination>
 	</b-form-group>
 	<b-form-group label="">
 		<template v-slot:label>
@@ -78,6 +87,8 @@ export default {
 	data() {
 		return {
 			err:null,
+			perPage:15,
+			currentPage:1,
 			users:null,
 			userfields:[
 				{key:'phone', label:'id'},
