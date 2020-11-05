@@ -7,6 +7,7 @@
 			<label for="example-datepicker">To</label>
 			<b-form-datepicker v-model="query.to" value-as-date reset-button class="mb-2 mr-sm-2 mb-sm-0"></b-form-datepicker>
 			<b-button variant="primary" class="mb-1 mb-sm-0" @click="refreshData">查</b-button>
+			<label class="float-right">可用资金<code>{{fund}}</code></label>
 		</b-form>
 		<b-table
 			id="withdraw-list"
@@ -33,6 +34,7 @@
 			:total-rows="withdraw.total"
 			:per-page="withdraw.perPage"
 			aria-controls="withdraw-list"
+			class="float-right"
 		/>
 	</div>
 </template>
@@ -60,6 +62,7 @@ export default {
 	name:'withdrawOrders',
 	data() {
 		return {
+			fund:null,
 			query:{
 				phone:null, from:null, end:null,
 			},
@@ -88,7 +91,24 @@ export default {
 				self.withdraw.total=total;
 				cb(rows);				
 			})
+			sock.emit('$fund', (err, n)=>{
+				if (!err) self.fund=n;
+			})
 		},
+		approval(order) {
+			var self=this;
+			sock.emit('$approval_order', order._id, (err)=>{
+				if (err) return alert(err);
+				self.refreshData();
+			})
+		},
+		refund(order) {
+			var self=this;
+			sock.emit('$refund', order._id, (err)=>{
+				if (err) return alert(err);
+				self.refreshData();
+			})
+		}
 	}
 }
 </script>

@@ -68,6 +68,7 @@
 				:total-rows="recharge.total"
 				:per-page="recharge.perPage"
 				aria-controls="recharge-list"
+				class="float-right"
 			/>
 		</b-form-group>
 		<b-form-group label="提现记录">
@@ -89,6 +90,7 @@
 				:total-rows="withdraw.total"
 				:per-page="withdraw.perPage"
 				aria-controls="withdraw-list"
+				class="float-right"
 			/>
 		</b-form-group>
 	</div>

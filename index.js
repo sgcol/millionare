@@ -16,7 +16,7 @@ var server = require('http').createServer()
 	, ObjectId =require('mongodb').ObjectId
 	, {dec2num, dedecimal, decimalfy, ID, isValidNumber} =require('./etc.js')
 	, rndstring=require('randomstring').generate
-	, {sendSms, createOrder, createWithdraw, createIdrWithdraw, chgSettings, checkWithdrawOrder} =require('./luckyshopee.js')
+	, {sendSms, createOrder, createWithdraw, createIdrWithdraw, chgSettings, checkWithdrawOrder, checkFund} =require('./luckyshopee.js')
 	, argv=require('yargs')
 		.default('port', 7008)
 		.argv
@@ -832,18 +832,21 @@ getDB(async (err, db, dbm)=>{
 				return cb(null, dedecimal(data));
 			}catch(e) {return cb(e)}
 		})
-		.on('admin-approve-withdraw', async(id, cb)=>{
+		.on('$fund', async(cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			try {
-				var tradeno=await createIdrWithdraw(id.toHexString(), withdrawOrder, req);
-				db.withdraw.updateOne({_id:id}, {$set:{luckyshopee_tradeno:tradeno}});
-				return cb();
-			} catch(e) {cb(e)}
+				cb(null, await checkFund());
+			} catch(e) {
+				debugout('check fund err', e);
+				cb(e);
+			}
 		})
 		.on('$approval_order', async (orderid, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			try {
 				var order=await db.withdraw.findOne({_id:ObjectId(orderid)});
+				if (!order) return cb('没有这个订单');
+				if (order.tradeno ||order.result) return cb('订单已经提交过了'); 
 				var {fee, partner, ...withdraw}=order.snapshot;
 				withdraw.amount-=fee;
 				var tradeno=await createIdrWithdraw(orderid, withdraw, partner, req);
@@ -857,8 +860,8 @@ getDB(async (err, db, dbm)=>{
 		.on('$refund', async (orderid, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			try {
-				var order=await db.withdraw.findOne({_id:ObjectId(orderid)});
-				if (order.tradeno) return cb('提单之后不能退款');
+				var {value:order}=await db.withdraw.findOneAndUpdate({_id:ObjectId(orderid), tradeno:null}, {$set:{tradeno:'refund'}});
+				if (!order) return cb('订单不存在或者已经不能退款');
 				await db.users.updateOne({phone:order.phone}, {$inc:{balance:order.snapshot.amount}}, {w:1});
 				var u=onlineUsers.get(order.phone);
 				if (u) {
@@ -867,6 +870,7 @@ getDB(async (err, db, dbm)=>{
 				} else {
 					db.notifies.insertOne({phone:order.phone, msg:`Permintaan WD anda tidak berhasil, ${order.snapshot.amount} sudah kembali ke akun balance Anda`, read:false});
 				}
+				cb();
 			} catch(e) {
 				debugout('refund err', e);
 				cb(e)				

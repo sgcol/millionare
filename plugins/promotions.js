@@ -1,3 +1,5 @@
+const db = require('../db.js');
+
 const _getDB=require('../db.js')
     , getDB=()=>new Promise((resolve, reject)=>{
         _getDB((err, db)=>{
@@ -33,5 +35,12 @@ module.exports={
             var u=onlineUsers.get(query.phone);
             if (u) u.socket.emit('incbalance', 4500);
         } else user.socket.emit('incbalance', 4500);
+    },
+    admin_list() {
+        return availble;
+    },
+    async admin_upd(content) {
+        const db=await getDB();
+        db.settings.updateOne({_id:'server'}, {$set:{promotions:content}});
     }
 }

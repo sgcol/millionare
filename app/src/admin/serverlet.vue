@@ -10,6 +10,8 @@
 		<b-form-input v-model="luckyshopee.withdraw_url"></b-form-input>
 		<label>代付检查接口</label>
 		<b-form-input v-model="luckyshopee.check_withdraw_url"></b-form-input>
+		<label>可用资金接口</label>
+		<b-form-input v-model="luckyshopee.check_fund_url"></b-form-input>
 		<label>短信接口</label>
 		<b-form-input v-model="luckyshopee.sms_url"></b-form-input>
 		<label>appId</label>
@@ -75,6 +77,7 @@ export default {
 				pay_url:null,
 				withdraw_url:null,
 				check_withdraw_url:null,
+				check_fund_url:null,
 				appId:null,
 				appKey:null,
 				appChannel:null

@@ -18,6 +18,7 @@ const _default={
 	pay_url:'https://pay-test.upayout.com/pay/createPaymentOrder',
 	withdraw_url:'https://pay-test.upayout.com/pay/createPayoutOrder',
 	check_withdraw_url:'https://pay-test.upayout.com/pay/inquiryPayoutOrder',
+	check_fund_url:'https://pay-test.upayout.com/pay/queryPayoutFound',
 	appId:'devTestAppId', 
 	appKey:'fe68e63bea35f8edeae04daec0ecb722',
 	appChannel:'wypay'
@@ -237,12 +238,35 @@ const checkWithdrawOrder=exports.checkWithdrawOrder=async function(orderid, orde
 	})
 }
 
+exports.checkFund=async function(cb) {
+	return new Promise((resolve, reject)=>{
+		cb=cb||function (err, r){
+			if (err) return reject(err);
+			return resolve(r);
+		}
+		var reqobj={uri:check_fund_url, json:makeSign({
+			appId:appId, 
+			appChannel:'vdm'
+		})};
+		debugout(reqobj);
+		request.post(reqobj, (err, header, body)=>{
+			if (err) return cb(err);
+			var ret=body;
+			debugout(body);
+			if (typeof ret!='object') return cb('luckyshopee return wrong data');
+			if (ret.Code!='200') return cb(ret.Msg);
+			if (ret.Data.resultCode!='0000') return cb(ret.Data.message)
+			return cb(null, Number(ret.Data.amount));
+		});
+	});
+}
 exports.router=router;
 const chgSettings=exports.chgSettings=(s)=>{
 	sms_url=s.sms_url||_default.sms_url;
 	pay_url=s.pay_url||_default.pay_url;
 	withdraw_url=s.withdraw_url||_default.withdraw_url;
 	check_withdraw_url=s.check_withdraw_url||_default.check_withdraw_url;
+	check_fund_url=s.check_fund_url||_default.check_fund_url;
 	appId=s.appId||_default.appId
 	appKey=s.appKey||_default.appKey;
 	appChannel=s.appChannel||_default.appChannel;
