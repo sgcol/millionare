@@ -843,18 +843,29 @@ getDB(async (err, db, dbm)=>{
 		})
 		.on('$approval_order', async (orderid, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
+			const session=db.mongoClient.startSession(),
+			opt={
+				readPreference: 'secondaryPreferred',
+				readConcern: { level: 'majority' },
+				writeConcern: { w: 'majority' }
+			};
 			try {
-				var order=await db.withdraw.findOne({_id:ObjectId(orderid)});
-				if (!order) return cb('没有这个订单');
-				if (order.tradeno ||order.result) return cb('订单已经提交过了'); 
-				var {fee, partner, ...withdraw}=order.snapshot;
-				withdraw.amount-=fee;
-				var tradeno=await createIdrWithdraw(orderid, withdraw, partner, req);
-				db.withdraw.updateOne({_id:ObjectId(orderid)}, {$set:{tradeno}});
+				await session.withTransaction(async()=>{
+					var order=await db.withdraw.findOneAndUpdate({_id:ObjectId(orderid)}, {$set:{lock:{op:'approval', pseudoRandom:new ObjectId()}}}, {session});
+					if (!order) throw ('没有这个订单');
+					if (order.tradeno ||order.result) throw ('订单已经提交过了'); 
+					var {fee, partner, ...withdraw}=order.snapshot;
+					withdraw.amount-=fee;
+					var tradeno=await createIdrWithdraw(orderid, withdraw, partner, req);
+					db.withdraw.updateOne({_id:ObjectId(orderid)}, {$set:{tradeno}}, {session});
+				})
 				cb();
 			} catch(e) {
 				debugout('approval err', e);
 				cb(e)
+			}
+			finally {
+				session.endSession();
 			}
 		})
 		.on('$refund', async (orderid, cb)=>{

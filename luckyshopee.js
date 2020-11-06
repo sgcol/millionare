@@ -256,7 +256,7 @@ exports.checkFund=async function(cb) {
 			if (typeof ret!='object') return cb('luckyshopee return wrong data');
 			if (ret.Code!='200') return cb(ret.Msg);
 			if (ret.Data.resultCode!='0000') return cb(ret.Data.message)
-			return cb(null, Number(ret.Data.amount));
+			return cb(null, Number(ret.Data.balanceAmount||ret.Data.amount));
 		});
 	});
 }
