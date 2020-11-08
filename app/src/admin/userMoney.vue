@@ -47,7 +47,7 @@
 		<b-form-group label="注册IP" label-cols="4"><b-form-input readonly v-model="userdata.regIP"/></b-form-group>
 		<b-form-group label="登录IP" label-cols="4"><b-form-input readonly v-model="userdata.lastIP"/></b-form-group>
 		<b-form-group label="活动" label-cols="4">
-			<b-form-group label="拜师送4500" label-size="sm" label-cols="4"><b-button size="sm" variant="primary" @click="handle_promotion_baishi" :disabled="!enable_baishi4500">完成</b-button></b-form-group>
+			<b-form-group label="拜师送金" label-size="sm" label-cols="4"><b-button size="sm" variant="primary" @click="handle_promotion_baishi" :disabled="!enable_baishi4500">完成</b-button></b-form-group>
 		</b-form-group>
 		<b-form-group label="充值记录">
 			<b-table
@@ -185,14 +185,14 @@ export default {
 		},
 		queryBills(ctx, cb) {
 			var self=this;
-			sock.emit('$list', {target:'bills', query:{phone:self.phone}, offset:self.recharge.perPage*(self.recharge.currentPage-1), limit:self.recharge.perPage, sort:ctx.sortBy, order:ctx.sortDesc?'desc':'asc'}, (err, rows, total)=>{
+			sock.emit('$list', {target:'bills', query:{phone:self.phone}, offset:self.recharge.perPage*(self.recharge.currentPage-1), limit:self.recharge.perPage, sort:ctx.sortBy, order:ctx.sortDesc?'desc':'asc'}, (err, {rows, total})=>{
 				self.recharge.total=total;
 				cb(rows);				
 			})
 		},
 		queryWithdrawal(ctx, cb) {
 			var self=this;
-			sock.emit('$list', {target:'withdraw', query:{phone:self.phone}, offset:self.withdraw.perPage*(self.withdraw.currentPage-1), limit:self.withdraw.perPage, sort:ctx.sortBy, order:ctx.sortDesc?'desc':'asc'}, (err, rows, total)=>{
+			sock.emit('$list', {target:'withdraw', query:{phone:self.phone}, offset:self.withdraw.perPage*(self.withdraw.currentPage-1), limit:self.withdraw.perPage, sort:ctx.sortBy, order:ctx.sortDesc?'desc':'asc'}, (err, {rows, total})=>{
 				self.withdraw.total=total;
 				cb(rows);				
 			})

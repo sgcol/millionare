@@ -108,11 +108,11 @@ export default {
 		sock.on('userin', (user)=>{
 			if (Array.isArray(self.users)) {
 				self.users.push(user);
-				sock.emit('$list', {target:'bills', query:{phone:user.phone, used:true}, sort:'time', order:'desc', limit:1}, (err, bills)=>{
-					bills.forEach(bill=>{
-						self.$set(user, 'rechargeTime', bill.time);
-					})
-				});
+				// sock.emit('$list', {target:'bills', query:{phone:user.phone, used:true}, sort:'time', order:'desc', limit:1}, (err, bills)=>{
+				// 	bills.forEach(bill=>{
+				// 		self.$set(user, 'rechargeTime', bill.time);
+				// 	})
+				// });
 			}
 		})
 		.on('userout', (phone)=>{
@@ -133,12 +133,12 @@ export default {
 		sock.emit('$list', {target:'online'}, (err, ul)=>{
 			if (err) return self.showerr(err);
 			self.users=ul;
-			sock.emit('$list', {target:'bills', query:{phone:{$in:ul.map(u=>u.phone)}, used:true}, sort:'time', order:'desc', limit:1}, (err, bills)=>{
-				bills.forEach(bill=>{
-					var user=self.users.find(u=>u.phone==bill.phone);
-					user.rechargeTime=bill.time;
-				})
-			});
+			// sock.emit('$list', {target:'bills', query:{phone:{$in:ul.map(u=>u.phone)}, used:true}, sort:'time', order:'desc', limit:1}, (err, bills)=>{
+			// 	bills.forEach(bill=>{
+			// 		var user=self.users.find(u=>u.phone==bill.phone);
+			// 		user.rechargeTime=bill.time;
+			// 	})
+			// });
 		})
 
 		sock.emit('$list', {target:'contracts'}, (err, cs)=>{
