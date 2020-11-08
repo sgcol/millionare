@@ -56,7 +56,7 @@
 
 <script>
 import { dateTimeString } from '../etc'
-import {openLink} from '../client'
+import {openLink} from './auth'
 import {router} from './router'
 import { mapState } from 'vuex'
 

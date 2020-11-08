@@ -24,8 +24,12 @@
 </template>
 
 <script>
-import {openLink} from "../client"
+import {openLink} from "./auth"
 import md5 from 'md5'
+// const {get:getPath} =require('object-path')
+
+
+var socket=openLink();
 
 export default {
 	name:'login',
@@ -42,59 +46,57 @@ export default {
 			e.preventDefault();
 			this.longop=true;
 			var phone=this.mobile, password=this.password, self=this;
-			openLink((socket)=>{
-				function errHandler() {
-					self.longop=false;
-					socket.off('reconnect_failed', errHandler);
-					alert('Can not reach the server');
-				}
-				socket.on('reconnect_failed', errHandler);
-				socket.emit('regadmin', {phone, pwd:password}, (err)=>{
-					self.handlelogin(err);
-					socket.off('reconnect_failed', errHandler);
-				})
+			function errHandler() {
+				self.longop=false;
+				socket.off('reconnect_failed', errHandler);
+				alert('Can not reach the server');
+			}
+			socket.on('reconnect_failed', errHandler);
+			socket.emit('regadmin', {phone, pwd:password}, (err, t)=>{
+				self.handlelogin(err, phone, t);
+				socket.off('reconnect_failed', errHandler);
 			})
 		},
 		dologin(e) {
 			e.preventDefault();
 			this.longop=true;
 			var phone=this.mobile, password=this.password, self=this;
-			openLink((socket)=>{
-				function errHandler() {
+			function errHandler() {
+				self.longop=false;
+				socket.off('reconnect_failed', errHandler);
+				alert('Can not reach the server');
+			}
+			socket.on('reconnect_failed', errHandler);
+			socket.emit('salt', phone, (err, salt)=>{
+				if (err) {
 					self.longop=false;
-					socket.off('reconnect_failed', errHandler);
-					alert('Can not reach the server');
+					alert(err);
+					return;
 				}
-				socket.on('reconnect_failed', errHandler);
-				socket.emit('salt', phone, (err, salt)=>{
-					if (err) {
-						self.longop=false;
-						alert(err);
-						return;
-					}
-					socket.emit('login', {phone, pwd:md5(''+salt+password)}, (err, t)=>{
-						self.handlelogin(err, t);
-						socket.off('reconnect_failed', errHandler);
-					})
+				socket.emit('login', {phone, pwd:md5(''+salt+password)}, (err, t)=>{
+					self.handlelogin(err, phone, t);
+					socket.off('reconnect_failed', errHandler);
 				})
 			})
 		},
 
-		handlelogin(err) {
+		handlelogin(err, name, token) {
 			this.longop=false;
 			if (err) return alert(err);
-			localStorage.admin_logged=true;
-			this.$router.replace('/serverlet');
+			localStorage.adminAccount=name;
+			localStorage.adminToken=token;
+			socket.isLogined=true;
+			var redirectTo=this.$router.currentRoute.query.redirect;
+			if (redirectTo) this.$router.replace(redirectTo);
+			else this.$router.replace('/serverlet');
 		},
 	},
 	mounted() {
 		var self=this;
-		openLink((socket)=>{
-			socket.emit('adminexists', (err, hasAdmin)=>{
-				if (err) return alert(err);
-				self.regmode=!hasAdmin;
-				self.mobile='admin';
-			})
+		socket.emit('adminexists', (err, hasAdmin)=>{
+			if (err) return alert(err);
+			self.regmode=!hasAdmin;
+			self.mobile='admin';
 		})
 	}
 }

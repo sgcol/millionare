@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import {openLink} from '../client';
+import {openLink} from './auth';
 
 export default {
 	name:'approveWithdraw',

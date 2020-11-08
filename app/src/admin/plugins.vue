@@ -13,7 +13,7 @@
 </template>
 
 <script>
-import {openLink} from '../client'
+import {openLink} from './auth'
 
 const sock=openLink();
 

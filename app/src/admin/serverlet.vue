@@ -1,26 +1,6 @@
 <template>
 <b-form>
 <b-tabs>
-	<b-tab title="支付配置">
-		<b>必须配置以下参数，否则充值提现都是测试版本</b>
-		<p></p>
-		<label>下单接口</label>
-		<b-form-input v-model="luckyshopee.pay_url"></b-form-input>
-		<label>代付接口</label>
-		<b-form-input v-model="luckyshopee.withdraw_url"></b-form-input>
-		<label>代付检查接口</label>
-		<b-form-input v-model="luckyshopee.check_withdraw_url"></b-form-input>
-		<label>可用资金接口</label>
-		<b-form-input v-model="luckyshopee.check_fund_url"></b-form-input>
-		<label>短信接口</label>
-		<b-form-input v-model="luckyshopee.sms_url"></b-form-input>
-		<label>appId</label>
-		<b-form-input v-model="luckyshopee.appId"></b-form-input>
-		<label>appKey</label>
-		<b-form-input v-model="luckyshopee.appKey"></b-form-input>
-		<label>appChannel</label>
-		<b-form-input v-model="luckyshopee.appChannel"></b-form-input>
-	</b-tab>
 	<b-tab title="运行参数">
 		<b-form-group label="在线人数">
 			<p>{{online}}</p>
@@ -54,11 +34,8 @@
 </template>
 
 <script>
-import {openLink} from '../client.js'
-import auth from './auth'
+import {openLink} from './auth.js'
 // import approveWithdraw from './approve-withdraw'
-
-const stdret=auth.stdret;
 
 export default {
 	name:'serverlet',
@@ -130,7 +107,7 @@ export default {
 		},
 		submit() {
 			if (!this.wfState) return;
-			var strategy=this.strategy, feeRate=Number(this.feeRate.slice(0, -1))/100, luckyshopee=this.luckyshopee, whatsup=this.whatsup;
+			var strategy=this.strategy, feeRate=Number(this.feeRate.slice(0, -1))/100, whatsup=this.whatsup;
 			var wfs=(()=>{
 				var parts=this.withdrawFee.split('%');
 				if (parts.length>2) return false;
@@ -151,7 +128,7 @@ export default {
 				var temp_result=this.spec_result.split(/[\s,，]+/);
 			}
 			openLink((socket)=>{
-				socket.emit('setsettings', {strategy, temp_result, feeRate, withdrawPercent:(wfs[0]||0)/100, withdrawFixed:wfs[1]||0, luckyshopee, whatsup}, (err)=>{
+				socket.emit('setsettings', {strategy, temp_result, feeRate, withdrawPercent:(wfs[0]||0)/100, withdrawFixed:wfs[1]||0, whatsup}, (err)=>{
 					if (err) return alert(err);
 					alert('success');
 				})
@@ -161,13 +138,13 @@ export default {
 	mounted(){
 		var self=this;
 		openLink((socket)=>{
-			socket.emit('getsettings', stdret((err, setting) =>{
+			socket.emit('getsettings', (err, setting) =>{
 				if (err) return alert(err);
 				var s='';
 				if (setting.withdrawPercent) {
 					s+=setting.withdrawPercent*100+'%'
 				}
-				if (setting.withdrawFixed) {
+				if (setting.withdrawFixed!=null) {
 					if (s.length>0) s+='+';
 					s+=setting.withdrawFixed;
 				}
@@ -178,7 +155,7 @@ export default {
 				setting.withdrawFee=s;
 				setting.feeRate=setting.feeRate*100+'%';
 				Object.assign(self, setting);
-			}))
+			})
 		})
 	}
 }

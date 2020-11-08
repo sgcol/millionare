@@ -342,7 +342,7 @@ getDB(async (err, db, dbm)=>{
 	if (!settings) settings={};
 	settings.feeRate=settings.feeRate||0.02;
 	settings.withdrawPercent=settings.withdrawPercent||0;
-	settings.withdrawFixed=settings.withdrawFixed||10000;
+	settings.withdrawFixed=settings.withdrawFixed==null?10000:settings.withdrawFixed;
 	const game=Game(settings, db);
 	game.start();
 	dataProviders.contracts=game.contracts_provider();
@@ -407,13 +407,17 @@ getDB(async (err, db, dbm)=>{
 			
 			var oldUser=onlineUsers.get(pack.phone)
 			if (oldUser) {
-				debugout('already online, kick old');
-				socket.user=oldUser;
-				oldUser.socket.emit('kicked', 'Account has logined at another place');
-				oldUser.socket.user=null;
-				oldUser.socket.disconnect(true);
-				oldUser.socket=socket;
-				oldUser.offline=false;
+				if (oldUser.socket!=socket) {
+					debugout('already online, kick old');
+					socket.user=oldUser;
+					oldUser.socket.emit('kicked', 'Account has logined at another place');
+					oldUser.socket.user=null;
+					oldUser.socket.disconnect(true);
+					oldUser.socket=socket;
+					oldUser.offline=false;
+				} else {
+					// nothing happened
+				}
 			} 
 			else {
 				debugout('new one');

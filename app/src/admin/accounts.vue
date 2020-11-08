@@ -46,7 +46,7 @@
 </template>
 
 <script>
-import {openLink} from '../client'
+import {openLink} from './auth'
 import { BIconPersonPlus } from 'bootstrap-vue'
 import {router} from './router'
 import {dateTimeString} from '../etc'

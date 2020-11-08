@@ -98,13 +98,11 @@
 </template>
 
 <script>
-import {openLink} from '../client.js'
-import auth from "./auth"
+import {openLink} from './auth.js'
 import {get} from 'object-path'
 import TDGA from '../stat'
 import {dateTimeString, nullAsZero} from '../etc'
 
-const stdret=auth.stdret;
 var sock=openLink();
 
 export default {
@@ -117,10 +115,10 @@ export default {
 			set(v) {
 				var self=this;
 				var date=v?new Date('2100/01/01'):new Date('1970/01/01');
-				sock.emit('disableuser', self.phone, date, stdret((err) =>{
+				sock.emit('disableuser', self.phone, date, (err) =>{
 					if (err) return alert(err);
 					self.$set(self.userdata, 'block', date);
-				}))
+				})
 			}
 		},
 		paytm_ids() {
@@ -173,14 +171,14 @@ export default {
 			e.preventDefault();
 			if (!this.phone) return;
 			var phone=this.phone, self=this;
-			sock.emit('$list', {target:'users', query:{phone}}, stdret((err, [ud])=>{
+			sock.emit('$list', {target:'users', query:{phone}}, (err, [ud])=>{
 				if (err) return alert(err);
 				self.manipulatedata(ud);
 				sock.emit('list', {target:'promotions', query:{phone}}, (err, promotions)=>{
 					if (err) return;
 					if (promotions.includes('baishi4500')) self.enable_baishi4500=true;
 				})
-			}))
+			})
 			// this.queryBills();
 			this.$refs.rechargeList.refresh();
 			this.$refs.withdrawList.refresh();
@@ -203,7 +201,7 @@ export default {
 			var delta=Number(document.getElementById('m_balance').value);
 			if (Number.isNaN(delta)) return;
 			var phone=this.phone, self=this;
-			sock.emit('modifybalance', phone, delta, stdret((err, chg)=>{
+			sock.emit('modifybalance', phone, delta, (err, chg)=>{
 				if (err) return alert(err);
 				self.manipulatedata(chg);
 				// for talkingdata
@@ -211,7 +209,7 @@ export default {
 					accountId : phone,
 				});
 				TDGA.onReward(delta, '管理员操作');
-			}))
+			})
 		},
 		chgPaytm(e) {
 			var idx=e.target.dataset.idx;
@@ -219,20 +217,20 @@ export default {
 			if (!Array.isArray(this.userdata.paytm_id)) idx=null
 			var self=this;
 
-			sock.emit('changepaytm', self.phone, idx, new_id, stdret((err, chg)=>{
+			sock.emit('changepaytm', self.phone, idx, new_id, (err, chg)=>{
 				if (err) return alert(err);
 				self.manipulatedata(chg);
-			}))
+			})
 		},
 		delPaytm(e) {
 			var idx=e.target.dataset.idx;
 			var id=document.getElementById(`paytm_id${idx}`).value;
 			var self=this;
 
-			sock.emit('delpaytm', self.phone, id, stdret((err)=>{
+			sock.emit('delpaytm', self.phone, id, (err)=>{
 				if (err) return alert(err);
 				self.$set(self.userdata, 'paytm_id', null);
-			}))
+			})
 		},
 		handle_promotion_baishi(e) {
 			e.preventDefault();

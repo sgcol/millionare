@@ -356,6 +356,11 @@ export default {
 				if (emit_login_event) eventBus.$emit('logined');
 			});
 		})
+		eventBus.$on('kicked', (str)=>{
+			docCookies.removeItem('token');
+			alert(self.$i18n.t(str));
+			self.checkLoginState();
+		})
 	}
 }
 setInterval(()=>{
