@@ -185,7 +185,7 @@ export default {
 		},
 		queryBills(ctx, cb) {
 			var self=this;
-			sock.emit('$list', {target:'bills', query:{phone:self.phone}, offset:self.recharge.perPage*(self.recharge.currentPage-1), limit:self.recharge.perPage, sort:ctx.sortBy, order:ctx.sortDesc?'desc':'asc'}, (err, {rows, total})=>{
+			sock.emit('$list', {target:'bills', query:{phone:self.phone, used:true}, offset:self.recharge.perPage*(self.recharge.currentPage-1), limit:self.recharge.perPage, sort:ctx.sortBy, order:ctx.sortDesc?'desc':'asc'}, (err, {rows, total})=>{
 				self.recharge.total=total;
 				cb(rows);				
 			})
