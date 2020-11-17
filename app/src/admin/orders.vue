@@ -82,7 +82,7 @@ export default {
 		},
 		queryorder(ctx, cb) {
 			var self=this;
-			sock.emit('$list', {target:'bills', query:filteredObject(self.query, v=>v!=null), offset:self.order.perPage*(self.order.currentPage-1), limit:self.order.perPage, sort:ctx.sortBy, order:ctx.sortDesc?'desc':'asc'}, (err, {rows, total, sum})=>{
+			sock.emit('$list', {target:'bills', query:filteredObject(self.query, v=>!!v), offset:self.order.perPage*(self.order.currentPage-1), limit:self.order.perPage, sort:ctx.sortBy, order:ctx.sortDesc?'desc':'asc'}, (err, {rows, total, sum})=>{
 				self.order.total=total;
 				self.sum=sum||{};
 				cb(rows);				

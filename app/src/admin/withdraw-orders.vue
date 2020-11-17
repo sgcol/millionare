@@ -95,7 +95,7 @@ export default {
 		},
 		queryWithdrawal(ctx, cb) {
 			var self=this;
-			sock.emit('$list', {target:'withdraw', query:filteredObject(self.query, v=>v!=null), offset:self.withdraw.perPage*(self.withdraw.currentPage-1), limit:self.withdraw.perPage, sort:ctx.sortBy, order:ctx.sortDesc?'desc':'asc'}, (err, {rows, total, sum})=>{
+			sock.emit('$list', {target:'withdraw', query:filteredObject(self.query, v=>!!v), offset:self.withdraw.perPage*(self.withdraw.currentPage-1), limit:self.withdraw.perPage, sort:ctx.sortBy, order:ctx.sortDesc?'desc':'asc'}, (err, {rows, total, sum})=>{
 				self.withdraw.total=total;
 				self.sum=sum||{};
 				cb(rows);				
