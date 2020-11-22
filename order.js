@@ -22,7 +22,8 @@ async function confirmOrder(orderid, money, cb) {
 		var {value}=await db.bills.findOneAndUpdate({_id:ObjectId(orderid), used:{$ne:true}}, {$set:{used:true, confirmedAmount:money, lastTime:new Date()}}, {w:'majority'});
 		if (!value) throw 'no such orderid or order is processing';
 		value=dedecimal(value);
-		var dbuser= dedecimal(await db.users.findOne({phone:value.phone}));//, {$inc:decimalfy({balance:money, recharge:money})}, {w:'majority'});
+		var {value:dbuser}=await db.users.findOneAndUpdate({phone:value.phone}, {$inc:decimalfy({balance:money})}, {w:'majority'});
+		dbuser=dedecimal(dbuser);
 		// 提现逻辑，
 		if (dbuser.bet>=dbuser.recharge) {
 			//重置下注金额
