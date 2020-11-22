@@ -768,7 +768,7 @@ getDB(async (err, db, dbm)=>{
 		.on('modifybalance', async(phone, delta, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			delta=Number(delta);
-			var value=await db.users.findOne({phone:phone});//, {$inc:decimalfy({balance:delta, recharge:delta})});
+			var {value}=await db.users.findOneAndUpdate({phone:phone}, {$inc:decimalfy({balance:delta})});
 			if (!value) return cb('没有这个用户');
 			db.adminlog.insertOne({op:'modifybalance', admin:socket.user.phone, target:value, change:delta, time:new Date()});
 			value=dedecimal(value);
