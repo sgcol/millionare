@@ -768,10 +768,20 @@ getDB(async (err, db, dbm)=>{
 		.on('modifybalance', async(phone, delta, cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');
 			delta=Number(delta);
-			var {value}=await db.users.findOneAndUpdate({phone:phone}, {$inc:decimalfy({balance:delta, recharge:delta})});
+			var value=await db.users.findOne({phone:phone});//, {$inc:decimalfy({balance:delta, recharge:delta})});
 			if (!value) return cb('没有这个用户');
 			db.adminlog.insertOne({op:'modifybalance', admin:socket.user.phone, target:value, change:delta, time:new Date()});
 			value=dedecimal(value);
+			if (delta>0) {
+				if (value.bet>=value.recharge) {
+					//重置下注金额
+					db.users.updateOne({phone:phone}, {$set:{recharge:delta, bet:0}});
+				} else {
+					//累积下注
+					db.users.updateOne({phone:phone}, {$inc:{recharge:delta}});
+				}
+			}
+
 			var ud=onlineUsers.get(phone);
 			if (ud) {
 				var newbalance=(value.balance||0)+delta;
