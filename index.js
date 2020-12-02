@@ -736,6 +736,9 @@ getDB(async (err, db, dbm)=>{
 			]).toArray();
 			cb(null, userTotal?dec2num(userTotal.total):0);
 		})
+		.on('getfeerate', (cb)=>{
+			cb(null, settings.feeRate);
+		})
 		// admin tools
 		.on('getsettings', (cb)=>{
 			if (!socket.user || !socket.user.isAdmin) return cb('access denied');

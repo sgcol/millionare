@@ -7,6 +7,13 @@ Vue.use(VueI18n);
 const en=new Proxy ({
     whatsup:'Add this whatsup {0} to get reward',
     term:'Agree {0}',
+    rule0: '3 minutes 1 issue, 2 minutes and 30 seconds to order, 30 seconds to show the lottery result. It opens all day. The total number of trade is 480 issues.',
+    rule1: 'If you spend {amount} rupiah to trade, after deducting {fee} rupiah service fee, your contract amount is {bet} rupiah:',
+    rule2: '"1. JOIN GREEN: if the result shows 1,3,7,9, you will get ({bet}*2) {double_bet} rupiah;"',
+    rule3: '"If the result shows 5, you will get ({bet}*1.5) {onehalf_bet} rupiah."',
+    rule4: '"2. JOIN RED: if the result shows 2,4,6,8, you will get ({bet}*2) {double_bet} rupiah; If the result shows 0, you will get ({bet}*1.5) {onehalf_bet} rupiah."',
+    rule5: '3. JOIN VIOLET: if the result shows 0 or 5, you will get ({bet}*4.5) {fourhalf_bet} rupiah.',
+    rule6: '4. SELECT NUMBER: if the result is the same as the number you selected, you will get ({bet}*9) {nineth_bet} rupiah.',
     "Select amount:(₹500-₹50000)":"Select amount:(Rp500k-Rp50000k)",
     "The amount must be between 500 and 50,000 and be divisible by 100":'The amount must be between 500k and 50,000k and be divisible by 100k',
     'The cash withdrawal amout must be at least ₹500.':'The cash withdrawal amout must be at least Rp500k.',
