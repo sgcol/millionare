@@ -127,4 +127,6 @@ module.exports={
     "At least Rp 10,000": "Minimal Rp 10.000",
     "Success, it may takes 3 days to process":"WD sedang diproses, Mohon menunggu 3 hari kerja akan sampaikan ke rekening",
     "inquiry failed, bkerrorTRANSFER INQUIRY DECLINE":"Masuk informasi bank ada yang salah",
+
+    "Promotion":"Hadiah",
 };

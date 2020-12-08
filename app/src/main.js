@@ -1,8 +1,17 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import {faCopy} from '@fortawesome/free-regular-svg-icons'
+import { faFacebookF, faWhatsapp } from '@fortawesome/free-brands-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { BootstrapVue, BIcon, BIconChevronRight, BIconChevronLeft ,BIconBoxArrowInLeft} from 'bootstrap-vue'
 import './custom.scss'
 import i18n from './lang'
+
+library.add(faCopy)
+library.add(faFacebookF)
+library.add(faWhatsapp)
+Vue.component('font-awesome-icon', FontAwesomeIcon)
 
 // Install BootstrapVue
 Vue.use(BootstrapVue)
@@ -17,6 +26,8 @@ Vue.use(Vuex);
 import App from './App.vue'
 
 Vue.config.productionTip = false
+
+Vue.prototype.navigator=window.navigator;
 
 const store =new Vuex.Store({
 	state:{

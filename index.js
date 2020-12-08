@@ -27,6 +27,7 @@ var server = require('http').createServer()
 	, dataProviders =require('./data-providers')
 	, plugins=require('./plugins')
 	, objPath=require('object-path')
+	, invitation=require('./invitation')
 
 require('colors');
 
@@ -486,6 +487,57 @@ getDB(async (err, db, dbm)=>{
 			cb(null, tokenData.t);
 			socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, balance:dbuser.balance, whatsup:settings.whatsup}), ...game.snapshot(pack.phone)});
 		})
+		.on('fber_invited', (accessToken, bywhom, cb)=>{
+			FB.api('me', { fields: ['id'], access_token: accessToken }, async (res)=>{
+				try {
+					const now=new Date();
+					var invitationSender=await db.users.findOne({_id:ObjectId(bywhom)}, {projection:{name:1, phone:1}});
+					if (!invitationSender) throw 'No such user';
+					var {phone, name}=invitationSender;
+					var {value:dbuser}=await db.invited.findOneAndUpdate({phone:res.id}, {$setOnInsert:{ip:socket.remoteAddress, time:now, invitedBy:phone}} ,{upsert:true, w:1});
+					if (dbuser) throw ('You has been invited by '+name+' already');
+					cb();
+				}catch(e) {
+					cb(e);
+				}
+			})
+		})
+		.on('gooer_invited', async (id_token, bywhom, cb)=>{
+			try {
+				const ticket = await gooclient.verifyIdToken({
+					idToken: id_token,
+					audience: '647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com',
+				});
+				const payload = ticket.getPayload();
+				const userid = payload['sub'];
+				const now=new Date();
+				var invitationSender=await db.users.findOne({_id:ObjectId(bywhom)}, {projection:{name:1, phone:1}});
+				if (!invitationSender) throw 'No such user';
+				var {phone, name}=invitationSender;
+				var {value:dbuser}=await db.invited.findOneAndUpdate({phone:res.id}, {$setOnInsert:{ip:socket.remoteAddress, time:now, invitedBy:phone}} ,{upsert:true, w:1});
+				if (dbuser) throw ('You has been invited by '+name+' already');
+				cb();
+			}	catch(e) {
+				cb(e);
+			}
+		})
+		.on('invitee/list', async (cb)=>{
+			if (!socket.user) return cb('Please login first');
+			cb(
+				null, 
+				await db.invitationLogs.aggregate([
+					{$match:{inviter:socket.user.phone}},
+					{$group:{_id:'$invitee', amount:{$sum:'$amount'}, reward:{$sum:'$reward'}, joined:{$sum:1}}},
+					{$lookup:{
+						localField:'_id',
+						from:'users',
+						foreignField:'phone',
+						as:'userData'
+					}},
+					{$project:{amount:1, reward:1, joined:1, name:'$userData[0].name'}}
+				]).toArray()
+			);
+		})
 		.on('fb_login', (accessToken, partner, cb) =>{
 			if (typeof partner=='function') {
 				cb=partner;
@@ -499,6 +551,15 @@ getDB(async (err, db, dbm)=>{
 					cb('Account has been banned');
 					socket.disconnect(true);
 					return;
+				}
+
+				if (dbuser.lastTime==dbuser.regTime) {
+					var invited=await db.invited.findOne({phone:userid}, {projection:{invitedBy:1}});
+					if (invited) 
+					// var {value:joinGame}=await db.invitationLogs.findOneAndUpdate({inviter:invited.invitedBy, invitee:res.id, action:'Joined Game'}, {$setOnInsert:{time:now}}, {upsert:true, w:1});
+					// if (joinGame) {
+						invitation.emit('onJoined', {inviter:invited.invitedBy, invitee:res.id});
+					// }
 				}
 				
 				var oldUser=onlineUsers.get(res.id)
@@ -545,7 +606,16 @@ getDB(async (err, db, dbm)=>{
 					socket.disconnect(true);
 					return;
 				}
-				
+
+				if (dbuser.lastTime==dbuser.regTime) {
+					var invited=await db.invited.findOne({phone:userid}, {projection:{invitedBy:1}});
+					if (invited) 
+						// var {value:joinGame}=await db.invitationLogs.findOneAndUpdate({invitedBy:invited.invitedBy, phone:userid, action:'Joined Game'}, {$setOnInsert:{time:now}}, {upsert:true, w:1});
+						// if (joinGame) {
+							invitation.emit('onJoined', {inviter:invited.invitedBy, invitee:userid});
+						// }
+				}
+
 				var oldUser=onlineUsers.get(userid)
 				if (oldUser) {
 					debugout('already online, kick old');
@@ -695,7 +765,7 @@ getDB(async (err, db, dbm)=>{
 					socket.emit('incbalance', -money);
 					cb();
 				}, opt);
-			} 
+			}
 			catch(e) {
 				// db.users.updateOne({phone:socket.user.phone}, {$set:{locked:false}});
 				debugout(e);
@@ -738,6 +808,9 @@ getDB(async (err, db, dbm)=>{
 		})
 		.on('getfeerate', (cb)=>{
 			cb(null, settings.feeRate);
+		})
+		.on('getshareurl', (cb)=>{
+
 		})
 		// admin tools
 		.on('getsettings', (cb)=>{
@@ -1009,4 +1082,3 @@ getDB(async (err, db, dbm)=>{
 		})
 	})
 })
-

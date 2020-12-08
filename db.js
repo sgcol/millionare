@@ -17,6 +17,8 @@ module.exports=function (cb) {
         'settings',
 		'contracts',
 		{notifies:{index:['phone', 'read'], capped:true, size:100*1024*1024, max:1000000}},
+		{invited:{index:['phone']}},
+		{invitationLogs:{index:[{inviter:1, invitee:1}]}},
 		]}, function(err, db) {
 		if (err) return cb(err);
 		__stored_db=db;

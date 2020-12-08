@@ -3,7 +3,8 @@ const _getDB =require('./db')
     , {dedecimal, decimalfy} =require('./etc.js')
     , onlineUsers=require('./onlineuser')
     , fetch=require('node-fetch')
-    , {gzip}=require('node-gzip');
+	, {gzip}=require('node-gzip')
+	, invitation =require('./invitation');
 
 const getDB=()=>new Promise((resolve, reject)=>{
     _getDB((err, db)=>{
@@ -17,9 +18,9 @@ async function confirmOrder(orderid, money, cb) {
 		if (err) throw err;
 		return r;
 	};
-	var db=await getDB();
+	var db=await getDB(), now=new Date();
 	try {
-		var {value}=await db.bills.findOneAndUpdate({_id:ObjectId(orderid), used:{$ne:true}}, {$set:{used:true, confirmedAmount:money, lastTime:new Date()}}, {w:'majority'});
+		var {value}=await db.bills.findOneAndUpdate({_id:ObjectId(orderid), used:{$ne:true}}, {$set:{used:true, confirmedAmount:money, lastTime:now}}, {w:'majority'});
 		if (!value) throw 'no such orderid or order is processing';
 		value=dedecimal(value);
 		var {value:dbuser}=await db.users.findOneAndUpdate({phone:value.phone}, {$inc:decimalfy({balance:money})}, {w:'majority'});
@@ -31,6 +32,11 @@ async function confirmOrder(orderid, money, cb) {
 		} else {
 			//累积下注
 			db.users.updateOne({phone:value.phone}, {$inc:{recharge:money}});
+		}
+
+		var invited=await db.invited.findOne({phone:value.phone}, {projection:{invitedBy:1}});
+		if (invited) {
+			invitation.emit('onRecharge', {inviter:invited.invitedBy, invitee:value.phone, amount:money});
 		}
 
 		var user=onlineUsers.get(value.phone);

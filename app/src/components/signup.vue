@@ -170,6 +170,8 @@ export default {
 			return window.LuckyJsBridge;
 		}
 	},
+	// 苏州园区社保 62888222 劳动局 65113011
+	//
 	data(){
 		return {
 			mobile:null, password:null, repeat_password:null, otp:null, agree:false, acceptRDA:false, remember_me:null, longop:false, err:null,

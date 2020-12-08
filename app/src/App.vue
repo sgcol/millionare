@@ -82,11 +82,19 @@
 				<p v-else>{{$t('no records')}}</p>
 			</div>
 		</div>
+		<b-navbar type="light" variant="white" fixed="bottom" style="border-top: 1px solid;height:58px">
+			<b-navbar-nav class="" style="width:100%">
+				<b-nav-item href="#" class="text-center" style="min-width:33%" @click="showMyMenu"><b-icon-person-lines-fill font-scale="2"/><br>{{$t('Me')}}</b-nav-item>
+				<b-nav-item href="#" class="text-center" style="min-width:33%" @click="showTopUp"><b-icon-cash-stack  font-scale="2"/><br>{{$t('Top Up')}}</b-nav-item>
+				<b-nav-item href="#" class="text-center" style="min-width:33%" @click="showShare"><b-icon-trophy  font-scale="2"/><br>{{$t('Promotion')}}</b-nav-item>
+			</b-navbar-nav>
+		</b-navbar>
 		<promotions/>
 		<mymenu ref="mymenu"></mymenu>
 		<xiazhu ref="xz"></xiazhu>
 		<rule ref='ru'></rule>
 		<signup ref="signup"></signup>
+		<Share ref="share"></Share>
 		<!-- <b-modal ref="modal1" title="test" size="xl"></b-modal> -->
 	</div>
 </template>
@@ -98,6 +106,9 @@ import signup from './components/signup.vue'
 import xiazhu from './components/xiazhu.vue'
 import mymenu from './components/mymenu.vue'
 import Promotions from "./components/promotions"
+import Share from "./components/share"
+
+import { BIconPersonLinesFill, BIconCashStack, BIconTrophy } from 'bootstrap-vue'
 // import BAlert from "bootstrap-vue"
 
 import { mapState } from 'vuex'
@@ -116,6 +127,8 @@ export default {
 		signup,
 		mymenu,
 		Promotions,
+		Share,
+		BIconPersonLinesFill, BIconCashStack, BIconTrophy,
 		// BAlert,
 	},
 	computed: mapState({
@@ -229,6 +242,9 @@ export default {
 		},
 		showErr(e) {
 			this.err=e;
+		},
+		showShare() {
+			this.$refs.share.show();
 		},
 		checkLoginState() {
 			// read token from cookie
