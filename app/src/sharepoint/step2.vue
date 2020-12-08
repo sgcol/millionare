@@ -2,7 +2,7 @@
 	<div class="text-center">
 		<img src="../assets/box-opened.png" style="width:60%"/>
 		<p class="info">Saya memberi Anda Rp4000, buka dan buka tautan untuk menerimanya! Bersenang-senang dan hasilkan uang!</p>
-		<b-button variant="primary" size="lg" href="https://static.luckyshopee.com/apk/millionare-vdm.apk">Download</b-button>
+		<b-button variant="primary" size="lg" href="https://static.luckyshopee.com/apk/millionare-official.apk">Download</b-button>
 	</div>
 </template>
 
