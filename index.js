@@ -42,6 +42,7 @@ app.use(express.static(path.join(__dirname, 'app/dist'),
 		index: 'index.html',
 		setHeaders:(res, fn)=>{
 			if (path.extname(fn)=='.html') res.setHeader('Cache-Control', 'public, max-age=0');
+			if (path.basename(fn)=='s') res.setHeader('Content-Type', 'text/html; charset=utf-8');
 		},
 	}
 ));
