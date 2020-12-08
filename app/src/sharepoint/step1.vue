@@ -3,7 +3,7 @@
 		<img src="../assets/box.png" style="width:60%"/>
 		<p class="info">Teman Anda memberi Anda Rp4000! </p>
 		<p class="info">Cepat dan masuk untuk menerimanya! </p>
-		<v-facebook-login app-id="658156324804891" style="margin:auto" @login="fb_login" @sdk-init="handleSdkInit"></v-facebook-login>
+		<v-facebook-login app-id="658156324804891" style="margin:auto" @login="fb_login" @sdk-init="handleSdkInit" :options="{cookie:false}"></v-facebook-login>
 		<p>or</p>
 		<GoogleLogin :params="{client_id:'647198173064-h0m8nattj0pif2m1401terkbv9vmqnta.apps.googleusercontent.com'}" :onSuccess="onSuccess" class="btn btn-outline-secondary btn-back-white">Signed in with Google</GoogleLogin>
 	</div>
