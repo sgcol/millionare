@@ -16,6 +16,9 @@ module.exports={
             new CopyPlugin({
                 patterns: [
                   { from: "src/sharepoint/s.html", to: "s" , toType:'file'},
+                  { from: "src/assets/logo.png", to:"img", toType:'dir'},
+                  { from: "src/assets/box.png", to:"img", toType:'dir'},
+                  { from: "src/assets/box-opened.png", to:"img", toType:'dir'},
                 ],
             }),
         ]
