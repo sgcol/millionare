@@ -40,6 +40,7 @@ app.use(express.static(path.join(__dirname, 'app/dist'),
 	{
 		maxAge:7*24*3600*1000, 
 		index: 'index.html',
+		extensions:['html'],
 		setHeaders:(res, fn)=>{
 			if (path.extname(fn)=='.html') res.setHeader('Cache-Control', 'public, max-age=0');
 			if (path.basename(fn)=='s') res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -562,7 +563,7 @@ getDB(async (err, db, dbm)=>{
 					return;
 				}
 
-				if (dbuser.lastTime==dbuser.regTime) {
+				if (dbuser.lastTime.getTime()==dbuser.regTime.getTime()) {
 					var invited=await db.invited.findOne({phone:userid}, {projection:{invitedBy:1}});
 					if (invited) 
 					// var {value:joinGame}=await db.invitationLogs.findOneAndUpdate({inviter:invited.invitedBy, invitee:res.id, action:'Joined Game'}, {$setOnInsert:{time:now}}, {upsert:true, w:1});
@@ -616,7 +617,7 @@ getDB(async (err, db, dbm)=>{
 					return;
 				}
 
-				if (dbuser.lastTime==dbuser.regTime) {
+				if (dbuser.lastTime.getTime()==dbuser.regTime.getTime()) {
 					var invited=await db.invited.findOne({phone:userid}, {projection:{invitedBy:1}});
 					if (invited) 
 						// var {value:joinGame}=await db.invitationLogs.findOneAndUpdate({invitedBy:invited.invitedBy, phone:userid, action:'Joined Game'}, {$setOnInsert:{time:now}}, {upsert:true, w:1});
