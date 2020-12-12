@@ -518,12 +518,12 @@ getDB(async (err, db, dbm)=>{
 				const now=new Date();
 				var [invitationSender, oldUser]=await Promise.all([
 					db.users.findOne({_id:ObjectId(bywhom)}, {projection:{name:1, phone:1}}),
-					db.users.findOne({phone:res.id}, {projection:{_id:1}})
+					db.users.findOne({phone:userid}, {projection:{_id:1}})
 				]);
 				if (!invitationSender) throw 'No such user';
 				if (oldUser) throw 'You have already signed up';
 				var {phone, name}=invitationSender;
-				var {value:dbuser}=await db.invited.findOneAndUpdate({phone:res.id}, {$setOnInsert:{ip:socket.remoteAddress, time:now, invitedBy:phone}} ,{upsert:true, w:1});
+				var {value:dbuser}=await db.invited.findOneAndUpdate({phone:userid}, {$setOnInsert:{ip:socket.remoteAddress, time:now, invitedBy:phone}} ,{upsert:true, w:1});
 				if (dbuser) throw ('You has been invited by '+name+' already');
 				cb();
 			}	catch(e) {
