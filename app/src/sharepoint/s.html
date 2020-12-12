@@ -53,7 +53,7 @@
     var x=new URLSearchParams(location.search);
     var possibleCode;
     for (var [k, v] of x) {
-      if (v=="" && k.length==8) {
+      if (v=="" && k.length==16) {
         possibleCode=k;
         break;
       }
