@@ -82,7 +82,7 @@
   function continueFB() {
     FB.getLoginStatus(response=>{
       if (response.status!='connected') return console.error(response);
-      const socket=io(location.host);
+      const socket=io(location.host, {transports:['websocket']});
       socket.emit('fber_invited', response.authResponse.accessToken, bywhom, (err)=>{
         if (err) return alert(err);
         showStep2();        
@@ -90,7 +90,7 @@
     });
   }
   function withGoogle(googleUser) {
-    const socket=io(location.host);
+    const socket=io(location.host, {transports:['websocket']});
     socket.emit('gooer_invited', googleUser.getAuthResponse().id_token, bywhom, (err)=>{
       if (err) return alert(err);
       showStep2();        
