@@ -21,7 +21,7 @@
       <div class="g-signin2" data-onsuccess="withGoogle" style="width:180px; height:40px; margin:auto"></div>
       <script async defer crossorigin="anonymous" src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v9.0&appId=658156324804891&autoLogAppEvents=1" nonce="s8yVODqo"></script>
       <script src="https://apis.google.com/js/platform.js" async defer></script>
-      <script async defer src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.slim.js"></script>
     </div>
     <div id="step2" class="text-center">
       <img src="./img/box-opened.png" style="width:60%"/>
