@@ -5,6 +5,7 @@ import conf from '../conf'
 Vue.use(VueI18n);
 
 const en=new Proxy ({
+    recharged: 'Recharged {0}',
     whatsup:'Add this whatsup {0} to get reward',
     term:'Agree {0}',
     rule0: '3 minutes 1 issue, 2 minutes and 30 seconds to order, 30 seconds to show the lottery result. It opens all day. The total number of trade is 480 issues.',
