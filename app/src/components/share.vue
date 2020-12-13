@@ -53,7 +53,7 @@
     <b-form-group label="Invited friends" label-size="">
         <b-table striped hover :items="items" :fields="cols">
             <template v-slot:cell(name)="row">
-                <span>{{row.item.name||row.item._id}}</span>
+                <span>{{nameIt(row.item)}}</span>
             </template>
             <template v-slot:cell(amount)="row">
                 <span v-if="!row.item.amount">Joined Game</span>
@@ -70,6 +70,7 @@ import {BIconCheckCircleFill, BIconLink45deg} from 'bootstrap-vue'
 import VueSocialSharing from 'vue-social-sharing'
 import { mapState } from 'vuex'
 import {openLink, eventBus} from '../client'
+import {get} from 'object-path'
 
 Vue.use(VueSocialSharing);
 
@@ -89,6 +90,9 @@ export default {
         }
     },
 	methods:{
+        nameIt(item) {
+            return get(item, 'userData.0.name', item._id)
+        },
 		show() {
 			this.$children[0].show();
 		},

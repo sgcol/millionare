@@ -544,7 +544,7 @@ getDB(async (err, db, dbm)=>{
 						foreignField:'phone',
 						as:'userData'
 					}},
-					{$project:{amount:1, reward:1, joined:1, name:'$userData[0].name'}}
+					{$project:{amount:1, reward:1, joined:1, 'userData.name':1}}
 				]).toArray()
 			);
 		})
