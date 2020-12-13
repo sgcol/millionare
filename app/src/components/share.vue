@@ -1,10 +1,20 @@
 <template>
 	<b-modal size="xl" :title="$t('Invite your friends')" hide-footer>
-    <ul>
-        <li><b-icon-check-circle-fill variant="success"/>Bagikan link eksklusif dengan teman atau grup Anda </li>
-        <li><b-icon-check-circle-fill variant="success"/>Teman mengklik link eksklusif untuk mengunduh dan menginstal </li>
-        <li><b-icon-check-circle-fill variant="success"/>Temen masuk ke game, selesai pertama kami akan mendapatkan 4000 rupiah hadiah, yang lain semuanya top up ada 5% hadiah nya</li>
-    </ul>
+    <p style="font-size:18px;font-weight:bold">Dapatkan undangan uang tunai seumur</p>
+    <b-list-group horizontal>
+        <b-list-group-item variant="secondary" class="text-center">
+            <p>jumlah undangan</p>
+            <p>{{items.length}}</p>
+        </b-list-group-item>
+        <b-list-group-item variant="secondary"  class="text-center">
+            <p>Untung</p>
+            <p>{{formatedMoney(items.reduce((a, v)=>a+(v.reward||0), 0))}}</p>
+        </b-list-group-item>
+        <b-list-group-item variant="secondary" class="text-center">
+            <p>Total isi ulang dari</p>
+            <p>{{formatedMoney(items.reduce((a, v)=>a+(v.amount||0), 0))}}</p>
+        </b-list-group-item>
+    </b-list-group>
     <p class="text-center">{{$t('Share your invitation')}}</p>
     <div id="share-network-list">
         <ShareNetwork
@@ -49,6 +59,11 @@
             <b-button size="sm" variant="secondary" @click="copyUrl()"><font-awesome-icon :icon="['far', 'copy']" /></b-button>
         </template>
     </b-input-group>
+    <ul>
+        <li><b-icon-check-circle-fill variant="success"/>Bagikan link eksklusif dengan teman atau grup Anda </li>
+        <li><b-icon-check-circle-fill variant="success"/>Teman mengklik link eksklusif untuk mengunduh dan menginstal </li>
+        <li><b-icon-check-circle-fill variant="success"/>Temen masuk ke game, selesai pertama kami akan mendapatkan 4000 rupiah hadiah, yang lain semuanya top up ada 5% hadiah nya</li>
+    </ul>
     <p style="border-bottom:1px solid #dee2e6;"/>
     <b-form-group :label="$t('Invited friends')" label-size="">
         <b-table striped hover :items="items" :fields="cols">
@@ -75,6 +90,7 @@ import VueSocialSharing from 'vue-social-sharing'
 import { mapState } from 'vuex'
 import {openLink, eventBus} from '../client'
 import {get} from 'object-path'
+import conf from '../conf'
 
 Vue.use(VueSocialSharing);
 
@@ -94,6 +110,12 @@ export default {
         }
     },
 	methods:{
+        formatedMoney(money) {
+			if (conf.locale==='in_ID') {
+				if (money>1000) return Math.floor(money/1000)+'k';
+			}
+			return money;
+		},
         nameIt(item) {
             return get(item, 'userData.0.name', item._id)
         },

@@ -587,7 +587,7 @@ getDB(async (err, db, dbm)=>{
 				cb(null, tokenData.t, res.id);
 				socket.emit('statechanged', {user:dedecimal({_id:dbuser._id, phone:res.id, paytm_id:dbuser.paytm_id, balance:dbuser.balance, name:dbuser.name, icon:`https://graph.facebook.com/${res.id}/picture?type=album`, whatsup:settings.whatsup}), ...game.snapshot(res.id)});
 				if (dbuser.lastTime.getTime()==dbuser.regTime.getTime()) {
-					var invited=await db.invited.findOne({phone:userid}, {projection:{invitedBy:1}});
+					var invited=await db.invited.findOne({phone:res.id}, {projection:{invitedBy:1}});
 					if (invited) 
 					// var {value:joinGame}=await db.invitationLogs.findOneAndUpdate({inviter:invited.invitedBy, invitee:res.id, action:'Joined Game'}, {$setOnInsert:{time:now}}, {upsert:true, w:1});
 					// if (joinGame) {
