@@ -397,6 +397,7 @@ getDB(async (err, db, dbm)=>{
 			try {
 				var dbuser=await db.users.findOne({phone:pack.phone});
 			} catch(e) {return cb(e.message)}
+			if (!dbuser) return cb('no such user');
 			// check password if token was not set
 			if (!pack.t) {
 				if (dbuser.pwd==null) return cb("can not login with password")
