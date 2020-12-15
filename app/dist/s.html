@@ -75,12 +75,12 @@
     return check;
   };
   function showStep2() {
-    if (mobileAndTabletCheck()) {
+    // if (mobileAndTabletCheck()) {
       document.getElementById('step1').style.display='none';
       document.getElementById('step2').style.display='block';
-    } else {
-      location.href='/';
-    }
+    // } else {
+    //   location.href='/';
+    // }
   }
   function continueFB() {
     FB.getLoginStatus(response=>{
