@@ -19,6 +19,7 @@ module.exports={
                   { from: "src/assets/logo.png", to:"img", toType:'dir'},
                   { from: "src/assets/box.png", to:"img", toType:'dir'},
                   { from: "src/assets/box-opened.png", to:"img", toType:'dir'},
+                  { from: "src/assets/star.png", to:"img", toType:'dir'},
                 ],
             }),
         ]

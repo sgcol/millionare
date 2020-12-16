@@ -129,4 +129,18 @@ module.exports={
     "inquiry failed, bkerrorTRANSFER INQUIRY DECLINE":"Masuk informasi bank ada yang salah",
 
     "Promotion":"Hadiah",
+
+    "Free Rp4000 for you":"Gratis Rp4000 untuk Anda",
+    "Invite your friends" :"Undang teman Anda",
+    "Invited friends":"Undang temen",
+    "Joined Game":"Masuk ke game",
+    "Name":"Nama",
+    "Or, copy the link":"atau copy link",
+    "Reward":"Hadiah",
+    "Share your invitation":"Bagikan undangan Anda",
+    "Success":"Berhasil",
+    "The url has been copied to your clipboard":"Url telah disalin ke papan klip Anda",				
+    "Error":"Error",
+    "Failed to copy content. You may copy the url manually":"Gagal menyalin konten. Anda dapat menyalin url secara manual",			
+    recharged:"Telah Top up {0}",
 };

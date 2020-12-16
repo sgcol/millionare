@@ -73,7 +73,7 @@
             <template v-slot:cell(amount)="row">
                 <span v-if="!row.item.amount">{{$t('Joined Game')}}</span>
                 <i18n path="recharged" tag="span" for="amount" v-else>
-                    {{row.item.amount}}
+                    {{formatedMoney(row.item.amount)}}
                 </i18n>
 <!-- 
                     {{$t('Recharged ')+row.item.amount}} -->
@@ -154,8 +154,13 @@ export default {
         },
         copyUrl() {
             var self=this;
+            if (!navigator.clipboard) {
+                return self.$bvModal.msgBoxOk(self.$i18n.t('Failed to copy content. You may copy the url manually'), {
+                    title:self.$i18n.t('Error')
+                });
+            }
             navigator.clipboard.writeText(this.invitationUrl).then(()=>{
-                self.$bvModal.msgBoxOk(self.$i18n.t('Url has been copied to your clipboard'), {
+                self.$bvModal.msgBoxOk(self.$i18n.t('The url has been copied to your clipboard'), {
                     title:self.$i18n.t('Success')
                 });
             }).catch(()=>{
@@ -171,7 +176,7 @@ export default {
             cols:[
                 {key:'name', label:this.$i18n.t('Name')},
                 {key:'amount', label:this.$i18n.t('Status')},
-                {key:'reward', label:this.$i18n.t('Reward')},
+                {key:'reward', label:this.$i18n.t('Reward'), formatter:this.formatedMoney},
             ]
         }
     },

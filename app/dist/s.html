@@ -31,6 +31,13 @@
       <p class="info">Saya memberi Anda Rp4000, buka dan buka tautan untuk menerimanya! Bersenang-senang dan hasilkan uang!</p>
       <a class="button" href="https://static.luckyshopee.com/apk/millionare-official.apk">Download</a>  
     </div>
+    <div id="err" class="text-center">
+      <img src="./img/star.png" style="width:60%" />
+      <p class="info">
+        Anda telah menerima undangan tersebut!<br> Silakan unduh Millionare
+      </p>
+      <a class="button" href="https://static.luckyshopee.com/apk/millionare-official.apk">Download</a>  
+    </div>
     </body>
   </body>
   <script>
@@ -76,11 +83,17 @@
   };
   function showStep2() {
     // if (mobileAndTabletCheck()) {
+      document.getElementById('err').style.display='none';
       document.getElementById('step1').style.display='none';
       document.getElementById('step2').style.display='block';
     // } else {
     //   location.href='/';
     // }
+  }
+  function showErr() {
+    document.getElementById('step1').style.display='none';
+    document.getElementById('step2').style.display='none';
+    document.getElementById('err').style.display='block';
   }
   function continueFB() {
     FB.getLoginStatus(response=>{
@@ -88,7 +101,7 @@
       const socket=io(location.host, {reconnectionAttempts: 0, transports:['websocket']});
       socket.emit('fber_invited', response.authResponse.accessToken, bywhom, (err)=>{
         socket.close();
-        if (err) return alert(err);
+        if (err) return showErr(err);
         showStep2();        
       })
     });
@@ -109,7 +122,7 @@
     const socket=io(location.host, {reconnectionAttempts: 0, transports:['websocket']});
     socket.emit('gooer_invited', googleUser.getAuthResponse().id_token, bywhom, (err)=>{
       socket.close();
-      if (err) return alert(err);
+      if (err) return showErr(err);
       showStep2();        
     })
   }
@@ -138,7 +151,7 @@
       font-weight:bold;
       margin: 0px 20px 28px 20px;
   }
-  #step2 {
+  #step2, #err{
     display: none;
   }
   .button {
