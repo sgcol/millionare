@@ -237,13 +237,13 @@ export default {
 			var self=this;
 			sock.emit('upd', {target:'promotions', query:{phone:self.phone}, name:'baishi4500'}, (err)=>{
 				if (err) return alert(err);
-				self.userdata.balance+=4500;
+				self.userdata.balance+=4000;
 				self.enable_baishi4500=false;
 				TDGA.Account({
 					accountId : self.phone,
 				});
-				TDGA.onReward(4500, '拜师送4500');
-				TDGA.onEvent('baishi4500', JSON.stringify({user:self.phone, reward:4500}));
+				TDGA.onReward(4000, '拜师送4500');
+				TDGA.onEvent('baishi4500', JSON.stringify({user:self.phone, reward:4000}));
 
 			})
 		},

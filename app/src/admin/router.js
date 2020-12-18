@@ -8,6 +8,7 @@ import auth, {openLink} from './auth'
 import accounts from './accounts'
 import gameset from './game'
 import orders from './orders'
+import bulkOp from './bulkOp.vue'
 
 function requireAuth(to, from, next) {
 		var r=auth.loggedIn()
@@ -30,6 +31,7 @@ const router=new VueRouter({
 				{path:'/gameset',component:gameset, beforeEnter:requireAuth},
 				{path:'/orders',component:orders, beforeEnter:requireAuth},
 				{path:'/withdrawOrders', component:withdrawOrders, beforeEnter:requireAuth},
+				{path:'/bulkOp', component:bulkOp, beforeEnter:requireAuth},
 				{path:'/login', component:login},
 				{ path: '/logout',
 					beforeEnter (to, from, next) {

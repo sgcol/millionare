@@ -336,6 +336,11 @@ export default {
 		// eventBus.$on('whatsupchgd', (v)=>{alert(v)});
 		var lost_connection_relogin_loop=false;
 		var self=this;
+		var ads=[];
+		eventBus.$on('ad', (arr)=>{
+			ads=ads.concat(arr);
+
+		})
 		eventBus.$on('relogin', ()=>{
 			lost_connection_relogin_loop=true;
 			self.checkLoginState();
