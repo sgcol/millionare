@@ -337,6 +337,7 @@ export default {
 		var lost_connection_relogin_loop=false;
 		var self=this;
 		var ads=[];
+		this.$bvToast.toast('A testing message');
 		eventBus.$on('ad', (arr)=>{
 			ads=ads.concat(arr);
 
