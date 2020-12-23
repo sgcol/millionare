@@ -9,7 +9,7 @@ module.exports=function (cb) {
 	if (__stored_db) return cb(null, __stored_db, easym);
 	else new easym.DbProvider().init(argv.mongo, {exists:[
 		{users:{index:['phone', 'money', 'isAdmin']}},
-		{bills:{index:['user', 'phone', 'time']}},
+		{bills:{index:[{phone:1, used:1}, 'user', 'phone', 'time']}},
 		{withdraw:{index:['phone', 'time', 'withdraw_result', 'tradeno']}}, 
 		{servers:{index:['order']}},
 		{games:{index:['user', 'time'], capped:true, size:100*1024*1024, max:1000000}},

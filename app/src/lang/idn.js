@@ -143,4 +143,6 @@ module.exports={
     "Error":"Error",
     "Failed to copy content. You may copy the url manually":"Gagal menyalin konten. Anda dapat menyalin url secara manual",			
     recharged:"Telah Top up {0}",
+
+    "Must recharge more than IDR 50k before cash withdrawal":'Sebelum WD harus perlu top up lebih dari 50k',
 };

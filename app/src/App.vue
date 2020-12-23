@@ -19,9 +19,9 @@
 					<p >{{username()}}</p>
 				</div>
 			</div>
-			<b-alert :show="me && !!me.whatsup">
+			<!-- <b-alert :show="me && !!me.whatsup">
 				{{me.whatsup}}
-			</b-alert>
+			</b-alert> -->
 			<div ref="notifies"></div>
 			<b-alert :show="!!notify" dismissible variant="danger" v-for="(note, idx) in notify" :key="idx">
 				{{note}}
@@ -337,7 +337,7 @@ export default {
 		var lost_connection_relogin_loop=false;
 		var self=this;
 		var ads=[];
-		this.$bvToast.toast('A testing message');
+		// this.$bvToast.toast('A testing message');
 		eventBus.$on('ad', (arr)=>{
 			ads=ads.concat(arr);
 

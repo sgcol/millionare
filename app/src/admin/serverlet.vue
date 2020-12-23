@@ -14,12 +14,12 @@
 				</b-form-radio>
 			</b-form-radio-group>
 		</b-form-group>
-		<b-form-group label="下注抽水" >
+		<!-- <b-form-group label="下注抽水" >
 			<b-form-input v-model="feeRate" :formatter="feeFormatter"></b-form-input>
 		</b-form-group>
 		<b-form-group label="取现抽水" invalid-feedback="格式: n%+d" :state="wfState">
 			<b-form-input v-model="withdrawFee" :state="wfState"></b-form-input>
-		</b-form-group>
+		</b-form-group> -->
 	</b-tab>
 	<b-tab title="老师配置">
 		<b-form-group label="老师WhatsUp" >
@@ -47,8 +47,8 @@ export default {
 			online:null,
 			strategy:0,
 			spec_result:null,
-			feeRate:'2%',
-			withdrawFee:'5%',
+			// feeRate:'2%',
+			// withdrawFee:'5%',
 			luckyshopee: {
 				sms_url:null,
 				pay_url:null,
@@ -107,28 +107,28 @@ export default {
 		},
 		submit() {
 			if (!this.wfState) return;
-			var strategy=this.strategy, feeRate=Number(this.feeRate.slice(0, -1))/100, whatsup=this.whatsup;
-			var wfs=(()=>{
-				var parts=this.withdrawFee.split('%');
-				if (parts.length>2) return false;
-				for (var i=0; i<parts.length; i++) {
-					parts[i]=Number(parts[i]);
-					if (isNaN(parts[i])) return false;
-				}
-				if (parts.length==1 && this.withdrawFee.slice(-1)!='%') {
-					parts[1]=parts[0];
-					parts[0]=0;
-				}
-				return parts;
-			})();
-			if (!wfs) return;
+			var strategy=this.strategy, /*feeRate=Number(this.feeRate.slice(0, -1))/100,*/ whatsup=this.whatsup;
+			// var wfs=(()=>{
+			// 	var parts=this.withdrawFee.split('%');
+			// 	if (parts.length>2) return false;
+			// 	for (var i=0; i<parts.length; i++) {
+			// 		parts[i]=Number(parts[i]);
+			// 		if (isNaN(parts[i])) return false;
+			// 	}
+			// 	if (parts.length==1 && this.withdrawFee.slice(-1)!='%') {
+			// 		parts[1]=parts[0];
+			// 		parts[0]=0;
+			// 	}
+			// 	return parts;
+			// })();
+			// if (!wfs) return;
 			if (strategy==2) {
 				if (!this.spec_result_state) return;
 				strategy=undefined;
 				var temp_result=this.spec_result.split(/[\s,，]+/);
 			}
 			openLink((socket)=>{
-				socket.emit('setsettings', {strategy, temp_result, feeRate, withdrawPercent:(wfs[0]||0)/100, withdrawFixed:wfs[1]||0, whatsup}, (err)=>{
+				socket.emit('setsettings', {strategy, temp_result, /*feeRate, withdrawPercent:(wfs[0]||0)/100, withdrawFixed:wfs[1]||0,*/ whatsup}, (err)=>{
 					if (err) return alert(err);
 					alert('success');
 				})

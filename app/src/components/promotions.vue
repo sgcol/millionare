@@ -14,7 +14,7 @@
 			</b-carousel-slide>
 			<b-carousel-slide v-if="promotions.includes('baishi4500')">
 				<template #img>
-				<a href="https://wa.me/6283899167630"><img src="../assets/baishi4500.png" style="width:100%"></a>
+				<a :href="`https://wa.me/${me.whatsup}`"><img src="../assets/baishi4500.png" style="width:100%"></a>
 				</template>
 			</b-carousel-slide>
 		</b-carousel>
@@ -22,6 +22,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import {openLink, eventBus} from '../client';
 import TDGA from '../stat'
 
@@ -36,6 +37,9 @@ export default {
 			promotions:[]
 		}
 	},
+	computed:mapState({
+		me: state => state.me,
+	}),
 	methods:{
 		handler_free4500(e) {
 			e.preventDefault();

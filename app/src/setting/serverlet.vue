@@ -21,8 +21,15 @@
 		<label>appChannel</label>
 		<b-form-input v-model="luckyshopee.appChannel"></b-form-input>
 	</b-tab>
-	<!-- <b-tab title="提款配置"></b-tab>
-	<b-tab title="审核提款"><approve-withdraw /></b-tab> -->
+	<b-tab title="提款配置">
+		<b-form-group label="下注抽水" >
+			<b-form-input v-model="feeRate" :formatter="feeFormatter"></b-form-input>
+		</b-form-group>
+		<b-form-group label="取现抽水" invalid-feedback="格式: n%+d" :state="wfState">
+			<b-form-input v-model="withdrawFee" :state="wfState"></b-form-input>
+		</b-form-group>
+	</b-tab>
+	<!--<b-tab title="审核提款"><approve-withdraw /></b-tab> -->
 </b-tabs>
 <b-button block v-on:click="submit" variant="info">Submit</b-button>
 </b-form>
@@ -39,6 +46,8 @@ export default {
 	},
 	data() {
 		return {
+			feeRate:null,
+			withdrawFee:null,
 			luckyshopee: {
 				sms_url:null,
 				pay_url:null,
@@ -52,12 +61,44 @@ export default {
 		}
 	},
 	computed:{
+		wfState() {
+			if (this.withdrawFee.length==0) return false;
+			var parts=this.withdrawFee.split('%');
+			if (parts.length>2) return false;
+			for (var i=0; i<parts.length; i++) {
+				parts[i]=Number(parts[i]);
+				if (isNaN(parts[i])) return false;
+			}
+			if (parts.length==2 && parts[0]>=100) return false;
+			return true;
+		}
 	},
 	methods:{
+		feeFormatter(v) {
+			if (v.slice(-1)=='%') return v;
+			return v+'%';
+		},
+
 		submit() {
+			if (!this.wfState) return;
+			var feeRate=Number(this.feeRate.slice(0, -1))/100;
+			var wfs=(()=>{
+				var parts=this.withdrawFee.split('%');
+				if (parts.length>2) return false;
+				for (var i=0; i<parts.length; i++) {
+					parts[i]=Number(parts[i]);
+					if (isNaN(parts[i])) return false;
+				}
+				if (parts.length==1 && this.withdrawFee.slice(-1)!='%') {
+					parts[1]=parts[0];
+					parts[0]=0;
+				}
+				return parts;
+			})();
+			if (!wfs) return;
 			var luckyshopee=this.luckyshopee;
 			openLink((socket)=>{
-				socket.emit('setsettings', {luckyshopee}, (err)=>{
+				socket.emit('setsettings', {luckyshopee, feeRate, withdrawPercent:(wfs[0]||0)/100, withdrawFixed:wfs[1]||0}, (err)=>{
 					if (err) return alert(err);
 					alert('success');
 				})

@@ -748,6 +748,22 @@ getDB(async (err, db, dbm)=>{
 			var phone=socket.user.phone;
 			if (fee>money) return cb('not enough money');
 
+			// check recharge history
+			var check_total_recharge_exceed_50k=await db.users.findOne({phone}, {projection:{total_recharge_exceed_50k:1}});
+			if (!check_total_recharge_exceed_50k) return cb('no such user');
+			if (!check_total_recharge_exceed_50k.total_recharge_exceed_50k) {
+				var r=await db.bills.aggregate([
+					{$match:{phone, used:true}},
+					{$group:{
+						_id:phone,
+						total_recharge:{$sum:'$money'}
+					}}
+				]).toArray();
+				if (!r || r.length==0) return cb('Must recharge more than IDR 50k before cash withdrawal');
+				if (!r[0].total_recharge || r[0].total_recharge<50000) return cb('Must recharge more than IDR 50k before cash withdrawal');
+				db.users.updateOne({phone}, {$set:{total_recharge_exceed_50k:true}});
+			}
+
 			const session=db.mongoClient.startSession(),
 			opt={
 				readPreference: 'secondaryPreferred',
