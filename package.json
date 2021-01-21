@@ -30,7 +30,7 @@
     "object-path": "^0.11.5",
     "randomstring": "^1.1.5",
     "request": "^2.88.2",
-    "socket.io": "^2.3.0",
+    "socket.io": "^2.4.0",
     "ws": "^7.3.0",
     "yargs": "^15.3.1"
   }
