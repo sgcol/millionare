@@ -5,6 +5,7 @@
   "scripts": {
     "serve": "vue-cli-service serve --port=7008",
     "build": "vue-cli-service build",
+    "dev-build": "vue-cli-service build --mode development",
     "build:admin": "vue-cli-service build --dest dist src/admin/main.js",
     "lint": "vue-cli-service lint"
   },

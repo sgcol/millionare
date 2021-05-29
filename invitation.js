@@ -1,6 +1,5 @@
 const EventEmitter = require('events')
     , onlineUsers= require('./onlineuser');
-const db = require('./db');
 const _getDB = require('./db');
 
 const getDB=()=>new Promise((resolve, reject)=>{

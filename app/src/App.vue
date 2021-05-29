@@ -117,6 +117,7 @@ import conf from './conf'
 import {dateTimeString, timeString} from './etc'
 
 // var nid=0;
+var toastCount=0;
 
 export default {
 	name: 'App',
@@ -327,8 +328,14 @@ export default {
 			var idx=this.notify.findIndex(item=>item.nid==id);
 			this.notify.splice(idx,1);
 			console.log(this.notify);
-		}
+		},
+		showToastOneByOne(msgs) {
+			var leftSlot=msgs.length-toastCount;
+			for (var i=0; i<leftSlot; i++) {
+				this.$bvToast.toast(msgs[i], {toaster:'b-toaster-bottom-left above-bottom-menu', variant:'success', noCloseButton:true})
+			}
 
+		}
 	},
 	events:{
 	},
@@ -336,11 +343,18 @@ export default {
 		// eventBus.$on('whatsupchgd', (v)=>{alert(v)});
 		var lost_connection_relogin_loop=false;
 		var self=this;
-		var ads=[];
-		// this.$bvToast.toast('A testing message');
-		eventBus.$on('ad', (arr)=>{
-			ads=ads.concat(arr);
-
+		// var ads=[];
+		var shownToasts=new Set();
+		this.$root.$on('bv::toast:show', (bvEvent)=>{
+			shownToasts.add(bvEvent.componentId);
+			toastCount=shownToasts.size;
+		})
+		.$on('bv::toast:hide', (bvEvent)=>{
+			shownToasts.delete(bvEvent.componentId);
+			toastCount=shownToasts.size;
+		});
+		eventBus.$on('consumption', (arr)=>{
+			this.showToastOneByOne(arr);
 		})
 		eventBus.$on('relogin', ()=>{
 			lost_connection_relogin_loop=true;
@@ -403,16 +417,16 @@ setInterval(()=>{
 	margin-top: 0px;
 } */
 a, article, aside, b, body, button, dd, div, dl, dt, figcaption, figure, footer, h1, h2, h3, h4, h5, h6, header, i, input, li, nav, p, section, select, span, textarea, ul {
-		-webkit-box-sizing: border-box;
-		box-sizing: border-box;
-		padding: 0;
-		border: none;
-		margin: 0;
-		font-family: Georgia,Microsoft Yahei;
-		font-size: 14px;
-		text-decoration: none;
-		-webkit-tap-highlight-color: transparent;
-		-webkit-font-smoothing: antialiased;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+	padding: 0;
+	border: none;
+	margin: 0;
+	font-family: Georgia,Microsoft Yahei;
+	font-size: 14px;
+	text-decoration: none;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-font-smoothing: antialiased;
 }
 /* .btn {
 		width: 90%;
@@ -748,4 +762,12 @@ span.orange {
 	overflow: scroll;
 }
 
+.above-bottom-menu {
+	margin-bottom:48px !important;
+	max-width:77%;
+}
+
+.toast-header {
+	display:none;
+}
 </style>

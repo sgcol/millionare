@@ -975,7 +975,9 @@ getDB(async (err, db, dbm)=>{
 					withdraw.amount-=fee;
 					var tradeno=await createIdrWithdraw(orderid, withdraw, partner, req);
 					db.withdraw.updateOne({_id:ObjectId(orderid)}, {$set:{tradeno}}, {session});
-				}, opt)
+					// notify consumptionEvent
+					
+				}, opt)		
 				cb();
 			} catch(e) {
 				debugout('approval err', e);
